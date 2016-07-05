@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/chasinglogic/dfm/common"
 	"github.com/urfave/cli"
 )
 
@@ -24,16 +23,16 @@ func Create(c *cli.Context) error {
 		return cloneErr
 	}
 
-	links := common.GenerateSymlinks(userDir)
+	links := GenerateSymlinks(userDir)
 
 	// Just create a symlink in configDir/profiles/ to the other profile name
 	if aliasDir != "" {
 		if err := os.Symlink(userDir, aliasDir); err != nil {
-			fmt.Println("Error creating alias:", err)
+			fmt.Println("Error creating alias", err, "skipping...")
 		}
 	}
 
-	return common.CreateSymlinks(links)
+	return CreateSymlinks(links)
 }
 
 func createURL(s []string) (string, string) {
@@ -45,9 +44,15 @@ func createURL(s []string) (string, string) {
 }
 
 func cloneRepo(url, user, userDir string) error {
-	fmt.Printf("Creating profile in %s\n", userDir)
+	if verbose {
+		fmt.Printf("Creating profile in %s\n", userDir)
+	}
+
 	c := exec.Command("git", "clone", url, userDir)
-	output, err := c.CombinedOutput()
-	fmt.Println(string(output))
+	_, err := c.CombinedOutput()
+	if err.Error() == "exit status 128" {
+		return cli.NewExitError("Profile exists, perhaps you meant dfm update?", 128)
+	}
+
 	return err
 }
