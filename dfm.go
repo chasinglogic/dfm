@@ -88,6 +88,12 @@ func main() {
 			},
 		},
 		{
+			Name:    "list",
+			Aliases: []string{"ls"},
+			Usage:   "List available profiles",
+			Action:  commands.List,
+		},
+		{
 			Name:    "update",
 			Aliases: []string{"up"},
 			Usage:   "Pull the latest version of the profile from origin master.",
