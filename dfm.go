@@ -33,6 +33,10 @@ func main() {
 			Name:  "verbose",
 			Usage: "Print verbose messaging.",
 		},
+		cli.BoolFlag{
+			Name:  "dry-run",
+			Usage: "Don't create symlinks just print what would be done.",
+		},
 	}
 
 	app.Commands = []cli.Command{
