@@ -61,7 +61,43 @@ func main() {
 					Name:  "alias, a",
 					Usage: "Creates `ALIAS` for the profile instead of username",
 				},
+				cli.BoolFlag{
+					Name:  "overwrite, o",
+					Usage: "Overwrites existing files when creating links.",
+				},
+				cli.BoolFlag{
+					Name:  "link, l",
+					Usage: "Links the profile after creation. Use --use instead if there is already an active profile.",
+				},
+				cli.BoolFlag{
+					Name:  "use, u",
+					Usage: "Switches to the newly created profile after downloaded.",
+				},
 			},
+		},
+		{
+			Name:    "link",
+			Aliases: []string{"l"},
+			Usage:   "Recreate the links from the dotfiles profile.",
+			Action:  commands.Link,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "overwrite, o",
+					Usage: "Overwrites existing files when creating links.",
+				},
+			},
+		},
+		{
+			Name:    "update",
+			Aliases: []string{"up"},
+			Usage:   "Pull the latest version of the profile from origin master.",
+			Action:  commands.Update,
+		},
+		{
+			Name:    "use",
+			Aliases: []string{"u"},
+			Usage:   "Switch to the profile",
+			Action:  commands.Use,
 		},
 	}
 
