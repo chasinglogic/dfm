@@ -11,6 +11,8 @@ import (
 )
 
 func Create(c *cli.Context) error {
+	setVerbosity(c.Parent())
+
 	var aliasDir string
 
 	if alias := c.String("alias"); alias != "" {
