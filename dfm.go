@@ -23,6 +23,17 @@ func main() {
 	app.Name = "dfm"
 	app.Usage = "Manage dotfiles."
 	app.Version = "1.0-dev"
+	app.Authors = []cli.Author{
+		{
+			Name:  "Mathew Robinson",
+			Email: "mathew.robinson3114@gmail.com",
+		},
+		{
+			Name:  "Mark Chandler",
+			Email: "mark.allen.chandler@gmail.com",
+		},
+	}
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
