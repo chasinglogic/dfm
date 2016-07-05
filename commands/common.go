@@ -31,6 +31,10 @@ func setGlobalOptions(c *cli.Context) {
 	DRYRUN = c.Bool("dry-run")
 }
 
+func getProfileDir(c *cli.Context) string {
+	return filepath.Join(c.Parent().String("config"), "profiles")
+}
+
 func getUser(c *cli.Context) string {
 	// This handles the case when create passes us it's context
 	if len(strings.Split(c.Args().First(), "/")) > 1 {
