@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -40,7 +39,6 @@ func GenerateSymlinks(profileDir string) []Link {
 		}
 	}
 
-	os.Exit(0)
 	return links
 }
 
@@ -49,8 +47,7 @@ func CreateSymlinks(l []Link) error {
 
 	for _, link := range l {
 		if _, err := os.Stat(link.Dest); err == nil {
-			fmt.Printf("%s already exists. Please remove and rerun this command.\n",
-				link.Dest)
+			fmt.Printf("%s already exists.\n", link.Dest)
 			ok = false
 		}
 	}
@@ -66,5 +63,5 @@ func CreateSymlinks(l []Link) error {
 		return nil
 	}
 
-	return errors.New("Symlink targets exist.")
+	return cli.NewExitError("Symlink targets exist. Refusing to create a broken state please remove the targets then rerun command.", 68)
 }
