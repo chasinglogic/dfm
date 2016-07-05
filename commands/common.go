@@ -67,23 +67,37 @@ func generateSymlinks(profileDir string) []LinkInfo {
 	return links
 }
 
-func CreateSymlinks(l []Link) error {
+func createSymlinks(l []LinkInfo, overwrite bool) error {
 	ok := true
 
 	for _, link := range l {
 		if _, err := os.Stat(link.Dest); err == nil {
-			fmt.Printf("%s already exists.\n", link.Dest)
-			ok = false
+			if overwrite {
+				if VERBOSE || DRYRUN {
+					fmt.Printf("%s already exists, removing.\n", link.Dest)
+				}
+
+				if !DRYRUN {
+					if rmerr := os.Remove(link.Dest); rmerr != nil {
+						fmt.Printf("Unable to remove %s: %s\n",
+							link.Dest,
+							rmerr.Error())
+					}
+				}
+			} else {
+				fmt.Printf("%s already exists.\n", link.Dest)
+				ok = false
+			}
 		}
 	}
 
 	if ok {
 		for _, link := range l {
-			if DRY_RUN || VERBOSE {
+			if DRYRUN || VERBOSE {
 				fmt.Printf("Creating symlink %s -> %s\n", link.Src, link.Dest)
 			}
 
-			if !DRY_RUN {
+			if !DRYRUN {
 				if err := os.Symlink(link.Src, link.Dest); err != nil {
 					return err
 				}
