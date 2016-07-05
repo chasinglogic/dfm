@@ -1,4 +1,4 @@
-package common
+package commands
 
 import (
 	"errors"
@@ -19,7 +19,7 @@ type Link struct {
 }
 
 func setVerbosity(c *cli.Context) {
-	verbose = c.BoolFlag("verbose")
+	verbose = c.Bool("verbose")
 }
 
 func GenerateSymlinks(profileDir string) []Link {
