@@ -7,11 +7,19 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/urfave/cli"
 )
+
+var verbose = false
 
 type Link struct {
 	Src  string
 	Dest string
+}
+
+func setVerbosity(c *cli.Context) {
+	verbose = c.BoolFlag("verbose")
 }
 
 func GenerateSymlinks(profileDir string) []Link {
@@ -25,7 +33,9 @@ func GenerateSymlinks(profileDir string) []Link {
 	for _, file := range files {
 		if !strings.HasPrefix(file.Name(), ".") {
 			l := filepath.Join(os.Getenv("HOME"), "."+file.Name())
-			fmt.Printf("Geneated symlink %s\n", l)
+			if verbose {
+				fmt.Printf("Geneated symlink %s\n", l)
+			}
 			links = append(links, Link{profileDir + file.Name(), l})
 		}
 	}
