@@ -27,8 +27,6 @@ func Create(c *cli.Context) error {
 		return cloneErr
 	}
 
-	links := GenerateSymlinks(userDir)
-
 	// Just create a symlink in configDir/profiles/ to the other profile name
 	if aliasDir != "" {
 		if err := os.Symlink(userDir, aliasDir); err != nil {
@@ -36,7 +34,15 @@ func Create(c *cli.Context) error {
 		}
 	}
 
-	return CreateSymlinks(links)
+	if c.Bool("link") {
+		return Link(c)
+	}
+
+	if c.Bool("use") {
+		return Use(c)
+	}
+
+	return nil
 }
 
 func createURL(s []string) (string, string) {
