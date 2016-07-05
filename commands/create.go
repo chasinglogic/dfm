@@ -11,7 +11,7 @@ import (
 )
 
 func Create(c *cli.Context) error {
-	setVerbosity(c.Parent())
+	setGlobalOptions(c.Parent())
 
 	var aliasDir string
 
@@ -46,7 +46,7 @@ func createURL(s []string) (string, string) {
 }
 
 func cloneRepo(url, user, userDir string) error {
-	if verbose {
+	if VERBOSE {
 		fmt.Printf("Creating profile in %s\n", userDir)
 	}
 
