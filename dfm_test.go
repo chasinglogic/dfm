@@ -42,7 +42,7 @@ func cleanup(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	e, profileDir := testCommand("create", "chasinglogic/dotfiles")
+	e, profileDir := testCommand("create", "-a", "cl", "chasinglogic/dotfiles")
 
 	if e != nil {
 		t.Errorf("Failed with error: %s\n", e.Error())
@@ -50,7 +50,8 @@ func TestCreate(t *testing.T) {
 
 	testFilesExistence(filepath.Join(profileDir, "bashrc"),
 		filepath.Join(profileDir, "vimrc"),
-		filepath.Join(profileDir, "vim"))
+		filepath.Join(profileDir, "vim"),
+		filepath.Join(defaultConfigDir(), "cl"))
 
 	cleanup(t)
 }
