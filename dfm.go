@@ -29,6 +29,10 @@ func main() {
 			Usage: "Use `DIR` for storing dfm configuration",
 			Value: defaultConfigDir(),
 		},
+		cli.BoolFlag{
+			Name:  "verbose",
+			Usage: "Print verbose messaging.",
+		},
 	}
 
 	app.Commands = []cli.Command{
