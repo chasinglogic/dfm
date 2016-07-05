@@ -14,6 +14,7 @@ type Link struct {
 
 func GenerateSymlinks(profileDir string) []Link {
 	links := []Link{}
+	// TODO: Handle the config dir special case
 	filepath.Walk(profileDir,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -42,6 +43,7 @@ func CreateSymlinks(l []Link) error {
 
 	if ok {
 		for _, link := range l {
+			fmt.Printf("Creating symlink %s -> %s", link.Src, link.Dest)
 			if err := os.Symlink(link.Src, link.Dest); err != nil {
 				return err
 			}
