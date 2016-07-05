@@ -18,11 +18,11 @@ func Create(c *cli.Context) error {
 	var aliasDir string
 
 	if alias := c.String("alias"); alias != "" {
-		aliasDir = filepath.Join(c.Parent().String("config"), "profiles", alias)
+		aliasDir = filepath.Join(getProfileDir(c), alias)
 	}
 
 	url, user := createURL(strings.Split(c.Args().First(), "/"))
-	userDir := filepath.Join(c.Parent().String("config"), "profiles", user)
+	userDir := filepath.Join(getProfileDir(c), user)
 	if cloneErr := cloneRepo(url, user, userDir); cloneErr != nil {
 		return cloneErr
 	}

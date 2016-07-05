@@ -10,7 +10,7 @@ import (
 func Link(c *cli.Context) error {
 	setGlobalOptions(c.Parent())
 
-	userDir := filepath.Join(c.Parent().String("config"), "profiles", getUser(c))
+	userDir := filepath.Join(getProfileDir(c), getUser(c))
 	links := generateSymlinks(userDir)
 	return createSymlinks(links, c.Bool("overwrite"))
 }
