@@ -10,15 +10,21 @@ import (
 	"github.com/urfave/cli"
 )
 
-var verbose = false
+var VERBOSE = false
+var DRY_RUN = false
 
 type Link struct {
 	Src  string
 	Dest string
 }
 
-func setVerbosity(c *cli.Context) {
-	verbose = c.Bool("verbose")
+func (l *Link) String() string {
+	return fmt.Sprintf("Link( %s, %s )", l.Src, l.Dest)
+}
+
+func setGlobalOptions(c *cli.Context) {
+	VERBOSE = c.Bool("verbose")
+	DRY_RUN = c.Bool("dry-run")
 }
 
 func GenerateSymlinks(profileDir string) []Link {
@@ -31,11 +37,16 @@ func GenerateSymlinks(profileDir string) []Link {
 
 	for _, file := range files {
 		if !strings.HasPrefix(file.Name(), ".") {
-			l := filepath.Join(os.Getenv("HOME"), "."+file.Name())
-			if verbose {
-				fmt.Printf("Geneated symlink %s\n", l)
+			ln := Link{
+				filepath.Join(profileDir, file.Name()),
+				filepath.Join(os.Getenv("HOME"), "."+file.Name()),
 			}
-			links = append(links, Link{profileDir + file.Name(), l})
+
+			if VERBOSE {
+				fmt.Printf("Generated symlink %s\n", ln.String())
+			}
+
+			links = append(links, ln)
 		}
 	}
 
@@ -54,9 +65,14 @@ func CreateSymlinks(l []Link) error {
 
 	if ok {
 		for _, link := range l {
-			fmt.Printf("Creating symlink %s -> %s\n", link.Src, link.Dest)
-			if err := os.Symlink(link.Src, link.Dest); err != nil {
-				return err
+			if DRY_RUN || VERBOSE {
+				fmt.Printf("Creating symlink %s -> %s\n", link.Src, link.Dest)
+			}
+
+			if !DRY_RUN {
+				if err := os.Symlink(link.Src, link.Dest); err != nil {
+					return err
+				}
 			}
 		}
 
