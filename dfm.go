@@ -106,8 +106,9 @@ func main() {
 			Action:  commands.Use,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:  "overwrite, o",
-					Usage: "Overwrites existing files when creating links.",
+					Name:   "overwrite, o",
+					Usage:  "Overwrites existing files when creating links.",
+					Hidden: true,
 				},
 			},
 		},
