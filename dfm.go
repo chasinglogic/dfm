@@ -104,6 +104,12 @@ func main() {
 			Aliases: []string{"u"},
 			Usage:   "Switch to the profile",
 			Action:  commands.Use,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "overwrite, o",
+					Usage: "Overwrites existing files when creating links.",
+				},
+			},
 		},
 	}
 
