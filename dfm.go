@@ -106,10 +106,18 @@ func main() {
 			Action:  commands.Use,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:  "overwrite, o",
-					Usage: "Overwrites existing files when creating links.",
+					Name:   "overwrite, o",
+					Usage:  "Overwrites existing files when creating links.",
+					Hidden: true,
 				},
 			},
+		},
+		{
+			Name:        "remove",
+			Aliases:     []string{"rm"},
+			Usage:       "Remove the profile and all it's symlinks.",
+			Description: "Removeds the profile and all it's symlinks, if there is another profile on this system we will switch to it. Otherwise will do nothing.",
+			Action:      commands.Remove,
 		},
 	}
 
