@@ -18,7 +18,8 @@ func defaultConfigDir() string {
 	return filepath.Join(xdg, "dfm")
 }
 
-func main() {
+// Added this to make testing easier.
+func buildApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "dfm"
 	app.Usage = "Manage dotfiles."
@@ -106,14 +107,9 @@ func main() {
 			Action:  commands.Use,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-<<<<<<< HEAD
 					Name:   "overwrite, o",
 					Usage:  "Overwrites existing files when creating links.",
 					Hidden: true,
-=======
-					Name:  "overwrite, o",
-					Usage: "Overwrites existing files when creating links.",
->>>>>>> cb4b207... added flag to use command, so we can set overwrite before calling link
 				},
 			},
 		},
@@ -126,5 +122,10 @@ func main() {
 		},
 	}
 
+	return app
+}
+
+func main() {
+	app := buildApp()
 	app.Run(os.Args)
 }
