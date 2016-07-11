@@ -42,6 +42,20 @@ func cleanup(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
+	e, profileDir := testCommand("create", "chasinglogic/dotfiles")
+
+	if e != nil {
+		t.Errorf("Failed with error: %s\n", e.Error())
+	}
+
+	testFilesExistence(filepath.Join(profileDir, "bashrc"),
+		filepath.Join(profileDir, "vimrc"),
+		filepath.Join(profileDir, "vim"))
+
+	cleanup(t)
+}
+
+func TestCreateWithAlias(t *testing.T) {
 	e, profileDir := testCommand("create", "-a", "cl", "chasinglogic/dotfiles")
 
 	if e != nil {
@@ -54,6 +68,32 @@ func TestCreate(t *testing.T) {
 		filepath.Join(defaultConfigDir(), "cl"))
 
 	cleanup(t)
+}
+
+func TestCreateWithLink(t *testing.T) {
+	e, profileDir := testCommand("create", "-l", "chasinglogic/dotfiles")
+
+	if e != nil {
+		t.Errorf("Failed with error: %s\n", e.Error())
+	}
+
+	testFilesExistence(filepath.Join(profileDir, "bashrc"),
+		filepath.Join(profileDir, "vimrc"),
+		filepath.Join(profileDir, "vim"),
+		filepath.Join(defaultConfigDir(), "cl"))
+
+	er, _ := testCommand("create", "-lo", "chasinglogic/dotfiles")
+
+	if er != nil {
+		t.Errorf("Failed with error: %s\n", e.Error())
+	}
+
+	testFilesExistence(filepath.Join(profileDir, "bashrc"),
+		filepath.Join(profileDir, "vimrc"),
+		filepath.Join(profileDir, "vim"))
+
+	cleanup(t)
+
 }
 
 func TestLink(t *testing.T) {
@@ -71,7 +111,9 @@ func TestLink(t *testing.T) {
 }
 
 func TestUse(t *testing.T) {
-	t.Log("Test not implemented.")
+	createDefault(t)
+
+	t.Error("Test not implemented.")
 }
 
 func TestUpdate(t *testing.T) {
