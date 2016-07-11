@@ -113,7 +113,16 @@ func TestLink(t *testing.T) {
 func TestUse(t *testing.T) {
 	createDefault(t)
 
-	t.Error("Test not implemented.")
+	e, _ := testCommand("use", "chasinglogic")
+	if e != nil {
+		t.Errorf("Failed with error: %s\n", e.Error())
+	}
+
+	testFilesExistence(filepath.Join(os.Getenv("HOME"), ".bashrc"),
+		filepath.Join(os.Getenv("HOME"), ".vimrc"),
+		filepath.Join(os.Getenv("HOME"), ".vim"))
+
+	cleanup(t)
 }
 
 func TestUpdate(t *testing.T) {
