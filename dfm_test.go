@@ -70,36 +70,20 @@ func TestCreateWithAlias(t *testing.T) {
 	cleanup(t)
 }
 
-func TestCreateWithLink(t *testing.T) {
-	e, profileDir := testCommand("create", "-l", "chasinglogic/dotfiles")
-
-	if e != nil {
-		t.Errorf("Failed with error: %s\n", e.Error())
-	}
-
-	testFilesExistence(filepath.Join(profileDir, "bashrc"),
-		filepath.Join(profileDir, "vimrc"),
-		filepath.Join(profileDir, "vim"),
-		filepath.Join(defaultConfigDir(), "cl"))
-
-	er, _ := testCommand("create", "-lo", "chasinglogic/dotfiles")
-
-	if er != nil {
-		t.Errorf("Failed with error: %s\n", e.Error())
-	}
-
-	testFilesExistence(filepath.Join(profileDir, "bashrc"),
-		filepath.Join(profileDir, "vimrc"),
-		filepath.Join(profileDir, "vim"))
-
-	cleanup(t)
-
-}
-
 func TestLink(t *testing.T) {
 	createDefault(t)
+
 	e, _ := testCommand("link", "chasinglogic")
 	if e != nil {
+		t.Errorf("Failed with error: %s\n", e.Error())
+	}
+
+	testFilesExistence(filepath.Join(os.Getenv("HOME"), ".bashrc"),
+		filepath.Join(os.Getenv("HOME"), ".vimrc"),
+		filepath.Join(os.Getenv("HOME"), ".vim"))
+
+	er, _ := testCommand("link", "-o", "chasinglogic")
+	if er != nil {
 		t.Errorf("Failed with error: %s\n", e.Error())
 	}
 
