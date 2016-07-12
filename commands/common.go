@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,11 +11,57 @@ import (
 	"github.com/urfave/cli"
 )
 
-// VERBOSE is used to globally control verbosity
+// Config is used to store global options
+type Config struct {
+	Verbose        bool
+	DryRun         bool
+	ConfigDir      string
+	CurrentProfile string
+}
+
+// VERBOSE is used to globally set verbosity
 var VERBOSE = false
 
-// DRYRUN is used to globally control whether changes should be made
+// DRYRUN is used to globally set whether this is a dry run
 var DRYRUN = false
+
+func loadConfig(c *cli.Context) (*Config, error) {
+	var config Config
+
+	configJSON, rerr := ioutil.ReadFile(filepath.Join(c.Parent().String("config"), "config.json"))
+	if rerr != nil {
+		return &config, rerr
+	}
+
+	err := json.Unmarshal(configJSON, &config)
+	if err != nil {
+		return &config, err
+	}
+
+	config.ConfigDir = c.String("config")
+	VERBOSE = c.Bool("verbose")
+	DRYRUN = c.Bool("dry-run")
+
+	if config.Verbose {
+		VERBOSE = config.Verbose
+	}
+
+	if config.DryRun {
+		DRYRUN = config.DryRun
+	}
+
+	return &config, nil
+}
+
+// Save will save the config to the configDir/config.json
+func (c *Config) Save() error {
+	JSON, merr := json.MarshalIndent(c, "", "\t")
+	if merr != nil {
+		return merr
+	}
+
+	return ioutil.WriteFile(c.ConfigDir+"config.json", JSON, 0644)
+}
 
 // LinkInfo simulates a tuple for our symbolic link
 type LinkInfo struct {
@@ -24,11 +71,6 @@ type LinkInfo struct {
 
 func (l *LinkInfo) String() string {
 	return fmt.Sprintf("Link( %s, %s )", l.Src, l.Dest)
-}
-
-func setGlobalOptions(c *cli.Context) {
-	VERBOSE = c.Bool("verbose")
-	DRYRUN = c.Bool("dry-run")
 }
 
 func getProfileDir(c *cli.Context) string {
