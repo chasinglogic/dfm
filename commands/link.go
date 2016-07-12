@@ -10,11 +10,19 @@ import (
 
 // Link will generate and create the symlinks to the dotfiles in the repo.
 func Link(c *cli.Context) error {
-	setGlobalOptions(c.Parent())
+	config, cerr := loadConfig(c.Parent())
+	if cerr != nil {
+		return cli.NewExitError(cerr.Error(), 3)
+	}
 
 	userDir := filepath.Join(getProfileDir(c), getUser(c))
 	links := generateSymlinks(userDir)
-	return createSymlinks(links, c.Bool("overwrite"))
+	if err := createSymlinks(links, c.Bool("overwrite")); err != nil {
+		return cli.NewExitError(err.Error(), 2)
+	}
+
+	config.CurrentProfile = getUser(c)
+	return config.Save()
 }
 
 func createSymlinks(l []LinkInfo, overwrite bool) error {
