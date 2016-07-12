@@ -53,6 +53,12 @@ func buildApp() *cli.App {
 
 	app.Commands = []cli.Command{
 		{
+			Name:    "add",
+			Aliases: []string{"a"},
+			Usage:   "Add a file to the current profile.",
+			Action:  commands.Add,
+		},
+		{
 			Name:    "create",
 			Aliases: []string{"c"},
 			Usage:   "Create a dotfiles profile from a git repo.",
