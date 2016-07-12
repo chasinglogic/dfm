@@ -10,9 +10,17 @@ import (
 )
 
 func Remove(c *cli.Context) error {
-	setGlobalOptions(c.Parent())
+	config, cerr := loadConfig(c.Parent())
+	if cerr != nil {
+		return cli.NewExitError(cerr.Error(), 3)
+	}
 
-	userDir := filepath.Join(getProfileDir(c), getUser(c))
+	profile := getUser(c)
+	if profile == "" {
+		profile = config.CurrentProfile
+	}
+
+	userDir := filepath.Join(getProfileDir(c), profile)
 	links := generateSymlinks(userDir)
 
 	rmerr := os.RemoveAll(userDir)
