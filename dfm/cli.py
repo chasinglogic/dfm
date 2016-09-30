@@ -25,25 +25,25 @@ from dfm.config import *
 
 
 LICENSE = """
-     dfm, a dotfile manager for lazy people and pair programmers
+dfm, a dotfile manager for lazy people and pair programmers
 
-     Copyright (C) 2016 Mathew Robinson <mathew.robinson3114@gmail.com>
+Copyright (C) 2016 Mathew Robinson <mathew.robinson3114@gmail.com>
 
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-VERSION_NUMBER = 1.0
+VERSION_NUMBER = 0.1
 
 @click.group()
 @click.option("--verbose", "-vv",
@@ -92,6 +92,13 @@ def push(branch):
     click.echo("Pushing profile %s" % profile)
     if profile:
         push_profile(profile, branch)
+
+@dfm.command()
+@click.argument("message")
+def commit(message):
+    """Run a git commit for the current profile."""
+    profile = CONFIG.get("profile")
+    commit_profile(profile, message)
 
 @dfm.command()
 @click.option("--link", "-l",
@@ -143,15 +150,19 @@ def rm(profile):
     rmtree(profile_path)
 
 @dfm.command()
-@click.argument("path", type=click.Path(resolve_path=True, exists=True))
+@click.argument("path",
+                type=click.Path(resolve_path=True, exists=True),
+                nargs=-1)
 def add(path):
     """Add a file or directory to the current profile."""
     profile = CONFIG.get("profile")
-    add_file(path, profile)
+    for f in path:
+        add_file(f, profile)
 
 @dfm.command()
 @click.argument("branch")
 def chk(branch):
+    """Switch to a different branch for the active profile."""
     profile = CONFIG.get("profile", None)
     if profile:
         checkout_profile(profile, branch)
@@ -160,5 +171,19 @@ def chk(branch):
 
 @dfm.command()
 def version():
-    print("You are running dfm version %f" % VERSION_NUMBER)
+    """Show the current dfm version."""
+    print("You are running dfm version %.1f" % VERSION_NUMBER)
+
+@dfm.command()
+def license():
+    """Show dfm licensing info."""
+    print("\nYou are running dfm version %.1f" % VERSION_NUMBER)
     print(LICENSE)
+
+@dfm.command()
+@click.argument("remote")
+def remote(remote):
+    """Set the git remote for the current profile."""
+    profile = CONFIG.get("profile", None)
+    if profile:
+        set_remote_profile(profile, remote)
