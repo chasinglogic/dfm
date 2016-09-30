@@ -17,7 +17,7 @@
 #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import os
-import os.path as path
+from pathlib import Path
 import shutil
 import click
 from dfm.config import CONFIG
@@ -33,19 +33,20 @@ def get_profile_path(config_dir, profile_name):
     if len(spl) > 1:
         # if we got passed a url of some sort return
         # the second to last element of the split.
-        return path.join(config_dir, "profiles", spl[len(spl) - 2])
-    return path.join(config_dir, "profiles", profile_name)
+        return os.path.join(config_dir, "profiles", spl[len(spl) - 2])
+    return os.path.join(config_dir, "profiles", profile_name)
 
-def pull_profile(path):
-    run([ "git", "pull", "origin", "master" ],
-        cwd=path, stdout=PIPE)
+def pull_profile(path, branch):
+    run([ "git", "pull", "origin", branch ],
+        cwd=path, stdout=PIPE, stdin=PIPE)
 
 def clone_profile(repo, profile_path):
-    run([ "git", "clone", repo, profile_path ], stdout=PIPE)
+    run([ "git", "clone", repo, profile_path ],
+        stdout=PIPE, stdin=PIPE)
 
 def push_profile(path, branch):
     run([ "git", "push", "origin", branch ],
-        cwd=path, stdout=PIPE)
+        cwd=path, stdout=PIPE, stdin=PIPE)
 
 def create_and_init_profile(profile_path):
     click.echo("Creating profile %s" % profile_path)
@@ -56,28 +57,28 @@ def create_and_init_profile(profile_path):
 
 def gen_dot_file(flname):
     df = flname if flname.startswith(".") else "." + flname
-    return path.abspath(path.join(os.environ.get("HOME", ""), df))
+    return os.path.abspath(os.path.join(os.environ.get("HOME", ""), df))
 
 
 def link_file(fl, df, force=False):
     # Check if a non sym linked version exists.
-    if ((path.exists(df) and
-         not path.islink(df)) and not force):
+    if ((os.path.exists(df) and
+         not os.path.islink(df)) and not force):
         click.echo("Error linking: %s" % df)
         click.echo("Dotfile exists and isn't symlink. Refusing to overwrite. Use --force to overwrite")
         return
 
-    if path.isfile(df) or path.islink(df):
+    if os.path.isfile(df) or os.path.islink(df):
         os.remove(df)
-    if path.isdir(df):
+    if os.path.isdir(df):
         shutil.rmtree(df)
 
-    os.symlink(fl.path, df)
+    os.symlink(fl, df)
     if CONFIG["verbose"]:
-        click.echo("Linked file %s -> %s" % (fl.name, df))
+        click.echo("Linked file %s -> %s" % (fl, df))
 
 def link_profile(profile_path, force=False):
-    dot_files = os.scandir(path.abspath(profile_path))
+    dot_files = os.scandir(os.path.abspath(profile_path))
     click.echo("Linking profile %s" % profile_path)
     for d in dot_files:
         # Skip the git directory
@@ -91,36 +92,36 @@ def link_profile(profile_path, force=False):
                 # .config files have a different path
                 config_path = os.environ.get("XDG_CONFIG_HOME", "")
                 if xdg == "":
-                    config_path = path.join(os.environ.get("HOME", ""), ".config")
+                    config_path = os.path.join(os.environ.get("HOME", ""), ".config")
 
-                dfp = path.join(config_path, f.name)
-                link_file(f, dfp, force=force)
+                dfp = os.path.join(config_path, f.name)
+                link_file(f.path, dfp, force=force)
             continue
-        link_file(d, gen_dot_file(d.name), force=force)
+        link_file(d.path, gen_dot_file(d.name), force=force)
 
 def add_file(path, profile):
     xdg = os.environ.get("XDG_CONFIG_HOME", "")
-    old_file = os.stat(path)
-    new_path = path.join(profile, f.name)
+    old_file = Path(path)
 
-    if xdg in old_file.path:
-        new_path = path.join(profile, "config", f.name)
+    fn = old_file.name
+    # If starts with a dot remove it.
+    if fn.startswith("."):
+        fn = fn.replace(".", "", 1)
 
-    os.rename(f.path, new_path)
-    new_file = os.stat(new_path)
-    link_file(new_file, old_file, force=True)
+    new_path = os.path.join(profile, fn)
+    if Path(xdg) in { old_file }:
+        new_path = os.path.join(profile, "config", fn)
 
+    os.rename(bytes(old_file), new_path)
+    link_file(new_path, bytes(old_file), force=True)
+    run([ "git", "add", fn ], cwd=profile, stdout=PIPE)
 
 def checkout_profile(profile, branch):
     run([ "git", "checkout", branch ],
         cwd=profile, stdout=PIPE)
 
-def commit_profile(profile, message=None):
-    if message:
-        run([ "git", "commit", "-am", message ],
-            cwd=profile, stdout=PIPE)
-        return
-    run([ "git", "commit", "-va" ],
+def commit_profile(profile, message):
+    run([ "git", "commit", "-am", message ],
         cwd=profile, stdout=PIPE)
 
 def set_remote_profile(profile, remote):
