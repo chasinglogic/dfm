@@ -1,44 +1,164 @@
+#
+#     dfm, a dotfile manager for lazy people and pair programmers
+#
+#     Copyright (C) 2016 Mathew Robinson <mathew.robinson3114@gmail.com>
+#
+#     This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+#
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+#
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 import click
-import json
 import os
-from dfm.lib import get_default_config_dir
+import sys
+from shutil import rmtree, which
+from dfm.lib import *
+from dfm.config import *
 
-CONFIG_DIR = get_default_config_dir()
-CONFIG = json.loads(os.path.join(CONFIG_DIR, "config.json"))
+
+LICENSE = """
+     dfm, a dotfile manager for lazy people and pair programmers
+
+     Copyright (C) 2016 Mathew Robinson <mathew.robinson3114@gmail.com>
+
+     This program is free software: you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation, either version 3 of the License, or
+     (at your option) any later version.
+
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
+VERSION_NUMBER = 1.0
 
 @click.group()
+@click.option("--verbose", "-vv",
+              default=False,
+              is_flag=True)
 @click.option("--config", "-c", 
+              help="The path where dfm stores it's config and profiles.",
+              default=get_default_config_dir(),
               type=click.Path(resolve_path=True))
-def dfm(config):
-    """A dotfile manager for pair programmers."""
-    if config != None:
-        CONFIG_DIR = config
+def dfm(verbose, config):
+    """A dotfile manager for lazy people and pair programmers."""
+    if config != get_default_config_dir():
+        set_config(config)
+
+    # If CONFIG_DIR does not exist, make it so #1
+    if not os.path.isdir(CONFIG_DIR):
+        os.mkdir(CONFIG_DIR)
+
+    if which("git") == None:
+        click.echo("Git is not in the $PATH. Git is required for dfm please install then try again.")
+        sys.exit(1)
+
+    if verbose:
+        CONFIG["verbose"] = True
+
     pass
 
 @dfm.command()
-@click.argument("profile")
-def pull(profile):
-    """Update a profile."""
-    profile_path = get_profile_path(CONFIG_DIR, profile)
-    update_profile(profile_path)
+@click.option("--branch", "-b",
+              help="Branch you would like to pull from.",
+              default="master")
+def pull(branch):
+    """Pull changes from the remote."""
+    profile = CONFIG.get("profile", None)
+    click.echo("Updating profile %s" % profile)
+    if profile:
+        pull_profile(profile, branch)
 
 @dfm.command()
-@click.argument("profile")
-def push(profile):
+@click.option("--branch", "-b",
+              help="Branch you would like to pull from.",
+              default="master")
+def push(branch):
     """Push local changes to the remote."""
-    pass
-    
+    profile = CONFIG.get("profile", None)
+    click.echo("Pushing profile %s" % profile)
+    if profile:
+        push_profile(profile, branch)
+
 @dfm.command()
+@click.option("--link", "-l",
+              default=False,
+              is_flag=True,
+              help="Link the profile after downloading it.")
+@click.option("--force", "-f",
+              default=False,
+              is_flag=True,
+              help="Force removal of non-symlink type files")
 @click.argument("repo")
-def clone(repo):
+def clone(link, force, repo):
     """Clone a profile from a git repo."""
     repo_url = get_repo_url(repo)
     profile_path = get_profile_path(CONFIG_DIR, repo)
-    clone_profile(repo_url)
+    click.echo("Creating profile %s from %s" % (profile_path, repo_url))
+    clone_profile(repo_url, profile_path)
+    if link:
+        link_profile(profile_path, force)
+        CONFIG["profile"] = profile_path
+        save_config()
+
+@dfm.command()
+@click.option("--force", "-f",
+              help="Force removal of non-symlink type files",
+              is_flag=True,
+              default=False)
+@click.argument("profile")
+def link(force, profile):
+    """Link the profile with the given name."""
+    profile_path = get_profile_path(CONFIG_DIR, profile)
+    link_profile(profile_path, force)
+    CONFIG["profile"] = profile_path
+    save_config()
 
 @dfm.command()
 @click.argument("profile")
 def init(profile):
     """Create an empty profile with the given name."""
-    pass
-    
+    profile_path = get_profile_path(CONFIG_DIR, profile)
+    create_and_init_profile(profile_path)
+
+@dfm.command()
+@click.argument("profile")
+def rm(profile):
+    """Remove the profile with the given name."""
+    profile_path = get_profile_path(CONFIG_DIR, profile)
+    click.echo("Removing profile %s" % profile_path)
+    rmtree(profile_path)
+
+@dfm.command()
+@click.argument("path", type=click.Path(resolve_path=True, exists=True))
+def add(path):
+    """Add a file or directory to the current profile."""
+    profile = CONFIG.get("profile")
+    add_file(path, profile)
+
+@dfm.command()
+@click.argument("branch")
+def chk(branch):
+    profile = CONFIG.get("profile", None)
+    if profile:
+        checkout_profile(profile, branch)
+    else:
+        click.echo("No profile currently active.")
+
+@dfm.command()
+def version():
+    print("You are running dfm version %f" % VERSION_NUMBER)
+    print(LICENSE)
