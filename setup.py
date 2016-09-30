@@ -5,19 +5,21 @@ from setuptools import find_packages, setup
 
 dependencies = ['click']
 
+with open("README.md") as rdm:
+    reamde = rdm.read()
+
 setup(
     name='dfm',
     version='0.1',
     url='https://github.com/chasinglogic/dfm',
+    download_url='https://github.com/chasinglogic/dfm/tarball/0.1',
     license='GPLv3',
     author='Mathew Robinson',
     author_email='mathew.robinson3114@gmail.com',
     description='A dotfile manager for lazy people and pair programmers.',
-    long_description=__doc__,
+    long_description=readme,
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
-    zip_safe=False,
-    platforms='any',
     install_requires=dependencies,
     entry_points={
         'console_scripts': [
