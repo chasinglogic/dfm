@@ -43,7 +43,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-VERSION_NUMBER = 0.1
+VERSION_NUMBER = 0.2
 
 @click.group()
 @click.option("--verbose", "-vv",
