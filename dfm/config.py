@@ -20,8 +20,11 @@ import os
 import json
 
 def get_default_config_dir():
-    home = os.environ.get("HOME", "")
-    return os.path.join(home, ".config", "dfm")
+    xdg = os.environ.get("XDG_CONFIG_HOME", "")
+    if xdg == "":
+        home = os.environ.get("HOME", "")
+        return os.path.join(home, ".config", "dfm")
+    return os.path.join(xdg, "dfm")
 
 CONFIG_DIR = get_default_config_dir()
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
