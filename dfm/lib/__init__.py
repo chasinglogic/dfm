@@ -89,23 +89,40 @@ def link_profile(profile_path, force=False):
             dfgf = os.scandir(d.path)
             for f in dfgf:
                 # .config files have a different path
-                dfp = path.join(os.environ.get("HOME", ""),
-                                ".config",
-                                f.name)
+                config_path = os.environ.get("XDG_CONFIG_HOME", "")
+                if xdg == "":
+                    config_path = path.join(os.environ.get("HOME", ""), ".config")
+
+                dfp = path.join(config_path, f.name)
                 link_file(f, dfp, force=force)
             continue
         link_file(d, gen_dot_file(d.name), force=force)
 
 def add_file(path, profile):
+    xdg = os.environ.get("XDG_CONFIG_HOME", "")
     old_file = os.stat(path)
     new_path = path.join(profile, f.name)
 
-    os.rename(f.path, new_path)
+    if xdg in old_file.path:
+        new_path = path.join(profile, "config", f.name)
 
+    os.rename(f.path, new_path)
     new_file = os.stat(new_path)
     link_file(new_file, old_file, force=True)
 
 
 def checkout_profile(profile, branch):
     run([ "git", "checkout", branch ],
+        cwd=profile, stdout=PIPE)
+
+def commit_profile(profile, message=None):
+    if message:
+        run([ "git", "commit", "-am", message ],
+            cwd=profile, stdout=PIPE)
+        return
+    run([ "git", "commit", "-a" ],
+        cwd=profile, stdout=PIPE)
+
+def set_remote_profile(profile, remote):
+    run([ "git", "remote", "set-url", "origin", remote ],
         cwd=profile, stdout=PIPE)
