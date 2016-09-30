@@ -120,7 +120,7 @@ def commit_profile(profile, message=None):
         run([ "git", "commit", "-am", message ],
             cwd=profile, stdout=PIPE)
         return
-    run([ "git", "commit", "-a" ],
+    run([ "git", "commit", "-va" ],
         cwd=profile, stdout=PIPE)
 
 def set_remote_profile(profile, remote):
