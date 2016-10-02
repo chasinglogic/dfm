@@ -90,11 +90,11 @@ def link_profile(profile_path, force=False):
             dfgf = os.scandir(d.path)
             for f in dfgf:
                 # .config files have a different path
-                config_path = os.environ.get("XDG_CONFIG_HOME", "")
+                xdg = os.environ.get("XDG_CONFIG_HOME", "")
                 if xdg == "":
-                    config_path = os.path.join(os.environ.get("HOME", ""), ".config")
+                    xdg = os.path.join(os.environ.get("HOME", ""), ".config")
 
-                dfp = os.path.join(config_path, f.name)
+                dfp = os.path.join(xdg, f.name)
                 link_file(f.path, dfp, force=force)
             continue
         link_file(d.path, gen_dot_file(d.name), force=force)
