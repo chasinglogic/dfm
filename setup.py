@@ -7,7 +7,7 @@ dependencies = ['click']
 
 setup(
     name='dfm',
-    version='0.2',
+    version='0.3',
     url='https://github.com/chasinglogic/dfm',
     download_url='https://github.com/chasinglogic/dfm/tarball/0.2',
     license='GPLv3',
