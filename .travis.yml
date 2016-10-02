@@ -1,0 +1,10 @@
+deploy:
+  provider: pypi
+  user: chasinglogic
+  password:
+    secure: e82LQa9kVNnJYDvJaVvSYoXz2FhZ2IrrzhKQqE9JD+YVq8ZRyEWwTe9S9jSdOb9bg1tqY2Xmzw5ViVh6+VekGfcngFIbSzrOfmZkP+uunPD3nEn8UymiEni2lZ8D2a1ZJbT6+qoy/QhDvEvgY4ULZOMXFrz+NgR3UQ0/226OhbDRDdA8QateDCsXuWn3+CknAoSaNaYIj1zOzaWXK0s/vClz7dDHk9A0qJQXXjxZiiRRh8cAv/rKxU/TXkyTTLNlsFC0fmQHgMkmrVDnHHYkflNngGn4kNTU7QtVCa43SdRFVlJNnMDhI/5myOM0DHgkiki8oSU81KJqrxNuOZiOSD2Ll9/Emk9Y4C5qgiVgXVj1bzFVn22n0F3LR5uflJ2JTjzq9SBvJXCMtIZ/e142wGDF7HYdqMofsv+bWSdNN/OChGSBL3A3XBSSiFjS5NbVAv0/O+nlbRfM3z1pFEvZaXcNGkXlIitHEXPY2S/Al+gcWydKB8FxWqldnt44KT0U3MKU1fohDIfk8mvEhTNCD89VEeu4uPlMpPcddZDrh7u3okTyXTEE93urcyil+l7EAIqZzYmCr5bp4Ct8AapB9oaZVSXdrIgQvr8VtCXPKttMzNfeV8PQAjC4VcihXZ2KHea7CCix2YMda3Kxk15X4xbccmJ+zclcrRD9Hs4703c=
+  on:
+    branch: master
+    tags: true
+    distributions: sdist bdist_wheel
+    repo: chasinglogic/dfm
