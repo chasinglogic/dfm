@@ -9,7 +9,7 @@ setup(
     name='dfm',
     version='0.3',
     url='https://github.com/chasinglogic/dfm',
-    download_url='https://github.com/chasinglogic/dfm/tarball/0.2',
+    download_url='https://github.com/chasinglogic/dfm/tarball/0.3',
     license='GPLv3',
     author='Mathew Robinson',
     author_email='mathew.robinson3114@gmail.com',
