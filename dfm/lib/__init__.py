@@ -127,3 +127,37 @@ def commit_profile(profile, message):
 def set_remote_profile(profile, remote):
     run([ "git", "remote", "set-url", "origin", remote ],
         cwd=profile, stdout=PIPE)
+
+def get_right_path(profile, path):
+    pfp = os.path.join(profile, path)
+    if not os.path.exists(pfp) and path.startswith("."):
+        name = path.replace(".", "", 1)
+        pfp = os.path.join(profile, name)
+        if os.path.exists(pfp):
+            return pfp
+    elif not os.path.exists(pfp):
+        return None
+    return pfp
+
+
+def remove_from_profile(profile, path):
+    dfp = Path(path)
+    if not dfp.is_symlink():
+        click.echo("Not a symlink refusing to remove.")
+        return
+    pfp = get_right_path(profile, dfp.name)
+    if pfp == None:
+        click.echo("File not found")
+        return
+
+    if os.path.isdir(pfp):
+        os.remove(dfp)
+        rmtree(pfp)
+    else:
+        os.remove(dfp)
+        os.remove(pfp)
+         
+        
+
+
+

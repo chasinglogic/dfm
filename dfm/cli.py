@@ -187,3 +187,8 @@ def remote(remote):
     profile = CONFIG.get("profile", None)
     if profile:
         set_remote_profile(profile, remote)
+
+@dfm.command()
+@click.argument("path", type=click.Path(exists=True, resolve_path=True))
+def rmf(path):
+    remove_from_profile(CONFIG.get("profile", ""), path)
