@@ -19,27 +19,33 @@ go get github.com/chasinglogic/dfm
 ## Usage
 
 ```
-Usage: dfm [OPTIONS] COMMAND [ARGS]...
+NAME:
+   dfm - Manage dotfiles.
 
-  A dotfile manager for lazy people and pair programmers.
+USAGE:
+   dfm [global options] command [command options] [arguments...]
 
-Options:
-  -vv, --verbose
-  -c, --config PATH  The path where dfm stores it's config and profiles.
-  --help             Show this message and exit.
+VERSION:
+   1.0-dev
 
-Commands:
-  add      Add a file or directory to the current...
-  chk      Switch to a different branch for the active...
-  clone    Clone a profile from a git repo.
-  commit   Run a git commit for the current profile.
-  init     Create an empty profile with the given name.
-  license  Show dfm licensing info.
-  link     Link the profile with the given name.
-  pull     Pull changes from the remote.
-  push     Push local changes to the remote.
-  rm       Remove the profile with the given name.
-  version  Show the current dfm version.
+AUTHOR(S):
+   Mathew Robinson <mathew.robinson3114@gmail.com>
+
+COMMANDS:
+     add, a      Add a file to the current profile.
+     create, c   Create a dotfiles profile from a git repo.
+     link, l     Recreate the links from the dotfiles profile.
+     list, ls    List available profiles
+     update, up  Pull the latest version of the profile from origin master.
+     remove, rm  Remove the profile and all it's symlinks.
+     help, h     Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --config DIR, -c DIR  Use DIR for storing dfm configuration and profiles (default: "/Users/mr91060/.config/dfm")
+   --verbose, --vv       Print verbose messaging.
+   --dry-run             Don't create symlinks just print what would be done.
+   --help, -h            show help
+   --version, -v         print the version
 ```
 
 dfm is mostly a thin wrapper around git and just manages repos and symlinks 
