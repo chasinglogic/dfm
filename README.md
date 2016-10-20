@@ -13,13 +13,13 @@ handles either case equally well.
 The easiest (and currently only) way to install dfm is using the go tool
 
 ```bash
-go get github.com/chasinglogic/dfm
+go get github.com/chasinglogic/dfm/cmd
 ```
 
 ## Usage
 
 ```
-NAME:
+AME:
    dfm - Manage dotfiles.
 
 USAGE:
@@ -33,11 +33,14 @@ AUTHOR(S):
 
 COMMANDS:
      add, a      Add a file to the current profile.
-     create, c   Create a dotfiles profile from a git repo.
+     clone, c    Create a dotfiles profile from a git repo.
      link, l     Recreate the links from the dotfiles profile.
      list, ls    List available profiles
-     update, up  Pull the latest version of the profile from origin master.
+     pull, pl    Pull the latest version of the profile from origin master.
+     push, ps    Push your local version of the profile to the remote.
      remove, rm  Remove the profile and all it's symlinks.
+     init, i     Create a new profile with `NAME`
+     commit, cm  Runs git commit for the profile using `MSG` as the message
      help, h     Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
