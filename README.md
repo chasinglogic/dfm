@@ -13,7 +13,7 @@ handles either case equally well.
 The easiest (and currently only) way to install dfm is using the go tool
 
 ```bash
-go get github.com/chasinglogic/dfm/cmd
+go get github.com/chasinglogic/dfm/cmd/dfm
 ```
 
 ## Usage
