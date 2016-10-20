@@ -29,7 +29,7 @@ type LinkInfo struct {
 }
 
 func (l *LinkInfo) String() string {
-	return fmt.Sprintf("Link( %s, %s )", l.Src, l.Dest)
+	return fmt.Sprintf("%s -> %s", l.Dest, l.Src)
 }
 
 func GenerateSymlinks(profileDir string) []LinkInfo {
@@ -47,7 +47,7 @@ func GenerateSymlinks(profileDir string) []LinkInfo {
 				filepath.Join(os.Getenv("HOME"), "."+file.Name()),
 			}
 
-			if CONFIG.Verbose {
+			if DRYRUN {
 				fmt.Printf("Generated symlink %s\n", ln.String())
 			}
 
@@ -58,9 +58,7 @@ func GenerateSymlinks(profileDir string) []LinkInfo {
 	return links
 }
 
-func CreateSymlinks(l []LinkInfo, overwrite bool) error {
-	ok := true
-
+func CheckLinks(l []LinkInfo, overwrite bool, files chan LinkInfo) {
 	for _, link := range l {
 		if _, err := os.Stat(link.Dest); err == nil {
 			if overwrite {
@@ -77,26 +75,40 @@ func CreateSymlinks(l []LinkInfo, overwrite bool) error {
 				}
 			} else {
 				fmt.Printf("%s already exists.\n", link.Dest)
-				ok = false
-			}
-		}
-	}
-
-	if ok {
-		for _, link := range l {
-			if CONFIG.Verbose || DRYRUN {
-				fmt.Printf("Creating symlink %s -> %s\n", link.Src, link.Dest)
-			}
-
-			if !DRYRUN {
-				if err := os.Symlink(link.Src, link.Dest); err != nil {
-					return err
-				}
+				files <- LinkInfo{}
+				continue
 			}
 		}
 
-		return nil
+		files <- link
 	}
+}
 
-	return cli.NewExitError("Symlink targets exist. Refusing to create a broken state please remove the targets then rerun command.", 68)
+func CreateLinks(numOfLinks int, files chan LinkInfo, errors chan error) {
+	count := 0
+
+	for count < numOfLinks {
+		link := <-files
+		if CONFIG.Verbose || DRYRUN {
+			fmt.Println("Creating symlink", link)
+		}
+
+		if !DRYRUN {
+			if err := os.Symlink(link.Src, link.Dest); err != nil {
+				errors <- err
+			}
+		}
+
+		count++
+	}
+}
+
+func CreateSymlinks(l []LinkInfo, overwrite bool) error {
+	files := make(chan LinkInfo, 3)
+	errors := make(chan error)
+
+	go CheckLinks(l, overwrite, files)
+	go CreateLinks(len(l), files, errors)
+
+	return <-errors
 }
