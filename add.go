@@ -1,4 +1,4 @@
-package commands
+package dfm
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/urfave/cli"
+	cli "gopkg.in/urfave/cli.v1"
 )
 
 func Add(c *cli.Context) error {

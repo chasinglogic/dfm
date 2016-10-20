@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/urfave/cli"
+	cli "gopkg.in/urfave/cli.v1"
 )
 
 func Remove(c *cli.Context) error {
@@ -21,7 +21,7 @@ func Remove(c *cli.Context) error {
 	}
 
 	userDir := filepath.Join(getProfileDir(c), profile)
-	links := generateSymlinks(userDir)
+	links := GenerateSymlinks(userDir)
 
 	rmerr := os.RemoveAll(userDir)
 	if rmerr != nil {
@@ -32,10 +32,10 @@ func Remove(c *cli.Context) error {
 		fmt.Println("Removed profile directory:", userDir)
 	}
 
-	return removeSymlinks(links, getUser(c))
+	return RemoveSymlinks(links, getUser(c))
 }
 
-func removeSymlinks(l []LinkInfo, username string) error {
+func RemoveSymlinks(l []LinkInfo, username string) error {
 	for _, link := range l {
 		// Check if the link is still valid after removing the profile, and if
 		// so just verify thta it doesn't contain the username of the profile

@@ -1,11 +1,13 @@
-package commands
+package dfm
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/urfave/cli"
+	cli "gopkg.in/urfave/cli.v1"
 )
 
 // Link will generate and create the symlinks to the dotfiles in the repo.
@@ -16,8 +18,8 @@ func Link(c *cli.Context) error {
 	}
 
 	userDir := filepath.Join(getProfileDir(c), getUser(c))
-	links := generateSymlinks(userDir)
-	if err := createSymlinks(links, c.Bool("overwrite")); err != nil {
+	links := GenerateSymlinks(userDir)
+	if err := CreateSymlinks(links, c.Bool("overwrite")); err != nil {
 		return cli.NewExitError(err.Error(), 2)
 	}
 
@@ -25,7 +27,33 @@ func Link(c *cli.Context) error {
 	return config.Save()
 }
 
-func createSymlinks(l []LinkInfo, overwrite bool) error {
+func GenerateSymlinks(profileDir string) []LinkInfo {
+	links := []LinkInfo{}
+	// TODO: Handle the config dir special case
+	files, err := ioutil.ReadDir(profileDir)
+	if err != nil {
+		return links
+	}
+
+	for _, file := range files {
+		if !strings.HasPrefix(file.Name(), ".") {
+			ln := LinkInfo{
+				filepath.Join(profileDir, file.Name()),
+				filepath.Join(os.Getenv("HOME"), "."+file.Name()),
+			}
+
+			if VERBOSE {
+				fmt.Printf("Generated symlink %s\n", ln.String())
+			}
+
+			links = append(links, ln)
+		}
+	}
+
+	return links
+}
+
+func CreateSymlinks(l []LinkInfo, overwrite bool) error {
 	ok := true
 
 	for _, link := range l {

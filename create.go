@@ -1,4 +1,4 @@
-package commands
+package dfm
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/urfave/cli"
+	cli "gopkg.in/urfave/cli.v1"
 )
 
 // Create will clone the given git repo to the profiles directory, it optionally
@@ -24,14 +24,14 @@ func Create(c *cli.Context) error {
 		aliasDir = filepath.Join(getProfileDir(c), alias)
 	}
 
-	url, user := createURL(strings.Split(c.Args().First(), "/"))
+	url, user := CreateURL(strings.Split(c.Args().First(), "/"))
 	userDir := filepath.Join(getProfileDir(c), user)
-	if cloneErr := cloneRepo(url, user, userDir); cloneErr != nil {
+	if cloneErr := CloneRepo(url, user, userDir); cloneErr != nil {
 		return cloneErr
 	}
 
 	// Just create a symlink in configDir/profiles/ to the other profile name
-	if aliasDir != "" {
+	if aliasDir != "" && aliasDir != nil {
 		if err := os.Symlink(userDir, aliasDir); err != nil {
 			fmt.Println("Error creating alias", err, "skipping...")
 		}
@@ -41,22 +41,18 @@ func Create(c *cli.Context) error {
 		return Link(c)
 	}
 
-	if c.Bool("use") {
-		return Use(c)
-	}
-
 	return nil
 }
 
-func createURL(s []string) (string, string) {
-	if len(s) == 3 {
-		return fmt.Sprintf("https://%s", strings.Join(s, "/")), s[1]
+func CreateURL(s []string) (string, string) {
+	if len(s) == 2 {
+		return fmt.Sprintf("https://github.com/%s", strings.Join(s, "/")), s[0]
 	}
 
-	return fmt.Sprintf("https://github.com/%s", strings.Join(s, "/")), s[0]
+	return strings.Join(s, "/"), s[len(s)-2]
 }
 
-func cloneRepo(url, user, userDir string) error {
+func CloneRepo(url, user, userDir string) error {
 	if VERBOSE {
 		fmt.Printf("Creating profile in %s\n", userDir)
 	}
