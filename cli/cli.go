@@ -48,10 +48,10 @@ func buildApp() *cli.App {
 			Action:  dfm.Add,
 		},
 		{
-			Name:    "create",
+			Name:    "clone",
 			Aliases: []string{"c"},
 			Usage:   "Create a dotfiles profile from a git repo.",
-			Action:  dfm.Create,
+			Action:  dfm.Clone,
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "alias, a",
@@ -86,10 +86,16 @@ func buildApp() *cli.App {
 			Action:  dfm.List,
 		},
 		{
-			Name:    "update",
-			Aliases: []string{"up"},
+			Name:    "pull",
+			Aliases: []string{"pl"},
 			Usage:   "Pull the latest version of the profile from origin master.",
-			Action:  dfm.Update,
+			Action:  dfm.Pull,
+		},
+		{
+			Name:    "push",
+			Aliases: []string{"ps"},
+			Usage:   "Push your local version of the profile to the remote.",
+			Action:  dfm.Push,
 		},
 		{
 			Name:        "remove",
@@ -97,6 +103,18 @@ func buildApp() *cli.App {
 			Usage:       "Remove the profile and all it's symlinks.",
 			Description: "Removes the profile and all it's symlinks, if there is another profile on this system we will switch to it. Otherwise will do nothing.",
 			Action:      dfm.Remove,
+		},
+		{
+			Name:    "init",
+			Aliases: []string{"i"},
+			Usage:   "Create a new profile with `NAME`",
+			Action:  dfm.Init,
+		},
+		{
+			Name:    "commit",
+			Aliases: []string{"cm"},
+			Usage:   "Runs git commit for the profile using `MSG` as the message",
+			Action:  dfm.Commit,
 		},
 	}
 
