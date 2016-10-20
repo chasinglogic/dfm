@@ -11,16 +11,11 @@ import (
 )
 
 func Add(c *cli.Context) error {
-	config, cerr := loadConfig(c.Parent())
-	if cerr != nil {
-		return cli.NewExitError(cerr.Error(), 3)
-	}
-
-	if VERBOSE {
+	if CONFIG.Verbose {
 		fmt.Println("Adding files:", c.Args())
 	}
 
-	userDir := filepath.Join(getProfileDir(c), config.CurrentProfile)
+	userDir := filepath.Join(getProfileDir(), CONFIG.CurrentProfile)
 
 	for _, f := range c.Args() {
 		file, err := filepath.Abs(f)
@@ -28,7 +23,7 @@ func Add(c *cli.Context) error {
 			return cli.NewExitError(err.Error(), 1)
 		}
 
-		if VERBOSE {
+		if CONFIG.Verbose {
 			fmt.Println("Absolute path:", file)
 		}
 

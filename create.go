@@ -13,25 +13,20 @@ import (
 // Create will clone the given git repo to the profiles directory, it optionally
 // will call link or use depending on the flag given.
 func Create(c *cli.Context) error {
-	_, cerr := loadConfig(c.Parent())
-	if cerr != nil {
-		return cli.NewExitError(cerr.Error(), 3)
-	}
-
 	var aliasDir string
 
 	if alias := c.String("alias"); alias != "" {
-		aliasDir = filepath.Join(getProfileDir(c), alias)
+		aliasDir = filepath.Join(getProfileDir(), alias)
 	}
 
 	url, user := CreateURL(strings.Split(c.Args().First(), "/"))
-	userDir := filepath.Join(getProfileDir(c), user)
+	userDir := filepath.Join(getProfileDir(), user)
 	if cloneErr := CloneRepo(url, user, userDir); cloneErr != nil {
 		return cloneErr
 	}
 
 	// Just create a symlink in configDir/profiles/ to the other profile name
-	if aliasDir != "" && aliasDir != nil {
+	if aliasDir != "" {
 		if err := os.Symlink(userDir, aliasDir); err != nil {
 			fmt.Println("Error creating alias", err, "skipping...")
 		}
@@ -53,7 +48,7 @@ func CreateURL(s []string) (string, string) {
 }
 
 func CloneRepo(url, user, userDir string) error {
-	if VERBOSE {
+	if CONFIG.Verbose {
 		fmt.Printf("Creating profile in %s\n", userDir)
 	}
 

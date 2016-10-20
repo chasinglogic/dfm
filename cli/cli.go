@@ -2,22 +2,11 @@ package cli
 
 import (
 	"os"
-	"path/filepath"
 
 	cli "gopkg.in/urfave/cli.v1"
 
-	"github.com/chasinglogic/dfm/commands"
+	"github.com/chasinglogic/dfm"
 )
-
-func defaultConfigDir() string {
-	xdg := os.Getenv("XDG_CONFIG_HOME")
-
-	if xdg == "" {
-		xdg = filepath.Join(os.Getenv("HOME"), ".config")
-	}
-
-	return filepath.Join(xdg, "dfm")
-}
 
 // Added this to make testing easier.
 func buildApp() *cli.App {
@@ -32,11 +21,14 @@ func buildApp() *cli.App {
 		},
 	}
 
+	app.Before = dfm.LoadConfig
+	app.After = dfm.SaveConfig
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "config, c",
 			Usage: "Use `DIR` for storing dfm configuration and profiles",
-			Value: defaultConfigDir(),
+			Value: dfm.DefaultConfigDir(),
 		},
 		cli.BoolFlag{
 			Name:  "verbose",
@@ -53,13 +45,13 @@ func buildApp() *cli.App {
 			Name:    "add",
 			Aliases: []string{"a"},
 			Usage:   "Add a file to the current profile.",
-			Action:  commands.Add,
+			Action:  dfm.Add,
 		},
 		{
 			Name:    "create",
 			Aliases: []string{"c"},
 			Usage:   "Create a dotfiles profile from a git repo.",
-			Action:  commands.Create,
+			Action:  dfm.Create,
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "alias, a",
@@ -79,7 +71,7 @@ func buildApp() *cli.App {
 			Name:    "link",
 			Aliases: []string{"l"},
 			Usage:   "Recreate the links from the dotfiles profile.",
-			Action:  commands.Link,
+			Action:  dfm.Link,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "overwrite, o",
@@ -91,20 +83,20 @@ func buildApp() *cli.App {
 			Name:    "list",
 			Aliases: []string{"ls"},
 			Usage:   "List available profiles",
-			Action:  commands.List,
+			Action:  dfm.List,
 		},
 		{
 			Name:    "update",
 			Aliases: []string{"up"},
 			Usage:   "Pull the latest version of the profile from origin master.",
-			Action:  commands.Update,
+			Action:  dfm.Update,
 		},
 		{
 			Name:        "remove",
 			Aliases:     []string{"rm"},
 			Usage:       "Remove the profile and all it's symlinks.",
 			Description: "Removes the profile and all it's symlinks, if there is another profile on this system we will switch to it. Otherwise will do nothing.",
-			Action:      commands.Remove,
+			Action:      dfm.Remove,
 		},
 	}
 

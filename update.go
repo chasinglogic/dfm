@@ -1,16 +1,21 @@
-package commands
+package dfm
 
 import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
 
-	"github.com/urfave/cli"
+	cli "gopkg.in/urfave/cli.v1"
 )
 
 // Update performs a git pull origin master in the profile's directory
 func Update(c *cli.Context) error {
-	userDir := filepath.Join(c.Parent().String("config"), "profiles", getUser(c))
+	profile := c.Args().First()
+	if profile == "" {
+		profile = CONFIG.CurrentProfile
+	}
+
+	userDir := filepath.Join(getProfileDir(), profile)
 	pullCMD := exec.Command("git", "pull", "origin", "master")
 	pullCMD.Dir = userDir
 	output, err := pullCMD.CombinedOutput()

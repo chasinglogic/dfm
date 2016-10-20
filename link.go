@@ -12,19 +12,24 @@ import (
 
 // Link will generate and create the symlinks to the dotfiles in the repo.
 func Link(c *cli.Context) error {
-	config, cerr := loadConfig(c.Parent())
-	if cerr != nil {
-		return cli.NewExitError(cerr.Error(), 3)
-	}
-
-	userDir := filepath.Join(getProfileDir(c), getUser(c))
+	userDir := filepath.Join(getProfileDir(), c.Args().First())
 	links := GenerateSymlinks(userDir)
 	if err := CreateSymlinks(links, c.Bool("overwrite")); err != nil {
 		return cli.NewExitError(err.Error(), 2)
 	}
 
-	config.CurrentProfile = getUser(c)
-	return config.Save()
+	CONFIG.CurrentProfile = c.Args().First()
+	return nil
+}
+
+// LinkInfo simulates a tuple for our symbolic link
+type LinkInfo struct {
+	Src  string
+	Dest string
+}
+
+func (l *LinkInfo) String() string {
+	return fmt.Sprintf("Link( %s, %s )", l.Src, l.Dest)
 }
 
 func GenerateSymlinks(profileDir string) []LinkInfo {
@@ -42,7 +47,7 @@ func GenerateSymlinks(profileDir string) []LinkInfo {
 				filepath.Join(os.Getenv("HOME"), "."+file.Name()),
 			}
 
-			if VERBOSE {
+			if CONFIG.Verbose {
 				fmt.Printf("Generated symlink %s\n", ln.String())
 			}
 
@@ -59,7 +64,7 @@ func CreateSymlinks(l []LinkInfo, overwrite bool) error {
 	for _, link := range l {
 		if _, err := os.Stat(link.Dest); err == nil {
 			if overwrite {
-				if VERBOSE || DRYRUN {
+				if CONFIG.Verbose || DRYRUN {
 					fmt.Printf("%s already exists, removing.\n", link.Dest)
 				}
 
@@ -79,7 +84,7 @@ func CreateSymlinks(l []LinkInfo, overwrite bool) error {
 
 	if ok {
 		for _, link := range l {
-			if DRYRUN || VERBOSE {
+			if CONFIG.Verbose || DRYRUN {
 				fmt.Printf("Creating symlink %s -> %s\n", link.Src, link.Dest)
 			}
 

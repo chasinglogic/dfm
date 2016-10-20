@@ -1,4 +1,4 @@
-package commands
+package dfm
 
 import (
 	"fmt"
@@ -10,17 +10,12 @@ import (
 )
 
 func Remove(c *cli.Context) error {
-	config, cerr := loadConfig(c.Parent())
-	if cerr != nil {
-		return cli.NewExitError(cerr.Error(), 3)
-	}
-
-	profile := getUser(c)
+	profile := c.Args().First()
 	if profile == "" {
-		profile = config.CurrentProfile
+		return cli.NewExitError("Please specify a profile.", 1)
 	}
 
-	userDir := filepath.Join(getProfileDir(c), profile)
+	userDir := filepath.Join(getProfileDir(), profile)
 	links := GenerateSymlinks(userDir)
 
 	rmerr := os.RemoveAll(userDir)
@@ -28,11 +23,11 @@ func Remove(c *cli.Context) error {
 		return rmerr
 	}
 
-	if VERBOSE {
+	if CONFIG.Verbose {
 		fmt.Println("Removed profile directory:", userDir)
 	}
 
-	return RemoveSymlinks(links, getUser(c))
+	return RemoveSymlinks(links, c.Args().First())
 }
 
 func RemoveSymlinks(l []LinkInfo, username string) error {
@@ -44,7 +39,7 @@ func RemoveSymlinks(l []LinkInfo, username string) error {
 		if path, err := os.Readlink(link.Dest); err != nil ||
 			strings.Contains(path, username) {
 
-			if DRYRUN || VERBOSE {
+			if DRYRUN || CONFIG.Verbose {
 				fmt.Printf("Removing symlink %s\n", link.Dest)
 			}
 

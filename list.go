@@ -1,4 +1,4 @@
-package commands
+package dfm
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 
 // List will list the available profiles and aliases
 func List(c *cli.Context) error {
-	files, err := ioutil.ReadDir(getProfileDir(c))
+	files, err := ioutil.ReadDir(getProfileDir())
 	if err != nil {
 		return cli.NewExitError(err.Error(), 1)
 	}
