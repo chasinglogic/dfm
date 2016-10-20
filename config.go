@@ -18,7 +18,7 @@ type Config struct {
 func LoadConfig(c *cli.Context) error {
 	configJSON, rerr := ioutil.ReadFile(filepath.Join(os.Getenv("HOME"), ".dfm"))
 	if rerr == os.ErrNotExist {
-		configJSON = []byte("{}")
+		configJSON = []byte("{\"Verbose\":false}")
 	} else if rerr != nil {
 		return rerr
 	}
@@ -28,8 +28,15 @@ func LoadConfig(c *cli.Context) error {
 		return err
 	}
 
-	CONFIG.ConfigDir = c.String("config")
-	CONFIG.Verbose = c.Bool("verbose")
+	if (CONFIG.ConfigDir == "" || CONFIG.ConfigDir == DefaultConfigDir()) &&
+		c.String("config") != DefaultConfigDir() {
+		CONFIG.ConfigDir = c.String("config")
+	}
+
+	if !CONFIG.Verbose && c.Bool("verbose") {
+		CONFIG.Verbose = c.Bool("verbose")
+	}
+
 	DRYRUN = c.Bool("dry-run")
 
 	return nil
