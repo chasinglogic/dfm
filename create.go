@@ -12,7 +12,7 @@ import (
 
 // Create will clone the given git repo to the profiles directory, it optionally
 // will call link or use depending on the flag given.
-func Create(c *cli.Context) error {
+func Clone(c *cli.Context) error {
 	var aliasDir string
 
 	if alias := c.String("alias"); alias != "" {
