@@ -31,7 +31,7 @@ func buildApp() *cli.App {
 			Value: dfm.DefaultConfigDir(),
 		},
 		cli.BoolFlag{
-			Name:  "verbose",
+			Name:  "verbose, vv",
 			Usage: "Print verbose messaging.",
 		},
 		cli.BoolFlag{
