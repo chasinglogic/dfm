@@ -17,7 +17,9 @@ type Config struct {
 
 func LoadConfig(c *cli.Context) error {
 	configJSON, rerr := ioutil.ReadFile(filepath.Join(os.Getenv("HOME"), ".dfm"))
-	if rerr != nil {
+	if rerr == os.ErrNotExist {
+		configJSON = []byte("{}")
+	} else if rerr != nil {
 		return rerr
 	}
 
