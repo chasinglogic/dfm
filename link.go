@@ -89,13 +89,18 @@ func CreateLinks(numOfLinks int, files chan LinkInfo, errors chan error) {
 
 	for count < numOfLinks {
 		link := <-files
+		// Means we had an error
+		if link.Src == "" {
+			continue
+		}
+
 		if CONFIG.Verbose || DRYRUN {
 			fmt.Println("Creating symlink", link)
 		}
 
 		if !DRYRUN {
 			if err := os.Symlink(link.Src, link.Dest); err != nil {
-				errors <- err
+				fmt.Println(err)
 			}
 		}
 
@@ -110,5 +115,5 @@ func CreateSymlinks(l []LinkInfo, overwrite bool) error {
 	go CheckLinks(l, overwrite, files)
 	go CreateLinks(len(l), files, errors)
 
-	return <-errors
+	return nil
 }
