@@ -1,2 +1,2 @@
 language: go
-go: tip
+go: 1.7
