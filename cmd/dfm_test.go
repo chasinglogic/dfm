@@ -94,25 +94,10 @@ func TestLink(t *testing.T) {
 	cleanup(t)
 }
 
-func TestUse(t *testing.T) {
+func TestPull(t *testing.T) {
 	createDefault(t)
 
-	e, _ := testCommand("use", "chasinglogic")
-	if e != nil {
-		t.Errorf("Failed with error: %s\n", e.Error())
-	}
-
-	testFilesExistence(filepath.Join(os.Getenv("HOME"), ".bashrc"),
-		filepath.Join(os.Getenv("HOME"), ".vimrc"),
-		filepath.Join(os.Getenv("HOME"), ".vim"))
-
-	cleanup(t)
-}
-
-func TestUpdate(t *testing.T) {
-	createDefault(t)
-
-	e, _ := testCommand("update", "chasinglogic")
+	e, _ := testCommand("pull", "chasinglogic")
 	if e != nil {
 		t.Errorf("Failed to update %s\n", e.Error())
 	}
