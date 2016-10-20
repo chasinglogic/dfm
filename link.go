@@ -60,8 +60,8 @@ func GenerateSymlinks(profileDir string) []LinkInfo {
 
 func CheckLinks(l []LinkInfo, overwrite bool, files chan LinkInfo) {
 	for _, link := range l {
-		if _, err := os.Stat(link.Dest); err == nil {
-			if overwrite {
+		if info, err := os.Lstat(link.Dest); err == nil {
+			if overwrite || info.Mode()&os.ModeSymlink == os.ModeSymlink {
 				if CONFIG.Verbose || DRYRUN {
 					fmt.Printf("%s already exists, removing.\n", link.Dest)
 				}
@@ -89,6 +89,8 @@ func CreateLinks(numOfLinks int, files chan LinkInfo, errors chan error) {
 
 	for count < numOfLinks {
 		link := <-files
+		count++
+
 		// Means we had an error
 		if link.Src == "" {
 			continue
@@ -104,7 +106,6 @@ func CreateLinks(numOfLinks int, files chan LinkInfo, errors chan error) {
 			}
 		}
 
-		count++
 	}
 }
 
