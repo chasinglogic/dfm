@@ -1,6 +1,29 @@
-hash: c9665c4f77ee5acc39015b5f283ba202638a8140115574ecdc65867ddaa67ccf
-updated: 2016-10-25T07:53:13.39667299-04:00
+hash: fe727a022482e7a5c89252d3d0297137bab37608d16e42bb29739e7c893c8b03
+updated: 2016-10-25T15:19:26.370600366-04:00
 imports:
+- name: github.com/kr/fs
+  version: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
+- name: github.com/pkg/errors
+  version: 839d9e913e063e28dfd0e6c7b7512793e0a48be9
+- name: github.com/pkg/sftp
+  version: 4d0e916071f68db74f8a73926335f809396d6b42
+- name: github.com/spf13/afero
+  version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
+  subpackages:
+  - mem
+  - sftp
+- name: golang.org/x/crypto
+  version: ca7e7f10cb9fd9c1a6ff7f60436c086d73714180
+  subpackages:
+  - curve25519
+  - ed25519
+  - ed25519/internal/edwards25519
+  - ssh
+- name: golang.org/x/text
+  version: 16e1d1f27f7aba51c74c0aeb7a7ee31a75c5c63c
+  subpackages:
+  - transform
+  - unicode/norm
 - name: gopkg.in/urfave/cli.v1
   version: a14d7d367bc02b1f57d88de97926727f2d936387
 testImports: []
