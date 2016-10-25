@@ -10,7 +10,7 @@ import (
 	cli "gopkg.in/urfave/cli.v1"
 )
 
-// Create will clone the given git repo to the profiles directory, it optionally
+// Clone will clone the given git repo to the profiles directory, it optionally
 // will call link or use depending on the flag given.
 func Clone(c *cli.Context) error {
 	var aliasDir string
@@ -21,7 +21,7 @@ func Clone(c *cli.Context) error {
 
 	url, user := CreateURL(strings.Split(c.Args().First(), "/"))
 	userDir := filepath.Join(getProfileDir(), user)
-	if cloneErr := CloneRepo(url, user, userDir); cloneErr != nil {
+	if cloneErr := CloneRepo(url, userDir); cloneErr != nil {
 		return cloneErr
 	}
 
@@ -39,6 +39,8 @@ func Clone(c *cli.Context) error {
 	return nil
 }
 
+// CreateURL will add the missing github.com for the shorthand version of
+// links.
 func CreateURL(s []string) (string, string) {
 	if len(s) == 2 {
 		return fmt.Sprintf("https://github.com/%s", strings.Join(s, "/")), s[0]
@@ -47,12 +49,13 @@ func CreateURL(s []string) (string, string) {
 	return strings.Join(s, "/"), s[len(s)-2]
 }
 
-func CloneRepo(url, user, userDir string) error {
+// CloneRepo will git clone the provided url into the appropriate profileDir
+func CloneRepo(url, profileDir string) error {
 	if CONFIG.Verbose {
-		fmt.Printf("Creating profile in %s\n", userDir)
+		fmt.Printf("Creating profile in %s\n", profileDir)
 	}
 
-	c := exec.Command("git", "clone", url, userDir)
+	c := exec.Command("git", "clone", url, profileDir)
 	_, err := c.CombinedOutput()
 	if err != nil && err.Error() == "exit status 128" {
 		return cli.NewExitError("Profile exists, perhaps you meant dfm update or link?", 128)
