@@ -9,6 +9,7 @@ import (
 	cli "gopkg.in/urfave/cli.v1"
 )
 
+// Init will create a new profile with the given name.
 func Init(c *cli.Context) error {
 	profile := c.Args().First()
 	if profile == "" {
