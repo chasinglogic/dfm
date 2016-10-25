@@ -8,6 +8,8 @@ import (
 	cli "gopkg.in/urfave/cli.v1"
 )
 
+// Commit takes the first argument as a commit message and runs git commit in
+// the current profile directory.
 func Commit(c *cli.Context) error {
 	profile := c.Args().First()
 	if profile == "" {
