@@ -10,6 +10,8 @@ import (
 	cli "gopkg.in/urfave/cli.v1"
 )
 
+// Add will add the specified profile to the current profile, linking it as
+// necessary.
 func Add(c *cli.Context) error {
 	if CONFIG.Verbose {
 		fmt.Println("Adding files:", c.Args())
