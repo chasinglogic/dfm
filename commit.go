@@ -17,10 +17,11 @@ func Commit(c *cli.Context) error {
 	}
 
 	userDir := filepath.Join(getProfileDir(), profile)
+
 	commit := exec.Command("git", "commit", "-m", c.Args().First())
 	commit.Dir = userDir
-	output, err := commit.CombinedOutput()
 
+	output, err := commit.CombinedOutput()
 	if err != nil {
 		return cli.NewExitError(string(output), 128)
 	}
