@@ -35,7 +35,7 @@ func buildApp() *cli.App {
 			Usage: "Print verbose messaging.",
 		},
 		cli.BoolFlag{
-			Name:  "dry-run",
+			Name:  "dry-run, dr",
 			Usage: "Don't create symlinks just print what would be done.",
 		},
 	}
@@ -115,6 +115,18 @@ func buildApp() *cli.App {
 			Aliases: []string{"cm"},
 			Usage:   "Runs git commit for the profile using `MSG` as the message",
 			Action:  dfm.Commit,
+		},
+		{
+			Name:    "status",
+			Aliases: []string{"st"},
+			Usage:   "Runs git status for the current or given profile.",
+			Action:  dfm.Status,
+		},
+		{
+			Name:            "git",
+			Usage:           "Runs the git command given in the current profile dir directly.",
+			SkipFlagParsing: true,
+			Action:          dfm.Git,
 		},
 	}
 
