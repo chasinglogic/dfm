@@ -13,8 +13,8 @@ import (
 // Link will generate and create the symlinks to the dotfiles in the repo.
 func Link(c *cli.Context) error {
 	userDir := filepath.Join(getProfileDir(), c.Args().First())
-	links := GenerateSymlinks(userDir)
-	if err := CreateSymlinks(links, c.Bool("overwrite")); err != nil {
+	fmt.Println("Linking profile", c.Args().First())
+	if err := CreateSymlinks(userDir, os.Getenv("HOME"), c.Bool("overwrite")); err != nil {
 		return cli.NewExitError(err.Error(), 2)
 	}
 
@@ -22,7 +22,7 @@ func Link(c *cli.Context) error {
 	return nil
 }
 
-// LinkInfo simulates a tuple for our symbolic link
+// LinkInfo holds the src and destination for our symlink.
 type LinkInfo struct {
 	Src  string
 	Dest string
@@ -32,71 +32,99 @@ func (l *LinkInfo) String() string {
 	return fmt.Sprintf("%s -> %s", l.Dest, l.Src)
 }
 
-func GenerateSymlinks(profileDir string) []LinkInfo {
-	links := []LinkInfo{}
-	// TODO: Handle the config dir special case
-	files, err := ioutil.ReadDir(profileDir)
+// getTargetName determines if we need to add a dot to the destination or not.
+func getTargetName(n string) string {
+	if !strings.HasPrefix(n, ".") {
+		return "." + n
+	}
+
+	return n
+}
+
+// GenerateSymlink will create a LinkInfo with the appropriate destination,
+// handling the XDG_CONFIG_HOME special case.
+func GenerateSymlink(sourceDir, targetDir string, file os.FileInfo) *LinkInfo {
+	target := getTargetName(file.Name())
+
+	if strings.HasSuffix(sourceDir, "config") {
+		target = file.Name()
+	}
+
+	ln := &LinkInfo{
+		filepath.Join(sourceDir, file.Name()),
+		filepath.Join(targetDir, target),
+	}
+
+	if DRYRUN {
+		fmt.Printf("Generated symlink %s\n", ln.String())
+	}
+
+	return ln
+}
+
+// removeIfNeeded will check if the link destination exists and delete it if
+// appropriate.
+func removeIfNeeded(link *LinkInfo, overwrite bool) error {
+	if info, err := os.Lstat(link.Dest); err == nil &&
+		(overwrite || info.Mode()&os.ModeSymlink == os.ModeSymlink) {
+		if CONFIG.Verbose || DRYRUN {
+			fmt.Printf("%s already exists, removing.\n", link.Dest)
+		}
+
+		if !DRYRUN {
+			if rmerr := os.Remove(link.Dest); rmerr != nil {
+				return fmt.Errorf("Unable to remove %s: %s",
+					link.Dest,
+					rmerr.Error())
+			}
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("%s already exists and is not a symlink, cowardly refusing to remove", link.Dest)
+}
+
+// CreateSymlinks will read all of the files at sourceDir and link them to the
+// appropriate location in targetDir, if there is a folder named config in
+// sourceDir CreateSymlinks will run itself using that folder as sourceDir and
+// targetDir as XDG_CONFIG_HOME or HOME/.config if XDG_CONFIG_HOME is not set.
+func CreateSymlinks(sourceDir, targetDir string, overwrite bool) error {
+	files, err := ioutil.ReadDir(sourceDir)
 	if err != nil {
-		return links
+		fmt.Println(err)
+		return err
 	}
 
 	for _, file := range files {
-		if !strings.HasPrefix(file.Name(), ".") {
-			ln := LinkInfo{
-				filepath.Join(profileDir, file.Name()),
-				filepath.Join(os.Getenv("HOME"), "."+file.Name()),
-			}
-
-			if DRYRUN {
-				fmt.Printf("Generated symlink %s\n", ln.String())
-			}
-
-			links = append(links, ln)
-		}
-	}
-
-	return links
-}
-
-func CheckLinks(l []LinkInfo, overwrite bool, files chan LinkInfo) {
-	for _, link := range l {
-		if info, err := os.Lstat(link.Dest); err == nil {
-			if overwrite || info.Mode()&os.ModeSymlink == os.ModeSymlink {
-				if CONFIG.Verbose || DRYRUN {
-					fmt.Printf("%s already exists, removing.\n", link.Dest)
-				}
-
-				if !DRYRUN {
-					if rmerr := os.Remove(link.Dest); rmerr != nil {
-						fmt.Printf("Unable to remove %s: %s\n",
-							link.Dest,
-							rmerr.Error())
-					}
-				}
-			} else {
-				fmt.Printf("%s already exists.\n", link.Dest)
-				files <- LinkInfo{}
-				continue
-			}
-		}
-
-		files <- link
-	}
-}
-
-func CreateLinks(numOfLinks int, files chan LinkInfo, errors chan error) {
-	count := 0
-
-	for count < numOfLinks {
-		link := <-files
-		count++
-
-		// Means we had an error
-		if link.Src == "" {
+		// Skip the .git directory
+		if file.Name() == ".git" {
 			continue
 		}
 
-		if CONFIG.Verbose || DRYRUN {
+		// Handle XDG_CONFIG_HOME special case.
+		if (file.Name() == "config" || file.Name() == ".config") && file.IsDir() {
+			xdg := os.Getenv("XDG_CONFIG_HOME")
+			if xdg == "" {
+				xdg = filepath.Join(os.Getenv("HOME"), ".config")
+			}
+
+			err := CreateSymlinks(filepath.Join(sourceDir, file.Name()), xdg, overwrite)
+			if err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		link := GenerateSymlink(sourceDir, targetDir, file)
+		e := removeIfNeeded(link, overwrite)
+		if e != nil {
+			fmt.Println(e)
+			continue
+		}
+
+		if DRYRUN || CONFIG.Verbose {
 			fmt.Println("Creating symlink", link)
 		}
 
@@ -105,16 +133,7 @@ func CreateLinks(numOfLinks int, files chan LinkInfo, errors chan error) {
 				fmt.Println(err)
 			}
 		}
-
 	}
-}
-
-func CreateSymlinks(l []LinkInfo, overwrite bool) error {
-	files := make(chan LinkInfo, 3)
-	errors := make(chan error)
-
-	go CheckLinks(l, overwrite, files)
-	go CreateLinks(len(l), files, errors)
 
 	return nil
 }
