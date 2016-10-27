@@ -19,7 +19,7 @@ go get github.com/chasinglogic/dfm/cmd/dfm
 ## Usage
 
 ```
-AME:
+NAME:
    dfm - Manage dotfiles.
 
 USAGE:
@@ -41,12 +41,14 @@ COMMANDS:
      remove, rm  Remove the profile and all it's symlinks.
      init, i     Create a new profile with `NAME`
      commit, cm  Runs git commit for the profile using `MSG` as the message
+     status, st  Runs git status for the current or given profile.
+     git, g      Runs the git command given in the current profile dir directly.
      help, h     Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
    --config DIR, -c DIR  Use DIR for storing dfm configuration and profiles (default: "/Users/mr91060/.config/dfm")
    --verbose, --vv       Print verbose messaging.
-   --dry-run             Don't create symlinks just print what would be done.
+   --dry-run, --dr       Don't create symlinks just print what would be done.
    --help, -h            show help
    --version, -v         print the version
 ```
@@ -126,7 +128,7 @@ dfm add ~/.bashrc ~/.vimrc ~/.vim ~/.emacs.d
 Then simply run `dfm commit` to commit them
 
 ```bash
-dfm commit "init dotfile repo"
+dfm commit -am "init dotfile repo"
 ```
 
 Then set the remote to your remote repo
@@ -145,16 +147,15 @@ Now you're done!
 
 ### A quick note about git commands and flags
 
-dfm does not simply push your commands directly through to git, I wanted to
-avoid that for those who are not or do not want to become familiar with git
-I've thought about adding this feature later for more advanced users but for
-now I think this is fine.
+dfm does always simply push your commands directly through to git.
 
-Another note is that when running `dfm commit` we give git the -a flag so all 
-of your changes will be added to that commit. 
+The git sub command will push directly through so you can run whatever you want
+as if you were in that directory. For example:
 
+`dfm git checkout -b my-work-laptop`
 
-
+Stdin, Stdout, and Stderr are given to git so even things that run a text
+editor for example will work as expected.
 
 ## Contributing
 
@@ -184,5 +185,4 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
-`
+```

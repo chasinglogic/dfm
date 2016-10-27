@@ -125,6 +125,7 @@ func buildApp() *cli.App {
 		},
 		{
 			Name:            "git",
+			Aliases:         []string{"g"},
 			Usage:           "Runs the git command given in the current profile dir directly.",
 			SkipFlagParsing: true,
 			Action:          dfm.Git,

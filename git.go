@@ -1,7 +1,6 @@
 package dfm
 
 import (
-	"fmt"
 	"os/exec"
 	"path/filepath"
 
@@ -16,11 +15,15 @@ func Git(c *cli.Context) error {
 	command := exec.Command("git", cmd...)
 	command.Dir = userDir
 
-	output, err := command.CombinedOutput()
+	err := command.Start()
 	if err != nil {
-		return cli.NewExitError(string(output), 128)
+		return cli.NewExitError(err.Error(), 128)
 	}
 
-	fmt.Println(string(output))
+	err := command.Wait()
+	if err != nil {
+		return cli.NewExitError(err.Error(), 128)
+	}
+
 	return nil
 }
