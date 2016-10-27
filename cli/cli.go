@@ -111,10 +111,11 @@ func buildApp() *cli.App {
 			Action:  dfm.Init,
 		},
 		{
-			Name:    "commit",
-			Aliases: []string{"cm"},
-			Usage:   "Runs git commit for the profile using `MSG` as the message",
-			Action:  dfm.Commit,
+			Name:            "commit",
+			Aliases:         []string{"cm"},
+			Usage:           "Runs git commit for the profile using `MSG` as the message",
+			SkipFlagParsing: true,
+			Action:          dfm.Commit,
 		},
 		{
 			Name:    "status",
