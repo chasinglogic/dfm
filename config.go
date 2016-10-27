@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"fmt"
 	"path/filepath"
 
 	cli "gopkg.in/urfave/cli.v1"
@@ -20,10 +21,9 @@ type Config struct {
 // ~/.dfm
 func LoadConfig(c *cli.Context) error {
 	configJSON, rerr := ioutil.ReadFile(filepath.Join(os.Getenv("HOME"), ".dfm"))
-	if rerr == os.ErrNotExist {
-		configJSON = []byte("{\"CurrentProfile\":false}")
-	} else if rerr != nil {
-		return rerr
+	if rerr != nil {
+		configJSON = []byte("{\"ConfigDir\":\"" + DefaultConfigDir() + "\"}")
+		fmt.Println("No config file found generating", "{\"ConfigDir\":\"" + DefaultConfigDir() + "\"}")
 	}
 
 	err := json.Unmarshal(configJSON, &CONFIG)
@@ -38,6 +38,13 @@ func LoadConfig(c *cli.Context) error {
 
 	if !CONFIG.Verbose && c.Bool("verbose") {
 		CONFIG.Verbose = c.Bool("verbose")
+	}
+
+	if _, err := os.Stat(CONFIG.ConfigDir); err == os.ErrNotExist {
+		derr := os.Mkdir(CONFIG.ConfigDir, os.ModeDir)
+		if derr != nil {
+			return derr
+		}
 	}
 
 	DRYRUN = c.Bool("dry-run")

@@ -1,7 +1,7 @@
 package dfm
 
 import (
-	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -11,21 +11,26 @@ import (
 // Commit takes the first argument as a commit message and runs git commit in
 // the current profile directory.
 func Commit(c *cli.Context) error {
-	profile := c.Args().First()
-	if profile == "" {
-		profile = CONFIG.CurrentProfile
-	}
-
+	profile := CONFIG.CurrentProfile
 	userDir := filepath.Join(getProfileDir(), profile)
 
-	commit := exec.Command("git", "commit", "-m", c.Args().First())
+	args := append([]string{"commit", c.Args().First()}, c.Args().Tail()...)
+	commit := exec.Command("git", args...)
 	commit.Dir = userDir
+	commit.Stdin = os.Stdin
+	commit.Stdout = os.Stdout
+	commit.Stderr = os.Stderr
 
-	output, err := commit.CombinedOutput()
+	err := commit.Start()
 	if err != nil {
-		return cli.NewExitError(string(output), 128)
+		return cli.NewExitError(err.Error(), 128)
+
 	}
 
-	fmt.Println(string(output))
+	err = commit.Wait()
+	if err != nil {
+		return cli.NewExitError(err.Error(), 128)
+	}
+
 	return nil
 }
