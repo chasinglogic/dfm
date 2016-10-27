@@ -20,7 +20,7 @@ func Git(c *cli.Context) error {
 		return cli.NewExitError(err.Error(), 128)
 	}
 
-	err := command.Wait()
+	err = command.Wait()
 	if err != nil {
 		return cli.NewExitError(err.Error(), 128)
 	}
