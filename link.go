@@ -65,8 +65,8 @@ func GenerateSymlink(sourceDir, targetDir string, file os.FileInfo) *LinkInfo {
 // removeIfNeeded will check if the link destination exists and delete it if
 // appropriate.
 func removeIfNeeded(link *LinkInfo, overwrite bool) error {
-	if info, err := os.Lstat(link.Dest); err == nil &&
-		(overwrite || info.Mode()&os.ModeSymlink == os.ModeSymlink) {
+	info, err := os.Lstat(link.Dest)
+	if err == nil && (overwrite || info.Mode()&os.ModeSymlink == os.ModeSymlink) {
 		if CONFIG.Verbose || DRYRUN {
 			fmt.Printf("%s already exists, removing.\n", link.Dest)
 		}
@@ -79,10 +79,11 @@ func removeIfNeeded(link *LinkInfo, overwrite bool) error {
 			}
 		}
 
-		return nil
+	} else if err == nil {
+		return fmt.Errorf("%s already exists and is not a symlink, cowardly refusing to remove", link.Dest)
 	}
 
-	return fmt.Errorf("%s already exists and is not a symlink, cowardly refusing to remove", link.Dest)
+	return nil
 }
 
 // CreateSymlinks will read all of the files at sourceDir and link them to the
@@ -90,6 +91,12 @@ func removeIfNeeded(link *LinkInfo, overwrite bool) error {
 // sourceDir CreateSymlinks will run itself using that folder as sourceDir and
 // targetDir as XDG_CONFIG_HOME or HOME/.config if XDG_CONFIG_HOME is not set.
 func CreateSymlinks(sourceDir, targetDir string, overwrite bool) error {
+	sourceDir, err := filepath.Abs(sourceDir)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
 	files, err := ioutil.ReadDir(sourceDir)
 	if err != nil {
 		fmt.Println(err)
