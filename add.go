@@ -44,7 +44,7 @@ func Add(c *cli.Context) error {
 	}
 
 	addCMD := exec.Command("git", "add", "--all")
-	commitCMD := exec.Command("git", "commit", "-m", "File added by Dotfile Manager! :D")
+	commitCMD := exec.Command("git", "commit", "-m", "File added by Dotfile Manager!")
 
 	addCMD.Dir = userDir
 	commitCMD.Dir = userDir
