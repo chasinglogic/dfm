@@ -17,7 +17,7 @@ func Init(c *cli.Context) error {
 	}
 
 	userDir := filepath.Join(getProfileDir(), profile)
-	err := os.Mkdir(userDir, os.ModeDir)
+	err := os.Mkdir(userDir, os.ModePerm)
 	if err != nil {
 		return cli.NewExitError(err.Error(), 2)
 	}
