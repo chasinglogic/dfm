@@ -2,9 +2,9 @@ package dfm
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
-	"fmt"
 	"path/filepath"
 
 	cli "gopkg.in/urfave/cli.v1"
@@ -23,7 +23,7 @@ func LoadConfig(c *cli.Context) error {
 	configJSON, rerr := ioutil.ReadFile(filepath.Join(os.Getenv("HOME"), ".dfm"))
 	if rerr != nil {
 		configJSON = []byte("{\"ConfigDir\":\"" + DefaultConfigDir() + "\"}")
-		fmt.Println("No config file found generating", "{\"ConfigDir\":\"" + DefaultConfigDir() + "\"}")
+		fmt.Println("No config file found generating", "{\"ConfigDir\":\""+DefaultConfigDir()+"\"}")
 	}
 
 	err := json.Unmarshal(configJSON, &CONFIG)
@@ -40,11 +40,9 @@ func LoadConfig(c *cli.Context) error {
 		CONFIG.Verbose = c.Bool("verbose")
 	}
 
-	if _, err := os.Stat(CONFIG.ConfigDir); err == os.ErrNotExist {
-		derr := os.Mkdir(CONFIG.ConfigDir, os.ModeDir)
-		if derr != nil {
-			return derr
-		}
+	err = os.MkdirAll(getProfileDir(), os.ModePerm)
+	if err != nil {
+		return err
 	}
 
 	DRYRUN = c.Bool("dry-run")
