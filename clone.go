@@ -21,8 +21,8 @@ func Clone(c *cli.Context) error {
 
 	url, user := CreateURL(strings.Split(c.Args().First(), "/"))
 	userDir := filepath.Join(getProfileDir(), user)
-	if cloneErr := CloneRepo(url, userDir); cloneErr != nil {
-		return cloneErr
+	if err := CloneRepo(url, userDir); err != nil {
+		return err
 	}
 
 	// Just create a symlink in configDir/profiles/ to the other profile name
@@ -33,7 +33,12 @@ func Clone(c *cli.Context) error {
 	}
 
 	if c.Bool("link") {
-		return Link(c)
+		err := CreateSymlinks(userDir, os.Getenv("HOME"), c.Bool("overwrite"))
+		if err != nil {
+			return err
+		}
+
+		CONFIG.CurrentProfile = user
 	}
 
 	return nil
