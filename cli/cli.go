@@ -105,6 +105,13 @@ func buildApp() *cli.App {
 			Action:      dfm.Remove,
 		},
 		{
+			Name:    "remote",
+			Aliases: []string{"re"},
+			Usage:   "Will show the remote if given no arguments otherwise will set the remote.",
+			Action:  dfm.Remote,
+		},
+
+		{
 			Name:    "init",
 			Aliases: []string{"i"},
 			Usage:   "Create a new profile with `NAME`",
