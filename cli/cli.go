@@ -13,7 +13,7 @@ func buildApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "dfm"
 	app.Usage = "Manage dotfiles."
-	app.Version = "1.0-dev"
+	app.Version = "1.0"
 	app.Authors = []cli.Author{
 		{
 			Name:  "Mathew Robinson",
@@ -104,6 +104,13 @@ func buildApp() *cli.App {
 			Description: "Removes the profile and all it's symlinks, if there is another profile on this system we will switch to it. Otherwise will do nothing.",
 			Action:      dfm.Remove,
 		},
+		{
+			Name:    "remote",
+			Aliases: []string{"re"},
+			Usage:   "Will show the remote if given no arguments otherwise will set the remote.",
+			Action:  dfm.Remote,
+		},
+
 		{
 			Name:    "init",
 			Aliases: []string{"i"},

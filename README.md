@@ -24,13 +24,13 @@ NAME:
 
 USAGE:
    dfm [global options] command [command options] [arguments...]
-
+   
 VERSION:
-   1.0-dev
-
+   1.0
+   
 AUTHOR(S):
-   Mathew Robinson <mathew.robinson3114@gmail.com>
-
+   Mathew Robinson <mathew.robinson3114@gmail.com> 
+   
 COMMANDS:
      add, a      Add a file to the current profile.
      clone, c    Create a dotfiles profile from a git repo.
@@ -39,6 +39,7 @@ COMMANDS:
      pull, pl    Pull the latest version of the profile from origin master.
      push, ps    Push your local version of the profile to the remote.
      remove, rm  Remove the profile and all it's symlinks.
+     remote, re  Will show the remote if given no arguments otherwise will set the remote.
      init, i     Create a new profile with `NAME`
      commit, cm  Runs git commit for the profile using `MSG` as the message
      status, st  Runs git status for the current or given profile.
@@ -46,7 +47,7 @@ COMMANDS:
      help, h     Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --config DIR, -c DIR  Use DIR for storing dfm configuration and profiles (default: "/Users/mr91060/.config/dfm")
+   --config DIR, -c DIR  Use DIR for storing dfm configuration and profiles (default: "/home/chasinglogic/.config/dfm")
    --verbose, --vv       Print verbose messaging.
    --dry-run, --dr       Don't create symlinks just print what would be done.
    --help, -h            show help
@@ -57,18 +58,20 @@ dfm is mostly a thin wrapper around git and just manages repos and symlinks
 for you. As such most of the dfm commands are directly analogous to git 
 commands.
 
-A note about the $XDG\_CONFIG\_HOME (commonly $HOME/.config) directory:
-
-dfm respects dotfiles which exist in the $XDG\_CONFIG\_HOME directory, meaning 
-if in your repo you have a folder named config or .config it will translate 
-those into the  $XDG\_CONFIG\_HOME directory appropriately. Similarly when 
-using `dfm add` if inside your $XDG\_CONFIG\_HOME or $HOME/.config directories 
-it will add those to the repo appropriately.
+> **A note about the $XDG\_CONFIG\_HOME (commonly $HOME/.config) directory:**
+> 
+> dfm respects dotfiles which exist in the $XDG\_CONFIG\_HOME directory, meaning 
+> if in your repo you have a folder named config or .config it will translate 
+> those into the  $XDG\_CONFIG\_HOME directory appropriately. Similarly when 
+> using `dfm add` if inside your $XDG\_CONFIG\_HOME or $HOME/.config directories 
+> it will add those to the repo appropriately.
 
 ### Quick Start (Existing dotfiles repo)
 
 If you already have a dotfiles repo you can start by cloning it using the clone
-command. **Note:** ssh urls work as well since it's just passed to git.
+command. 
+
+**Note:** ssh urls will work as well.
 
 ```bash
 dfm clone https://github.com/chasinglogic/dfiles
@@ -132,6 +135,12 @@ dfm commit -am "init dotfile repo"
 ```
 
 Then set the remote to your remote repo
+
+**Note:** When creating the remote repo do not choose any options such as
+"initialize this repo with a README" otherwise git will get cranky when you add
+the remote because of a recent git update and how it handles [unrelated
+histories](http://stackoverflow.com/questions/37937984/git-refusing-to-merge-unrelated-histories)
+if you do don't worry the linked post explains how to get past it.
 
 ```bash
 dfm remote https://github.com/myusername/dotfiles

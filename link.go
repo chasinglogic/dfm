@@ -14,6 +14,7 @@ import (
 func Link(c *cli.Context) error {
 	userDir := filepath.Join(getProfileDir(), c.Args().First())
 	fmt.Println("Linking profile", c.Args().First())
+
 	if err := CreateSymlinks(userDir, os.Getenv("HOME"), c.Bool("overwrite")); err != nil {
 		return cli.NewExitError(err.Error(), 2)
 	}
