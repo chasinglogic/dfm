@@ -15,6 +15,13 @@ The easiest (and currently only) way to install dfm is using the go tool
 ```bash
 go get github.com/chasinglogic/dfm/cmd/dfm
 ```
+ 
+## Updating
+Make sure dfm is updated to bring in the latest bug fixes and features. If you are installing dfm for the first time, you can skip this step.
+
+```bash
+go get -u github.com/chasinglogic/dfm/cmd/dfm
+```
 
 ## Usage
 
