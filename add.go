@@ -10,6 +10,43 @@ import (
 	cli "gopkg.in/urfave/cli.v1"
 )
 
+func renameAndLink(userDir, file string) error {
+	split := strings.Split(file, string(filepath.Separator))
+	filen := ""
+
+	for _, s := range split {
+		filen += strings.TrimPrefix(s, ".") + string(filepath.Separator)
+	}
+
+	filen = strings.TrimPrefix(filen, os.Getenv("HOME")+string(filepath.Separator))
+	filen = strings.TrimSuffix(filen, string(filepath.Separator))
+
+	newFile := filepath.Join(userDir, filen)
+
+	err := os.Rename(file, newFile)
+	if err != nil {
+		err = os.MkdirAll(filepath.Dir(newFile), 0700)
+		if err != nil {
+			return cli.NewExitError(err.Error(), 1)
+		}
+
+		err = os.Rename(file, newFile)
+
+		if err != nil {
+			return cli.NewExitError(err.Error(), 1)
+		}
+	}
+
+	l := LinkInfo{
+		newFile,
+		filen,
+	}
+
+	os.Link
+
+	return nil
+}
+
 // Add will add the specified profile to the current profile, linking it as
 // necessary.
 func Add(c *cli.Context) error {
@@ -29,15 +66,7 @@ func Add(c *cli.Context) error {
 			fmt.Println("Absolute path:", file)
 		}
 
-		nodot := strings.TrimPrefix(f, ".")
-		newFile := filepath.Join(userDir, nodot)
-
-		err = move(file, newFile)
-		if err != nil {
-			return cli.NewExitError(err.Error(), 1)
-		}
-
-		err = os.Link(newFile, file)
+		err = renameAndLink(userDir, file)
 		if err != nil {
 			return cli.NewExitError(err.Error(), 1)
 		}
@@ -60,8 +89,4 @@ func Add(c *cli.Context) error {
 	}
 
 	return nil
-}
-
-func move(oldfile, newfile string) error {
-	return os.Rename(oldfile, newfile)
 }
