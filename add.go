@@ -42,9 +42,7 @@ func renameAndLink(userDir, file string) error {
 		filen,
 	}
 
-	os.Link
-
-	return nil
+	return os.Link(l.Src, l.Dest)
 }
 
 // Add will add the specified profile to the current profile, linking it as
