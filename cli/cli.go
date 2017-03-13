@@ -137,6 +137,12 @@ func buildApp() *cli.App {
 			SkipFlagParsing: true,
 			Action:          dfm.Git,
 		},
+		{
+			Name:    "where",
+			Aliases: []string{"w"},
+			Usage:   "Prints the CurrentProfile directory, useful for using with other bash commands",
+			Action:  dfm.Where,
+		},
 	}
 
 	return app
