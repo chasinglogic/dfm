@@ -1,18 +1,29 @@
-"""
-A dotfile manager for pair programmers.
-"""
+"""dfm, a dotfile manager for pair programmers."""
+import os.path as path
+import re
 from setuptools import find_packages, setup
 
 dependencies = ['click']
 
+dfmfile = path.join(path.dirname(__file__), 'dfm', 'cli.py')
+print(dfmfile)
+
+# Thanks to SQLAlchemy:
+# https://github.com/zzzeek/sqlalchemy/blob/master/setup.py#L104
+with open(dfmfile) as stream:
+    __version__ = re.compile(
+        r".*__version__ = '(.*?)'", re.S
+    ).match(stream.read()).group(1)
+
+
 setup(
     name='dfm',
-    version='0.3',
+    version=__version__,
     url='https://github.com/chasinglogic/dfm',
-    download_url='https://github.com/chasinglogic/dfm/tarball/0.3',
+    download_url='https://github.com/chasinglogic/dfm/tarball/'+__version__,
     license='GPLv3',
     author='Mathew Robinson',
-    author_email='mathew.robinson3114@gmail.com',
+    author_email='chasinglogic@gmail.com',
     description='A dotfile manager for lazy people and pair programmers.',
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
