@@ -1,8 +1,0 @@
-hash: fe727a022482e7a5c89252d3d0297137bab37608d16e42bb29739e7c893c8b03
-updated: 2017-02-17T21:16:01.437430251-05:00
-imports:
-- name: github.com/spf13/afero
-  version: 9be650865eab0c12963d8753212f4f9c66cdcf12
-- name: gopkg.in/urfave/cli.v1
-  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
-testImports: []
