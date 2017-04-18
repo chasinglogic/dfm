@@ -1,4 +1,0 @@
-package: github.com/chasinglogic/dfm
-import:
-- package: gopkg.in/urfave/cli.v1
-  version: ^1.18.1
