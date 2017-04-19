@@ -165,5 +165,4 @@ def set_remote_profile(profile, remote):
 
 def git_pass_through(profile, argv):
     """Run the specified git command with cwd=profile."""
-    print('running', argv)
     run(argv, cwd=profile)
