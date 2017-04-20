@@ -6,7 +6,6 @@ from setuptools import find_packages, setup
 dependencies = ['click']
 
 dfmfile = path.join(path.dirname(__file__), 'dfm', 'cli.py')
-print(dfmfile)
 
 # Thanks to SQLAlchemy:
 # https://github.com/zzzeek/sqlalchemy/blob/master/setup.py#L104
@@ -15,6 +14,8 @@ with open(dfmfile) as stream:
         r".*__version__ = '(.*?)'", re.S
     ).match(stream.read()).group(1)
 
+with open('README.md') as f:
+    readme = f.read()
 
 setup(
     name='dfm',
@@ -24,7 +25,7 @@ setup(
     license='GPLv3',
     author='Mathew Robinson',
     author_email='chasinglogic@gmail.com',
-    description='A dotfile manager for lazy people and pair programmers.',
+    description=readme,
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
     install_requires=dependencies,
