@@ -64,7 +64,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-__version__ = '2.1.1'
+__version__ = '2.2.1'
 
 
 @click.group()
@@ -86,8 +86,8 @@ def dfm(verbose, config):
         os.mkdir(os.path.join(CONFIG_DIR, 'profiles'))
 
     if which('git') is None:
-        print('Git is not in the $PATH.')
-        print('Git is required for dfm please install then try again.')
+        print('Git is not in the $PATH. '
+              'Git is required for dfm please install then try again.')
         sys.exit(1)
 
     if verbose:
@@ -255,3 +255,13 @@ def upgrade(config):
             os.remove(config)
         return
     print('No old config found you\'re good to go!')
+
+
+@dfm.command()
+def status():
+    """Run git status in the currently active profile."""
+    profile = CONFIG.get('profile')
+    if profile:
+        git_pass_through(profile, ['git', 'status'])
+    else:
+        print('No profile selected.')
