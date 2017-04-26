@@ -81,8 +81,6 @@ def dfm(verbose, config):
     # If CONFIG_DIR does not exist, make it so #1
     if not os.path.isdir(CONFIG_DIR):
         os.mkdir(CONFIG_DIR)
-
-    if not os.path.isdir(os.path.join(CONFIG_DIR, 'profiles')):
         os.mkdir(os.path.join(CONFIG_DIR, 'profiles'))
 
     if which('git') is None:
