@@ -82,6 +82,9 @@ def dfm(verbose, config):
     if not os.path.isdir(CONFIG_DIR):
         os.mkdir(CONFIG_DIR)
 
+    if not os.path.isdir(os.path.join(CONFIG_DIR, 'profiles')):
+        os.mkdir(os.path.join(CONFIG_DIR, 'profiles'))
+
     if which('git') is None:
         print('Git is not in the $PATH.')
         print('Git is required for dfm please install then try again.')
