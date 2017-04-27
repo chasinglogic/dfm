@@ -63,7 +63,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__version__ = '2.2.1'
+__version__ = '2.2.2'
 
 
 @click.group()
@@ -173,8 +173,7 @@ def rm(profile):
 
 
 @dfm.command()
-@click.argument('path', nargs=-1,
-                type=click.Path(resolve_path=True, exists=True))
+@click.argument('path', nargs=-1)
 def add(path):
     """Add a file or directory to the current profile."""
     profile = CONFIG.get('profile')
