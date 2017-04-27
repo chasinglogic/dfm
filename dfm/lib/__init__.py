@@ -133,6 +133,9 @@ def add_file(path, profile):
     """Add file to the current profile."""
     xdg = os.environ.get('XDG_CONFIG_HOME', '')
     old_file = Path(path)
+    if os.path.islink(path):
+        print('You can\'t add a symlink using dfm.')
+        return
 
     fn = old_file.name
     # If starts with a dot remove it.
