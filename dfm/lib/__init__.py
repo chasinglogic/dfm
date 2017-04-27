@@ -93,7 +93,7 @@ def link_file(fle, dotfile, force=False):
         shutil.rmtree(dotfile)
 
     os.symlink(fle, dotfile)
-    if CONFIG['verbose']:
+    if CONFIG.get('verbose', False):
         print('Linked file %s -> %s' % (fle, dotfile))
 
 
