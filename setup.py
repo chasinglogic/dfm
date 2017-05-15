@@ -3,7 +3,7 @@ import os.path as path
 import re
 from setuptools import find_packages, setup
 
-dependencies = ['click']
+dependencies = ['click', 'PyYaml']
 
 dfmfile = path.join(path.dirname(__file__), 'dfm', 'cli.py')
 
@@ -14,7 +14,11 @@ with open(dfmfile) as stream:
         r".*__version__ = '(.*?)'", re.S
     ).match(stream.read()).group(1)
 
-readme = "A dotfile manager for lazy people and pair programmers. Dotfile Manager will allow you to create \"profiles\" for dotfiles underneath one unix account and easily switch between them. It requires a git repo with your dotfiles in it and that the dotfiles be placed how you want them represented in your home directory."
+readme = """A dotfile manager for lazy people and pair programmers. Dotfile Manager will allow you to create \"profiles\" for dotfiles underneath one unix account and easily switch between them. It requires a git repo with your dotfiles in it and that the dotfiles be placed how you want them represented in your home directory."""
+
+
+with open('README.md') as f:
+    rmd = f.read()
 
 setup(
     name='dfm',
@@ -25,6 +29,7 @@ setup(
     author='Mathew Robinson',
     author_email='chasinglogic@gmail.com',
     description=readme,
+    long_description=rmd,
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
     install_requires=dependencies,
