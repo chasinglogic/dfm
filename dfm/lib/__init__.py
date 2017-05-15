@@ -108,8 +108,12 @@ def link_profile(profile_path, force=False):
     dot_files = os.scandir(abpath)
     print('Linking profile %s' % profile_path)
     for d in dot_files:
-        # Skip the git directory
-        if d.name == '.git':
+        # Skip the git directory and dfm config file
+        if (
+                d.name == '.git'
+                or d.name == '.dfm.yml'
+                or d.name == '.dfm.yaml'
+        ):
             continue
 
         # If files are in the config dir, that means they need to
