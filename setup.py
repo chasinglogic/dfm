@@ -14,7 +14,11 @@ with open(dfmfile) as stream:
         r".*__version__ = '(.*?)'", re.S
     ).match(stream.read()).group(1)
 
-readme = """A dotfile manager for lazy people and pair programmers. Dotfile Manager will allow you to create \"profiles\" for dotfiles underneath one unix account and easily switch between them. It requires a git repo with your dotfiles in it and that the dotfiles be placed how you want them represented in your home directory."""
+readme = """A dotfile manager for lazy people and pair programmers. Dotfile
+Manager will allow you to create \"profiles\" for dotfiles underneath
+one unix account and easily switch between them. It requires a git
+repo with your dotfiles in it and that the dotfiles be placed how you
+want them represented in your home directory."""
 
 
 with open('README.md') as f:
@@ -43,7 +47,7 @@ setup(
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'License :: OSI Approved :: Apache Software License',
         'Operating System :: POSIX',
         'Operating System :: MacOS',
         'Operating System :: Unix',
