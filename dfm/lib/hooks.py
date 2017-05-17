@@ -33,7 +33,7 @@ def auto_hooks(fn):
 
 def run_hooks(hooks, hook_name, path=os.getcwd()):
     """Run hooks indicated by hook_name."""
-    hks = hooks[hook_name]
+    hks = hooks.get(hook_name, [])
     for h in hks:
         run(shlex.split(h), cwd=path)
 
