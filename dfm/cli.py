@@ -56,7 +56,7 @@ You should have recieved a copy of the license with this software if
 not you can view it here: https://www.apache.org/licenses/LICENSE-2.0
 """
 
-__version__ = '2.3.0'
+__version__ = '2.3.1'
 
 
 @click.group()
