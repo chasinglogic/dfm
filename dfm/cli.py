@@ -56,7 +56,7 @@ You should have recieved a copy of the license with this software if
 not you can view it here: https://www.apache.org/licenses/LICENSE-2.0
 """
 
-__version__ = '2.3.1'
+__version__ = '2.3.2'
 
 
 @click.group()
@@ -133,8 +133,9 @@ def clone(link, force, repo):
     profile_path = get_profile_path(CONFIG_DIR, repo)
     click.echo('Creating profile %s from %s' % (profile_path, repo_url))
     clone_profile(repo_url, profile_path)
-    hooks = hooks.load_hooks(profile_path)
-    hooks.run_hooks(hooks, 'after_clone')
+    hks = hooks.load_hooks(profile_path)
+    if hks is not None:
+        hooks.run_hooks(hks, 'after_clone')
     if link:
         link_profile(profile_path, force)
         CONFIG['profile'] = profile_path
