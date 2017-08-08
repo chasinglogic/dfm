@@ -10,53 +10,61 @@ It does not require that the dotfiles in your repo start with dots though it
 handles either case equally well.
 
 ## Installation
-The easiest (and currently only) way to install dfm is using pip
+The easiest (and currently only) way to install dfm is using go
 
 ```bash
-$ pip3 install dfm
+$ go get github.com/chasinglogic/dfm/cmd/dfm
 ```
  
 ## Updating
+
 Make sure dfm is updated to bring in the latest bug fixes and features. If you are installing dfm for the first time, you can skip this step.
 
 ```bash
 go get -u github.com/chasinglogic/dfm/cmd/dfm
 ```
 
-To install in the global path you'll need to run `pip3` as root.
-
-```
-# pip3 install dfm
-```
-
 ## Usage
 
 ```text
-Usage: dfm [OPTIONS] COMMAND [ARGS]...
+NAME:
+   dfm - Manage dotfiles.
 
-  A dotfile manager for lazy people and pair programmers.
+USAGE:
+   dfm [global options] command [command options] [arguments...]
 
-Options:
-  -vv, --verbose
-  -c, --config PATH  The path where dfm stores it's config and profiles.
-  --help             Show this message and exit.
+VERSION:
+   1.0
 
-Commands:
-  add       Add a file or directory to the current...
-  checkout  Switch to a different branch for the active...
-  clone     Clone a profile from a git repo.
-  commit    Run a git commit for the current profile.
-  git       Run the given git command in the current...
-  init      Create an empty profile with the given name.
-  license   Show dfm licensing info.
-  link      Link the profile with the given name.
-  pull      Pull changes from the remote.
-  push      Push local changes to the remote.
-  remote    Set the git remote for the current profile.
-  rm        Remove the profile with the given name.
-  upgrade   Upgrade from the old style config to the new...
-  version   Show the current dfm version.
-  where     Return the path to the current profile.
+AUTHOR(S):
+   Mathew Robinson <chasinglogic@gmail.com>
+
+COMMANDS:
+     add, a      Add a file to the current profile.
+     clone, c    Create a dotfiles profile from a git repo.
+     link, l     Recreate the links from the dotfiles profile.
+     list, ls    List available profiles
+     pull, pl    Pull the latest version of the profile from origin master.
+     push, ps    Push your local version of the profile to the remote.
+     remove, rm  Remove the profile and all it's symlinks.
+     remote, re  Will show the remote if given no arguments otherwise will set
+the remote.
+     init, i     Create a new profile with `NAME`
+     commit, cm  Runs git commit for the profile using `MSG` as the message
+     status, st  Runs git status for the current or given profile.
+     git, g      Runs the git command given in the current profile dir directly
+.
+     where, w    Prints the CurrentProfile directory, useful for using with oth
+er bash commands
+     help, h     Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --config DIR, -c DIR  Use DIR for storing dfm configuration and profiles (de
+fault: "/Users/mathewrobinson/.config/dfm")
+   --verbose, --vv       Print verbose messaging.
+   --dry-run, --dr       Don't create symlinks just print what would be done.
+   --help, -h            show help
+   --version, -v         print the version
 ```
 
 dfm is mostly a thin wrapper around git and just manages repos and symlinks 
