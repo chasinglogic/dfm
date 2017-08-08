@@ -17,7 +17,7 @@ func buildApp() *cli.App {
 	app.Authors = []cli.Author{
 		{
 			Name:  "Mathew Robinson",
-			Email: "mathew.robinson3114@gmail.com",
+			Email: "chasinglogic@gmail.com",
 		},
 	}
 
