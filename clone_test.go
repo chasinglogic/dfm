@@ -1,4 +1,4 @@
-package dfm
+package dfm_test
 
 import (
 	"strings"
