@@ -18,10 +18,19 @@ func renameAndLink(userDir, file string) error {
 	// Check if file is in XDG_CONFIG_HOME
 	xdgConfigHome, _ := filepath.Abs(os.Getenv("XDG_CONFIG_HOME"))
 	if s[len(s)-2] == ".config" || s[len(s)-2] == xdgConfigHome {
+		if CONFIG.Verbose {
+			fmt.Println("XDG_CONFIG_HOME detected updating new path...")
+		}
+
 		newFile = "config" + string(filepath.Separator) + s[len(s)-1]
 	}
 
 	newFile = filepath.Join(userDir, newFile)
+
+	if CONFIG.Verbose {
+		fmt.Println("Moving", file, "to", newFile)
+	}
+
 	err := os.Rename(file, newFile)
 	if err != nil {
 		fmt.Println("Encountered error:", err)
@@ -38,7 +47,12 @@ func renameAndLink(userDir, file string) error {
 		}
 	}
 
-	return os.Link(newFile, file)
+	if CONFIG.Verbose {
+		fmt.Println("Linking")
+	}
+
+	CreateSymlinks(userDir, os.Getenv("HOME"), false)
+	return nil
 }
 
 // Add will add the specified profile to the current profile, linking it as
@@ -77,9 +91,17 @@ func Add(c *cli.Context) error {
 		return cli.NewExitError(string(output), 128)
 	}
 
+	if CONFIG.Verbose {
+		fmt.Println(output)
+	}
+
 	output, err = commitCMD.CombinedOutput()
 	if err != nil {
 		return cli.NewExitError(string(output), 128)
+	}
+
+	if CONFIG.Verbose {
+		fmt.Println(output)
 	}
 
 	return nil
