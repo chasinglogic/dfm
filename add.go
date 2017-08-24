@@ -38,6 +38,23 @@ func renameAndLink(userDir, file string) error {
 		}
 	}
 
+	stat, err := os.Stat(file)
+	if err != nil {
+		fmt.Println("Unexpected error:", err)
+		os.Exit(1)
+	}
+
+	if stat.IsDir() {
+		err = os.RemoveAll(file)
+	} else {
+		err = os.Remove(file)
+	}
+
+	if err != nil {
+		fmt.Println("Error removing old file:", err)
+		os.Exit(1)
+	}
+
 	return os.Link(newFile, file)
 }
 
