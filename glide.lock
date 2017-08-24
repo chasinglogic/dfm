@@ -1,6 +1,0 @@
-hash: c9665c4f77ee5acc39015b5f283ba202638a8140115574ecdc65867ddaa67ccf
-updated: 2016-10-25T07:53:13.39667299-04:00
-imports:
-- name: gopkg.in/urfave/cli.v1
-  version: a14d7d367bc02b1f57d88de97926727f2d936387
-testImports: []
