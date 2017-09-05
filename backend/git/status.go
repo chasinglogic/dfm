@@ -1,4 +1,4 @@
-package dfm
+package git
 
 import (
 	"fmt"
@@ -8,18 +8,19 @@ import (
 	cli "gopkg.in/urfave/cli.v1"
 )
 
-// Pull performs a git pull origin master in the profile's directory
-func Pull(c *cli.Context) error {
+// Status will run git status for the current profile.
+func Status(c *cli.Context) error {
 	profile := c.Args().First()
 	if profile == "" {
 		profile = CONFIG.CurrentProfile
 	}
 
 	userDir := filepath.Join(getProfileDir(), profile)
-	pullCMD := exec.Command("git", "pull", "origin", "master")
-	pullCMD.Dir = userDir
-	output, err := pullCMD.CombinedOutput()
 
+	status := exec.Command("git", "status")
+	status.Dir = userDir
+
+	output, err := status.CombinedOutput()
 	if err != nil {
 		return cli.NewExitError(string(output), 128)
 	}

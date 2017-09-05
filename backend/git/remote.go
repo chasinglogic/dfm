@@ -1,4 +1,4 @@
-package dfm
+package git
 
 import (
 	"fmt"

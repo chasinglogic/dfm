@@ -1,9 +1,9 @@
-package backends
+package backend
 
 import "github.com/urfave/cli"
 
-// DFMBackend represents any syncing service or store that DFM can use.
-type DFMBackend interface {
+// Backend represents any syncing service or store that DFM can use.
+type Backend interface {
 	// This is called on dfm start once the backend to use is determined. Any
 	// setup code or checking for available tools should happen in this
 	// function
