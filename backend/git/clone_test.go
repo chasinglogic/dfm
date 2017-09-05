@@ -1,4 +1,4 @@
-package dfm_test
+package git_test
 
 import (
 	"strings"
