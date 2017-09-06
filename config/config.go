@@ -28,11 +28,7 @@ func getInput(prompt string) string {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print(prompt)
 	text, _ := reader.ReadString('\n')
-	if text == "\n" {
-		return ""
-	}
-
-	return text[:len(text)-2]
+	return text
 }
 
 func setupWizard() Config {
