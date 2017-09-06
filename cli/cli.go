@@ -1,12 +1,24 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 
-	cli "gopkg.in/urfave/cli.v1"
-
-	"github.com/chasinglogic/dfm"
+	"github.com/chasinglogic/dfm/backend"
+	"github.com/chasinglogic/dfm/backend/git"
+	"github.com/chasinglogic/dfm/config"
+	"github.com/urfave/cli"
 )
+
+func loadBackend(backendName string) backend.Backend {
+	switch backendName {
+	case "git":
+		return git.Backend{}
+	default:
+		fmt.Printf("Backend \"%s\" not found defaulting to git\n.", backendName)
+		return git.Backend{}
+	}
+}
 
 // Added this to make testing easier.
 func buildApp() *cli.App {
@@ -21,21 +33,21 @@ func buildApp() *cli.App {
 		},
 	}
 
-	app.Before = dfm.LoadConfig
-	app.After = dfm.SaveConfig
+	app.Before = func(c *cli.Context) error {
+		Verbose = c.Bool("verbose")
+		DRYRUN = c.Bool("dry-run")
+		return nil
+	}
+
+	app.After = config.SaveConfig
 
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  "config, c",
-			Usage: "Use `DIR` for storing dfm configuration and profiles",
-			Value: dfm.DefaultConfigDir(),
-		},
 		cli.BoolFlag{
-			Name:  "verbose, vv",
+			Name:  "verbose",
 			Usage: "Print verbose messaging.",
 		},
 		cli.BoolFlag{
-			Name:  "dry-run, dr",
+			Name:  "dry-run",
 			Usage: "Don't create symlinks just print what would be done.",
 		},
 	}
@@ -45,33 +57,13 @@ func buildApp() *cli.App {
 			Name:    "add",
 			Aliases: []string{"a"},
 			Usage:   "Add a file to the current profile.",
-			Action:  dfm.Add,
-		},
-		{
-			Name:    "clone",
-			Aliases: []string{"c"},
-			Usage:   "Create a dotfiles profile from a git repo.",
-			Action:  dfm.Clone,
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "alias, a",
-					Usage: "Creates `ALIAS` for the profile instead of username",
-				},
-				cli.BoolFlag{
-					Name:  "overwrite, o",
-					Usage: "Overwrites existing files when creating links.",
-				},
-				cli.BoolFlag{
-					Name:  "link, l",
-					Usage: "Links the profile after creation.",
-				},
-			},
+			Action:  Add,
 		},
 		{
 			Name:    "link",
 			Aliases: []string{"l"},
 			Usage:   "Recreate the links from the dotfiles profile.",
-			Action:  dfm.Link,
+			Action:  Link,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "overwrite, o",
@@ -83,67 +75,57 @@ func buildApp() *cli.App {
 			Name:    "list",
 			Aliases: []string{"ls"},
 			Usage:   "List available profiles",
-			Action:  dfm.List,
+			Action:  List,
 		},
 		{
-			Name:    "pull",
-			Aliases: []string{"pl"},
-			Usage:   "Pull the latest version of the profile from origin master.",
-			Action:  dfm.Pull,
-		},
-		{
-			Name:    "push",
-			Aliases: []string{"ps"},
-			Usage:   "Push your local version of the profile to the remote.",
-			Action:  dfm.Push,
+			Name:        "delete",
+			Aliases:     []string{"d"},
+			Usage:       "Delete the profile and all it's symlinks.",
+			Description: "Deletes the profile and all it's symlinks, if there is another profile on this system we will switch to it. Otherwise will do nothing.",
+			Action:      Remove,
 		},
 		{
 			Name:        "remove",
 			Aliases:     []string{"rm"},
-			Usage:       "Remove the profile and all it's symlinks.",
-			Description: "Removes the profile and all it's symlinks, if there is another profile on this system we will switch to it. Otherwise will do nothing.",
-			Action:      dfm.Remove,
+			Usage:       "Remove the file from the profile.",
+			Description: "Removes the file pointed at by the link and syncs the current profile. Can restore the file if given the --restore flag.",
+			Action:      Rm,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "restore, re",
+					Usage: "Restore the file to it's original location instead of deleting it permanently.",
+				},
+			},
 		},
-		{
-			Name:    "remote",
-			Aliases: []string{"re"},
-			Usage:   "Will show the remote if given no arguments otherwise will set the remote.",
-			Action:  dfm.Remote,
-		},
-
 		{
 			Name:    "init",
 			Aliases: []string{"i"},
 			Usage:   "Create a new profile with `NAME`",
-			Action:  dfm.Init,
-		},
-		{
-			Name:            "commit",
-			Aliases:         []string{"cm"},
-			Usage:           "Runs git commit for the profile using `MSG` as the message",
-			SkipFlagParsing: true,
-			Action:          dfm.Commit,
-		},
-		{
-			Name:    "status",
-			Aliases: []string{"st"},
-			Usage:   "Runs git status for the current or given profile.",
-			Action:  dfm.Status,
-		},
-		{
-			Name:            "git",
-			Aliases:         []string{"g"},
-			Usage:           "Runs the git command given in the current profile dir directly.",
-			SkipFlagParsing: true,
-			Action:          dfm.Git,
+			Action:  Init,
 		},
 		{
 			Name:    "where",
 			Aliases: []string{"w"},
 			Usage:   "Prints the CurrentProfile directory, useful for using with other bash commands",
-			Action:  dfm.Where,
+			Action:  Where,
+		},
+		{
+			Name:    "sync",
+			Aliases: []string{"s"},
+			Usage:   "Sync your config with the configured backend.",
+			Action:  Sync,
 		},
 	}
+
+	e := config.LoadConfig()
+	if e != nil {
+		fmt.Println(e)
+		os.Exit(1)
+	}
+
+	Backend = loadBackend(config.CONFIG.Backend)
+	Backend.Init()
+	app.Commands = append(app.Commands, Backend.Commands()...)
 
 	return app
 }

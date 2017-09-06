@@ -1,7 +1,12 @@
-package dfm
+package cli
 
-// CONFIG holds the global config struct
-var CONFIG Config
+import "github.com/chasinglogic/dfm/backend"
 
-// DRYRUN is used to globally set whether this is a dry run
-var DRYRUN = false
+// DRYRUN indicates whether this is a dry run or not.
+var DRYRUN bool
+
+// Verbose controls the verbosity of information that dfm prints
+var Verbose bool
+
+// Backend is the currently selected DFM backend.
+var Backend backend.Backend
