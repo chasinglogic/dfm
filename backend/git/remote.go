@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/chasinglogic/dfm/config"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
@@ -12,7 +13,7 @@ import (
 // remote for origin
 func Remote(c *cli.Context) error {
 	remote := c.Args().First()
-	userDir := filepath.Join(getProfileDir(), CONFIG.CurrentProfile)
+	userDir := filepath.Join(config.ProfileDir(), config.CONFIG.CurrentProfile)
 
 	// No args means run git remote -v
 	if remote == "" {

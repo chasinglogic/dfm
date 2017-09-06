@@ -1,12 +1,11 @@
-package dfm
+package cli
 
 import (
-	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
-	cli "gopkg.in/urfave/cli.v1"
+	"github.com/chasinglogic/dfm/config"
+	"github.com/urfave/cli"
 )
 
 // Init will create a new profile with the given name.
@@ -16,20 +15,11 @@ func Init(c *cli.Context) error {
 		return cli.NewExitError("Please specify a profile name.", 1)
 	}
 
-	userDir := filepath.Join(getProfileDir(), profile)
+	userDir := filepath.Join(config.ProfileDir(), profile)
 	err := os.Mkdir(userDir, os.ModePerm)
 	if err != nil {
 		return cli.NewExitError(err.Error(), 2)
 	}
 
-	initCMD := exec.Command("git", "init")
-	initCMD.Dir = userDir
-	output, err := initCMD.CombinedOutput()
-
-	if err != nil {
-		return cli.NewExitError(string(output), 128)
-	}
-
-	fmt.Println(string(output))
-	return nil
+	return Backend.NewProfile(userDir)
 }

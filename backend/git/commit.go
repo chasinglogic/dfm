@@ -5,14 +5,15 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/chasinglogic/dfm/config"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
 // Commit takes the first argument as a commit message and runs git commit in
 // the current profile directory.
 func Commit(c *cli.Context) error {
-	profile := CONFIG.CurrentProfile
-	userDir := filepath.Join(getProfileDir(), profile)
+	profile := config.CONFIG.CurrentProfile
+	userDir := filepath.Join(config.ProfileDir(), profile)
 
 	args := append([]string{"commit", c.Args().First()}, c.Args().Tail()...)
 	commit := exec.Command("git", args...)

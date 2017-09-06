@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/chasinglogic/dfm/config"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
@@ -16,11 +17,11 @@ func Clone(c *cli.Context) error {
 	var aliasDir string
 
 	if alias := c.String("alias"); alias != "" {
-		aliasDir = filepath.Join(getProfileDir(), alias)
+		aliasDir = filepath.Join(config.ProfileDir(), alias)
 	}
 
 	url, user := CreateURL(strings.Split(c.Args().First(), "/"))
-	userDir := filepath.Join(getProfileDir(), user)
+	userDir := filepath.Join(config.ProfileDir(), user)
 	if err := CloneRepo(url, userDir); err != nil {
 		return err
 	}
@@ -33,12 +34,12 @@ func Clone(c *cli.Context) error {
 	}
 
 	if c.Bool("link") {
-		err := CreateSymlinks(userDir, os.Getenv("HOME"), c.Bool("overwrite"))
-		if err != nil {
-			return err
+		args := []string{"dfm", "link", user}
+		if c.Bool("overwrite") {
+			args = []string{"dfm", "link", "-o", user}
 		}
 
-		CONFIG.CurrentProfile = user
+		return c.App.Run(args)
 	}
 
 	return nil
@@ -56,9 +57,7 @@ func CreateURL(s []string) (string, string) {
 
 // CloneRepo will git clone the provided url into the appropriate profileDir
 func CloneRepo(url, profileDir string) error {
-	if CONFIG.Verbose {
-		fmt.Printf("Creating profile in %s\n", profileDir)
-	}
+	fmt.Printf("Creating profile in %s\n", profileDir)
 
 	c := exec.Command("git", "clone", url, profileDir)
 	_, err := c.CombinedOutput()

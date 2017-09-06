@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/chasinglogic/dfm/config"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
@@ -12,10 +13,10 @@ import (
 func Push(c *cli.Context) error {
 	profile := c.Args().First()
 	if profile == "" {
-		profile = CONFIG.CurrentProfile
+		profile = config.CONFIG.CurrentProfile
 	}
 
-	userDir := filepath.Join(getProfileDir(), profile)
+	userDir := filepath.Join(config.ProfileDir(), profile)
 	pullCMD := exec.Command("git", "push", "origin", "master")
 	pullCMD.Dir = userDir
 	output, err := pullCMD.CombinedOutput()

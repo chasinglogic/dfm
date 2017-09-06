@@ -10,22 +10,10 @@ type Backend interface {
 	Init() error
 
 	// Sync the users current profile with the remote backend
-	Sync() error
+	Sync(userDir string) error
 
-	// Get a new profile from the remote backend
-	Clone(profileName string) error
-
-	// Remove a profile
-	RemoveProfile(profileName string) error
-
-	// Get the full path for the given profile name
-	ProfileDir(profileName string) (string, error)
-
-	// Add a file to the current profile
-	AddFile(file string) error
-
-	// Get all profiles
-	GetProfiles() []string
+	// NewProfile allows the backend to do any necessary setup on a new profile.
+	NewProfile(userDir string) error
 
 	// This is used to register "extra" commands to dfm proper from the backend
 	// it allows for backends to expose internal functionality but their use
