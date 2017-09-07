@@ -75,11 +75,6 @@ func LoadConfig() error {
 		}
 	}
 
-	err = os.MkdirAll(ProfileDir(), os.ModePerm)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

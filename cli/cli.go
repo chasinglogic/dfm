@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/chasinglogic/dfm/backend"
+	"github.com/chasinglogic/dfm/backend/dropbox"
 	"github.com/chasinglogic/dfm/backend/git"
 	"github.com/chasinglogic/dfm/config"
 	"github.com/urfave/cli"
@@ -14,6 +15,8 @@ func loadBackend(backendName string) backend.Backend {
 	switch backendName {
 	case "git":
 		return git.Backend{}
+	case "dropbox":
+		return dropbox.Backend{}
 	default:
 		fmt.Printf("Backend \"%s\" not found defaulting to git\n.", backendName)
 		return git.Backend{}
@@ -125,6 +128,13 @@ func buildApp() *cli.App {
 
 	Backend = loadBackend(config.CONFIG.Backend)
 	Backend.Init()
+
+	err = os.MkdirAll(ProfileDir(), os.ModePerm)
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		os.Exit(1)
+	}
+
 	app.Commands = append(app.Commands, Backend.Commands()...)
 
 	return app

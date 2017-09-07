@@ -10,8 +10,20 @@ import (
 	"github.com/urfave/cli"
 )
 
+func getUserMsg() string {
+	etc, ok := config.CONFIG.Etc["DFM_GIT_COMMIT_MSG"]
+	if !ok {
+		return ""
+	}
+
+	msg, _ := etc.(*string)
+	return *msg
+}
+
+// Backend implements backend.Backend for a git based remote.
 type Backend struct{}
 
+// Init checks for the existence of git as it's a requirement for this backend.
 func (b Backend) Init() error {
 	if _, err := exec.LookPath("git"); err != nil {
 		fmt.Println("ERROR: git is required for this backend.")
@@ -22,19 +34,36 @@ func (b Backend) Init() error {
 	return nil
 }
 
+// Sync will add and commit all files in the repo then push.
 func (b Backend) Sync(userDir string) error {
 	err := runGitCMD(userDir, "git", "add", "--all")
 	if err != nil {
 		return err
 	}
 
-	return runGitCMD(userDir, "git", "commit", "-m", "File added by Dotfile Manager!")
+	msg := "Files managed by DFM! https://github.com/chasinglogic/dfm"
+	if userMsg := os.Getenv("DFM_GIT_COMMIT_MSG"); userMsg != "" {
+		msg = userMsg
+	}
+
+	if userMsg := getUserMsg(); userMsg != "" {
+		msg = userMsg
+	}
+
+	err = runGitCMD(userDir, "git", "commit", "-m", msg)
+	if err != nil {
+		return err
+	}
+
+	return runGitCMD(userDir, "git", "push", "origin", "master")
 }
 
+// NewProfile will run git init in the directory
 func (b Backend) NewProfile(userDir string) error {
 	return runGitCMD(userDir, "git", "init")
 }
 
+// Commands adds some git specific funtionality
 func (b Backend) Commands() []cli.Command {
 	return []cli.Command{
 		{
