@@ -28,7 +28,7 @@ func buildApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "dfm"
 	app.Usage = "Manage dotfiles."
-	app.Version = "1.1"
+	app.Version = "3.0.0"
 	app.Authors = []cli.Author{
 		{
 			Name:  "Mathew Robinson",
