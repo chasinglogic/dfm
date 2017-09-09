@@ -19,7 +19,7 @@ archive:
   name_template: '{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{
     .Arm }}{{ end }}'
   files:
-  - LICENCE
+  - LICENSE
   - README.md
 snapshot:
   name_template: SNAPSHOT-{{ .Commit }}
