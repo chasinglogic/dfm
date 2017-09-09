@@ -15,7 +15,8 @@ type Backend struct{}
 func getDropboxDir() string {
 	etc, ok := config.CONFIG.Etc["DROPBOX_DIR"]
 
-	defaultDir, err := os.Stat(filepath.Join(os.Getenv("HOME"), "Dropbox"))
+	defaultDir := filepath.Join(os.Getenv("HOME"), "Dropbox")
+	_, err := os.Stat(defaultDir)
 	if err != nil && os.IsNotExist(err) && !ok {
 		fmt.Println("Default Dropbox location found.")
 		fmt.Println("Set DROPBOX_DIR in your config's etc section.")
@@ -43,7 +44,7 @@ func getDropboxDir() string {
 
 // Init determines where the Dropbox folder is and sets up dfm
 func (b Backend) Init() error {
-	config.CONFIG.ProfileDir = filepath.Join(getDropboxDir(), "dfm")
+	config.CONFIG.ConfigDir = filepath.Join(getDropboxDir(), "dfm")
 	return nil
 }
 
