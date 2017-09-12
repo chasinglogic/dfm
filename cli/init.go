@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/chasinglogic/dfm/config"
-	"github.com/urfave/cli"
+	"gopkg.in/urfave/cli.v1"
 )
 
 // Init will create a new profile with the given name.

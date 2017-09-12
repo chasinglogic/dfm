@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/urfave/cli"
+	"gopkg.in/urfave/cli.v1"
 )
 
 func Rm(c *cli.Context) error {

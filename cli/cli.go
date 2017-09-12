@@ -8,7 +8,7 @@ import (
 	"github.com/chasinglogic/dfm/backend/dropbox"
 	"github.com/chasinglogic/dfm/backend/git"
 	"github.com/chasinglogic/dfm/config"
-	"github.com/urfave/cli"
+	"gopkg.in/urfave/cli.v1"
 )
 
 func loadBackend(backendName string) backend.Backend {
