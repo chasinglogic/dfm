@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/chasinglogic/dfm/config"
-	"github.com/urfave/cli"
+	"gopkg.in/urfave/cli.v1"
 )
 
 func getUserMsg() string {

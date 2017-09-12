@@ -1,6 +1,6 @@
 package backend
 
-import "github.com/urfave/cli"
+import "gopkg.in/urfave/cli.v1"
 
 // Backend represents any syncing service or store that DFM can use.
 type Backend interface {
