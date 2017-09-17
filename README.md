@@ -6,22 +6,22 @@ unix account and easily switch between them. It requires a git repo with your
 dotfiles in it and that the dotfiles be placed how you want them represented in
 your home directory.
 
-It does not require that the dotfiles in your repo start with dots though it 
+It does not require that the dotfiles in your repo start with dots though it
 handles either case equally well.
 
 ## Installation
 The easiest (and currently only) way to install dfm is using go
 
 ```bash
-$ go get github.com/chasinglogic/dfm/cmd/dfm
+$ go get github.com/chasinglogic/dfm
 ```
- 
+
 ## Updating
 
 Make sure dfm is updated to bring in the latest bug fixes and features. If you are installing dfm for the first time, you can skip this step.
 
 ```bash
-go get -u github.com/chasinglogic/dfm/cmd/dfm
+go get -u github.com/chasinglogic/dfm
 ```
 
 ## Usage
@@ -67,22 +67,22 @@ fault: "/Users/mathewrobinson/.config/dfm")
    --version, -v         print the version
 ```
 
-dfm is mostly a thin wrapper around git and just manages repos and symlinks 
-for you. As such most of the dfm commands are directly analogous to git 
+dfm is mostly a thin wrapper around git and just manages repos and symlinks
+for you. As such most of the dfm commands are directly analogous to git
 commands.
 
 > **A note about the $XDG\_CONFIG\_HOME (commonly $HOME/.config) directory:**
-> 
-> dfm respects dotfiles which exist in the $XDG\_CONFIG\_HOME directory, meaning 
-> if in your repo you have a folder named config or .config it will translate 
-> those into the  $XDG\_CONFIG\_HOME directory appropriately. Similarly when 
-> using `dfm add` if inside your $XDG\_CONFIG\_HOME or $HOME/.config directories 
+>
+> dfm respects dotfiles which exist in the $XDG\_CONFIG\_HOME directory, meaning
+> if in your repo you have a folder named config or .config it will translate
+> those into the  $XDG\_CONFIG\_HOME directory appropriately. Similarly when
+> using `dfm add` if inside your $XDG\_CONFIG\_HOME or $HOME/.config directories
 > it will add those to the repo appropriately.
 
 ### Quick Start (Existing dotfiles repo)
 
 If you already have a dotfiles repo you can start by cloning it using the clone
-command. 
+command.
 
 **Note:** ssh urls will work as well.
 
@@ -102,7 +102,7 @@ If you want to clone and link the dotfiles in one command:
 dfm clone --link chasinglogic/dfiles
 ```
 
-You may have to use `--force` as well if you have existing non-symlinked 
+You may have to use `--force` as well if you have existing non-symlinked
 versions of your dotfiles
 
 Once you have multiple profiles you can switch between them using `dfm link`
