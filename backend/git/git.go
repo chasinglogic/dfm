@@ -36,7 +36,7 @@ func (b Backend) Init() error {
 
 // Sync will add and commit all files in the repo then push.
 func (b Backend) Sync(userDir string) error {
-	err := runGitCMD(userDir, "git", "add", "--all")
+	err := runGitCMD(userDir, "add", "--all")
 	if err != nil {
 		return err
 	}
@@ -50,22 +50,22 @@ func (b Backend) Sync(userDir string) error {
 		msg = userMsg
 	}
 
-	err = runGitCMD(userDir, "git", "commit", "-m", msg)
+	err = runGitCMD(userDir, "commit", "-m", msg)
 	if err != nil {
 		return err
 	}
 
-	err = runGitCMD(userDir, "git", "pull", "--rebase", "origin", "master")
+	err = runGitCMD(userDir, "pull", "--rebase", "origin", "master")
 	if err != nil {
 		return err
 	}
 
-	return runGitCMD(userDir, "git", "push", "origin", "master")
+	return runGitCMD(userDir, "push", "origin", "master")
 }
 
 // NewProfile will run git init in the directory
 func (b Backend) NewProfile(userDir string) error {
-	return runGitCMD(userDir, "git", "init")
+	return runGitCMD(userDir, "init")
 }
 
 // Commands adds some git specific funtionality
@@ -108,14 +108,9 @@ func runGitCMD(userDir string, args ...string) error {
 	command := exec.Command("git", args...)
 	command.Dir = userDir
 
-	err := command.Start()
+	out, err := command.CombinedOutput()
 	if err != nil {
-		return cli.NewExitError(err.Error(), 128)
-	}
-
-	err = command.Wait()
-	if err != nil {
-		return cli.NewExitError(err.Error(), 128)
+		return cli.NewExitError(string(out), 128)
 	}
 
 	return nil

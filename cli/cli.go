@@ -156,7 +156,11 @@ License:
 	}
 
 	Backend = loadBackend(config.CONFIG.Backend)
-	Backend.Init()
+	err = Backend.Init()
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		os.Exit(1)
+	}
 
 	err = os.MkdirAll(config.CONFIG.ConfigDir, os.ModePerm)
 	if err != nil {
