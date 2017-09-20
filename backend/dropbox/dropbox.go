@@ -20,7 +20,7 @@ func getDropboxDir() string {
 	if err != nil && os.IsNotExist(err) && !ok {
 		fmt.Println("Default Dropbox location found.")
 		fmt.Println("Set DROPBOX_DIR in your config's etc section.")
-		fmt.Println(`Example: 
+		fmt.Println(`Example:
 {
     "Etc": {
          "DROPBOX_DIR": "<path to dropbox folder>

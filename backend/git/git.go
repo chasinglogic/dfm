@@ -55,6 +55,11 @@ func (b Backend) Sync(userDir string) error {
 		return err
 	}
 
+	err = runGitCMD(userDir, "git", "pull", "--rebase", "origin", "master")
+	if err != nil {
+		return err
+	}
+
 	return runGitCMD(userDir, "git", "push", "origin", "master")
 }
 
