@@ -147,6 +147,11 @@ License:
 			Usage:   "Sync your config with the configured backend.",
 			Action:  Sync,
 		},
+		{
+			Name:   "clean",
+			Usage:  "Clean dead symlinks.",
+			Action: Clean,
+		},
 	}
 
 	err := config.LoadConfig()
