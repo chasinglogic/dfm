@@ -97,7 +97,7 @@ func CreateSymlinks(sourceDir, targetDir string, DRYRUN, overwrite bool) error {
 
 		// Handle XDG_config.CONFIG_HOME special case.
 		if (file.Name() == "config" || file.Name() == ".config") && file.IsDir() {
-			xdg := os.Getenv("XDG_config.CONFIG_HOME")
+			xdg := os.Getenv("XDG_CONFIG_HOME")
 			if xdg == "" {
 				xdg = filepath.Join(os.Getenv("HOME"), ".config")
 			}
