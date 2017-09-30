@@ -8,21 +8,51 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"gopkg.in/urfave/cli.v1"
 )
 
-var DefaultConfigDir = GetDefaultConfigDir()
+var (
+	// Dir is where dfm will keep internal files and state.
+	// TODO: Move the .dfm config json here
+	Dir = GetDefaultConfigDir()
 
-// Config holds some basic information about the state of dfm.
-type Config struct {
-	ConfigDir      string
-	CurrentProfile string
-	Backend        string
-	Etc            map[string]interface{} `json:",omitempty"`
+	// Backend is a string use for loading the appropriate backend.
+	Backend = "git"
+
+	// CurrentProfile is the currently loaded profile.
+	CurrentProfile = ""
+
+	// Etc contains additionall information that the various backends can
+	// reference.
+	Etc map[string]interface{}
+)
+
+func init() {
+	cfgFile := filepath.Join(os.Getenv("HOME"), ".dfm")
+	jsonBytes, err := ioutil.ReadFile(cfgFile)
+
+	var config configJSON
+
+	if err != nil {
+		setupWizard()
+	}
+
+	err = json.Unmarshal(jsonBytes, &config)
+	if err != nil {
+		fmt.Println("ERROR:", err.Error())
+		os.Exit(1)
+	}
+
+	Backend = config.Backend
+	CurrentProfile = config.CurrentProfile
+	Dir = config.ConfigDir
+	Etc = config.Etc
+
+	err = os.MkdirAll(ProfileDir(), os.ModePerm)
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		os.Exit(1)
+	}
 }
-
-var CONFIG Config
 
 func getInput(prompt string) string {
 	reader := bufio.NewReader(os.Stdin)
@@ -31,25 +61,31 @@ func getInput(prompt string) string {
 	return text[:len(text)-1]
 }
 
-func setupWizard() Config {
+type configJSON struct {
+	Backend        string
+	ConfigDir      string
+	CurrentProfile string
+	Etc            map[string]interface{}
+}
+
+func setupWizard() {
 	confirmation := "no"
 
-	cfg := Config{
-		Backend:   "git",
-		ConfigDir: DefaultConfigDir,
-	}
-
 	for strings.HasPrefix(strings.ToLower(confirmation), "n") {
-		cfg.Backend = getInput(fmt.Sprintf("Which backend would you like to use? [git, dropbox] (Default: %s) ", cfg.Backend))
-		if cfg.Backend == "" {
-			cfg.Backend = "git"
+		Backend = getInput(fmt.Sprintf("Which backend would you like to use? [git, dropbox] (Default: %s) ", Backend))
+		if Backend == "" {
+			Backend = "git"
 		}
 
 		fmt.Println("\nNOTE: Some backends will change this automatically and override your setting. (i.e. dropbox)")
-		cfg.ConfigDir = getInput(fmt.Sprintf("Where would you like to store profiles? (Default: %s) ", cfg.ConfigDir))
-		fmt.Println(cfg.ConfigDir)
-		if cfg.ConfigDir == "" {
-			cfg.ConfigDir = DefaultConfigDir
+		Dir = getInput(fmt.Sprintf("Where would you like to store profiles? (Default: %s) ", Dir))
+		if Dir == "" {
+			Dir = GetDefaultConfigDir()
+		}
+
+		cfg := configJSON{
+			Backend:   Backend,
+			ConfigDir: Dir,
 		}
 
 		jsn, _ := json.MarshalIndent(cfg, "", "\t")
@@ -57,30 +93,18 @@ func setupWizard() Config {
 
 		confirmation = getInput("Does this look correct? Y/n: ")
 	}
-
-	return cfg
 }
 
-// LoadConfig runs as a hook when dfm runs to load the config object from
-// ~/.dfm
-func LoadConfig() error {
-	cfgFile := filepath.Join(os.Getenv("HOME"), ".dfm")
-	configJSON, err := ioutil.ReadFile(cfgFile)
-	if err != nil {
-		CONFIG = setupWizard()
-	} else {
-		err = json.Unmarshal(configJSON, &CONFIG)
-		if err != nil {
-			return err
-		}
+// SaveConfig should be run after every command in dfm.
+func SaveConfig() error {
+	config := configJSON{
+		Backend:        Backend,
+		ConfigDir:      Dir,
+		CurrentProfile: CurrentProfile,
+		Etc:            Etc,
 	}
 
-	return nil
-}
-
-// SaveConfig will save the config to the configDir/config.json
-func SaveConfig(c *cli.Context) error {
-	jsn, merr := json.MarshalIndent(CONFIG, "", "\t")
+	jsn, merr := json.MarshalIndent(config, "", "\t")
 	if merr != nil {
 		return merr
 	}
@@ -88,16 +112,13 @@ func SaveConfig(c *cli.Context) error {
 	return ioutil.WriteFile(filepath.Join(os.Getenv("HOME"), ".dfm"), jsn, 0644)
 }
 
+// ProfileDir will return the config.Dir joined with profiles.
 func ProfileDir() string {
-	return filepath.Join(CONFIG.ConfigDir, "profiles")
+	return filepath.Join(Dir, "profiles")
 }
 
-func CurrentProfile() string {
-	return CONFIG.CurrentProfile
-}
-
-// DefaultConfigDir will return the default location to store profiles which is
-// $XDG_CONFIG_HOME/dfm or $HOME/.config/dfm
+// GetDefaultConfigDir will return the default location to store profiles which
+// is $XDG_CONFIG_HOME/dfm or $HOME/.config/dfm
 func GetDefaultConfigDir() string {
 	xdg := os.Getenv("XDG_CONFIG_HOME")
 
