@@ -67,7 +67,7 @@ commands.
 > using `dfm add` if inside your $XDG\_CONFIG\_HOME or $HOME/.config directories
 > it will add those to the repo appropriately.
 
-### Quick Start (Existing dotfiles repo)
+### Quick Start (Existing dotfiles repo with the Git backend)
 
 If you already have a dotfiles repo you can start by cloning it using the clone
 command.
@@ -97,6 +97,12 @@ Once you have multiple profiles you can switch between them using `dfm link`
 
 ```bash
 dfm link some-other-profile
+```
+
+Once you have made some changes you can simply sync your changes to git with:
+
+```bash
+dfm sync
 ```
 
 See the Usage Notes below for some quick info on what to expect from other dfm
@@ -129,12 +135,6 @@ Alternatively you can add multiple files at once
 dfm add ~/.bashrc ~/.vimrc ~/.vim ~/.emacs.d
 ```
 
-Then simply run `dfm commit` to commit them
-
-```bash
-dfm commit -am "init dotfile repo"
-```
-
 Then set the remote to your remote repo
 
 **Note:** When creating the remote repo do not choose any options such as
@@ -144,13 +144,13 @@ histories](http://stackoverflow.com/questions/37937984/git-refusing-to-merge-unr
 if you do don't worry the linked post explains how to get past it.
 
 ```bash
-dfm remote https://github.com/myusername/dotfiles
+dfm git remote add origin https://github.com/myusername/dotfiles
 ```
 
-Then simply push them up
+Then simply sync your changes
 
 ```bash
-dfm push
+dfm sync
 ```
 
 Now you're done!
