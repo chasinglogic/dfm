@@ -57,7 +57,6 @@ var Root = &cobra.Command{
 	Short: "Manage dotfiles.",
 	Long: `Dotfile management written for pair programmers. Examples on getting
 started with dfm are avialable at https://github.com/chasinglogic/dfm`,
-	Run: func(cmd *cobra.Command, args []string) {},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		_ = config.SaveConfig()
 	},
