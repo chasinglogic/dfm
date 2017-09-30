@@ -167,7 +167,7 @@ License:
 		os.Exit(1)
 	}
 
-	err = os.MkdirAll(config.CONFIG.ConfigDir, os.ModePerm)
+	err = os.MkdirAll(config.ProfileDir(), os.ModePerm)
 	if err != nil {
 		fmt.Println("ERROR:", err)
 		os.Exit(1)
