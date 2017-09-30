@@ -27,44 +27,32 @@ go get -u github.com/chasinglogic/dfm
 ## Usage
 
 ```text
-NAME:
-   dfm - Manage dotfiles.
+Dotfile management written for pair programmers. Examples on getting
+started with dfm are avialable at https://github.com/chasinglogic/dfm
 
-USAGE:
-   dfm [global options] command [command options] [arguments...]
+Usage:
+  dfm [flags]
+  dfm [command]
 
-VERSION:
-   1.0
+Available Commands:
+  add         Add a file to the current profile.
+  clean       clean dead symlinks
+  clone       git clone an existing profile from `URL`
+  git         run the given git command on the current profile
+  help        Help about any command
+  init        create a new profile with `NAME`
+  link        link the profile with `NAME`
+  list        list available profiles
+  remove      remove the profile with `NAME`
+  sync        sync the current profile with the configured backend
+  where       prints the current profile directory path
 
-AUTHOR(S):
-   Mathew Robinson <chasinglogic@gmail.com>
+Flags:
+  -d, --dry-run   don't make changes just print what would happen
+  -h, --help      help for dfm
+  -v, --verbose   verbose output
 
-COMMANDS:
-     add, a      Add a file to the current profile.
-     clone, c    Create a dotfiles profile from a git repo.
-     link, l     Recreate the links from the dotfiles profile.
-     list, ls    List available profiles
-     pull, pl    Pull the latest version of the profile from origin master.
-     push, ps    Push your local version of the profile to the remote.
-     remove, rm  Remove the profile and all it's symlinks.
-     remote, re  Will show the remote if given no arguments otherwise will set
-the remote.
-     init, i     Create a new profile with `NAME`
-     commit, cm  Runs git commit for the profile using `MSG` as the message
-     status, st  Runs git status for the current or given profile.
-     git, g      Runs the git command given in the current profile dir directly
-.
-     where, w    Prints the CurrentProfile directory, useful for using with oth
-er bash commands
-     help, h     Shows a list of commands or help for one command
-
-GLOBAL OPTIONS:
-   --config DIR, -c DIR  Use DIR for storing dfm configuration and profiles (de
-fault: "/Users/mathewrobinson/.config/dfm")
-   --verbose, --vv       Print verbose messaging.
-   --dry-run, --dr       Don't create symlinks just print what would be done.
-   --help, -h            show help
-   --version, -v         print the version
+Use "dfm [command] --help" for more information about a command.
 ```
 
 dfm is mostly a thin wrapper around git and just manages repos and symlinks
