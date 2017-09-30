@@ -22,5 +22,5 @@
 
 
 [[constraint]]
-  name = "gopkg.in/urfave/cli.v1"
-  version = "1.18.1"
+  branch = "master"
+  name = "github.com/spf13/cobra"
