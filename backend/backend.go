@@ -1,6 +1,6 @@
 package backend
 
-import "gopkg.in/urfave/cli.v1"
+import "github.com/spf13/cobra"
 
 // Backend represents any syncing service or store that DFM can use.
 type Backend interface {
@@ -18,5 +18,5 @@ type Backend interface {
 	// This is used to register "extra" commands to dfm proper from the backend
 	// it allows for backends to expose internal functionality but their use
 	// should not be required
-	Commands() []cli.Command
+	Commands() []*cobra.Command
 }

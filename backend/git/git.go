@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 
 	"github.com/chasinglogic/dfm/config"
-	"gopkg.in/urfave/cli.v1"
+	"github.com/spf13/cobra"
 )
 
 func getUserMsg() string {
-	etc, ok := config.CONFIG.Etc["DFM_GIT_COMMIT_MSG"]
+	etc, ok := config.Etc["DFM_GIT_COMMIT_MSG"]
 	if !ok {
 		return ""
 	}
@@ -69,38 +69,10 @@ func (b Backend) NewProfile(userDir string) error {
 }
 
 // Commands adds some git specific funtionality
-func (b Backend) Commands() []cli.Command {
-	return []cli.Command{
-		{
-			Name:   "pull",
-			Usage:  "Run git pull on the current profile.",
-			Action: Pull,
-		},
-		{
-			Name:   "push",
-			Usage:  "Run git push on the current profile.",
-			Action: Push,
-		},
-		{
-			Name:   "clone",
-			Usage:  "Run git clone on the current profile.",
-			Action: Clone,
-		},
-		{
-			Name:   "status",
-			Usage:  "Run git status on the current profile.",
-			Action: Status,
-		},
-		{
-			Name:   "commit",
-			Usage:  "Run git commit on the current profile.",
-			Action: Commit,
-		},
-		{
-			Name:   "git",
-			Usage:  "Run arbritrary git commands on the current profile.",
-			Action: Git,
-		},
+func (b Backend) Commands() []*cobra.Command {
+	return []*cobra.Command{
+		Git,
+		Clone,
 	}
 }
 
@@ -109,16 +81,21 @@ func runGitCMD(userDir string, args ...string) error {
 	command.Dir = userDir
 
 	out, err := command.CombinedOutput()
-	if err != nil {
-		return cli.NewExitError(string(out), 128)
-	}
-
-	return nil
+	fmt.Println(string(out))
+	return err
 }
 
-// Git passes directly through and runs the given git command on the current profile.
-func Git(c *cli.Context) error {
-	cmd := append([]string{c.Args().First()}, c.Args().Tail()...)
-	userDir := filepath.Join(config.ProfileDir())
-	return runGitCMD(userDir, cmd...)
+// Git runs arbitrary git commands on the current profile
+var Git = &cobra.Command{
+	Use:                "git",
+	Args:               cobra.ArbitraryArgs,
+	Short:              "run the given git command on the current profile",
+	DisableFlagParsing: true,
+	Run: func(cmd *cobra.Command, args []string) {
+		userDir := filepath.Join(config.ProfileDir(), config.CurrentProfile)
+		if err := runGitCMD(userDir, args...); err != nil {
+			fmt.Println("ERROR:", err.Error())
+			os.Exit(1)
+		}
+	},
 }

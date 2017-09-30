@@ -1,11 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/chasinglogic/dfm/cli"
+	"github.com/chasinglogic/dfm/commands"
 )
 
 func main() {
-	os.Exit(cli.Run())
+	if err := commands.Execute(); err != nil {
+		fmt.Println("ERROR:", err.Error())
+		os.Exit(1)
+	}
 }

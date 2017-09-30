@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"gopkg.in/urfave/cli.v1"
 )
 
 func RenameAndLink(userDir, file string) error {
@@ -29,12 +27,14 @@ func RenameAndLink(userDir, file string) error {
 
 		err = os.MkdirAll(filepath.Dir(newFile), 0700)
 		if err != nil {
-			return cli.NewExitError(err.Error(), 1)
+			fmt.Println("ERROR:", err.Error())
+			os.Exit(1)
 		}
 
 		err = os.Rename(file, newFile)
 		if err != nil {
-			return cli.NewExitError(err.Error(), 1)
+			fmt.Println("ERROR:", err.Error())
+			os.Exit(1)
 		}
 	}
 
