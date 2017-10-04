@@ -49,6 +49,7 @@ func AddHooks(command *cobra.Command) *cobra.Command {
 
 	command.Run = func(cmd *cobra.Command, args []string) {
 		hooks := loadHooks()
+		prof := config.CurrentProfile
 
 		commands, preHooks := hooks["before_"+command.Use]
 		if preHooks {
@@ -57,6 +58,11 @@ func AddHooks(command *cobra.Command) *cobra.Command {
 
 		// Run the real command
 		runFunc(cmd, args)
+
+		if prof != config.CurrentProfile {
+			// Reload if profile changed
+			hooks = loadHooks()
+		}
 
 		commands, postHooks := hooks["after_"+command.Use]
 		if postHooks {
