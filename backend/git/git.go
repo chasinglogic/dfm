@@ -79,9 +79,12 @@ func (b Backend) Commands() []*cobra.Command {
 func runGitCMD(userDir string, args ...string) error {
 	command := exec.Command("git", args...)
 	command.Dir = userDir
-
 	out, err := command.CombinedOutput()
 	fmt.Println(string(out))
+	if err != nil {
+		fmt.Println("ERROR Running Git Command:", "git", args)
+	}
+
 	return err
 }
 
