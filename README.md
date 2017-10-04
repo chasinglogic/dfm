@@ -4,6 +4,22 @@ A dotfile manager for lazy people and pair programmers.
 **NOTE:** DFM does not require that the dotfiles in your repo start with dots
 though it handles either case equally well.
 
+## Table of Contents
+
+- [Features](#features)
+  - [Multiple Dotfile Profiles](#multiple-dotfile-profiles)
+  - [Pre and Post Command Hooks](#pre-and-post-command-hooks)
+  - [Respects $XDG\_CONFIG\_HOME](#respects-xdg_config_home)
+  - [Skips Relevant Files](#skips-relevant-files)
+- [Installation](#installation)
+- [Updating](#updating)
+- [Usage](#usage)
+- [Git Quick Start](#git-quick-start)
+  - [Existing Dotfiles Repo](#quick-start-existing-dotfiles-repo)
+  - [No Existing Dotfiles Repo](#quick-start-no-existing-dotfiles-repo)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
 DFM Supports these features that I was unable to find in other Dotfile
