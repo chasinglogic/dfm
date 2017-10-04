@@ -66,9 +66,3 @@ func AddHooks(command *cobra.Command) *cobra.Command {
 
 	return command
 }
-
-func runCommands(commands []string) {
-	for _, shCmd := range commands {
-		runCommand(shCmd)
-	}
-}

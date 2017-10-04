@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/blang/semver"
+  packages = ["."]
+  revision = "2ee87856327ba09384cabd113bc6b5d174e9ec0f"
+  version = "v3.5.1"
+
+[[projects]]
   name = "github.com/inconshreveable/mousetrap"
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
@@ -28,6 +34,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a3097c85380ac227205389d76e6f82101eafb3fde70669abb8366ba2f838f48a"
+  inputs-digest = "2a508e631a7cd708d04b4839058ba6ec0986e67eff7c64e47736a5dcb2119fd4"
   solver-name = "gps-cdcl"
   solver-version = 1

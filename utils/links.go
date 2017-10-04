@@ -90,9 +90,11 @@ func CreateSymlinks(sourceDir, targetDir string, DryRun, overwrite bool) error {
 	}
 
 	for _, file := range files {
-		// Skip the .git directory
-		if file.Name() == ".git" ||
-			strings.HasSuffix(file.Name(), "hooks.yml") ||
+		// Skip various files we want to "ignore"
+		if (file.Name() == ".git" && file.IsDir()) ||
+			file.Name() == "README.md" ||
+			file.Name() == "LICENSE" ||
+			file.Name() == ".dfm.yml" ||
 			file.Name() == ".gitignore" {
 			continue
 		}
@@ -114,18 +116,18 @@ func CreateSymlinks(sourceDir, targetDir string, DryRun, overwrite bool) error {
 		}
 
 		link := GenerateSymlink(sourceDir, targetDir, file, DryRun)
-		e := removeIfNeeded(link, DryRun, overwrite)
-		if e != nil {
-			fmt.Println(e)
-			continue
-		}
-
 		if file.Name() == ".ggitignore" || file.Name() == "ggitignore" {
 			link.Dest = strings.Replace(link.Dest, "ggitignore", "gitignore", 1)
 		}
 
 		if DryRun {
 			fmt.Println("Creating symlink", link)
+		}
+
+		e := removeIfNeeded(link, DryRun, overwrite)
+		if e != nil {
+			fmt.Println(e)
+			continue
 		}
 
 		if !DryRun {
