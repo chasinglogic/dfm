@@ -7,6 +7,7 @@ import (
 	"github.com/chasinglogic/dfm/backend/dropbox"
 	"github.com/chasinglogic/dfm/backend/git"
 	"github.com/chasinglogic/dfm/config"
+	"github.com/chasinglogic/dfm/hooks"
 	"github.com/spf13/cobra"
 )
 
@@ -25,17 +26,17 @@ func init() {
 	Root.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	Root.PersistentFlags().BoolVarP(&DryRun, "dry-run", "d", false, "don't make changes just print what would happen")
 
-	Root.AddCommand(Init)
-	Root.AddCommand(Add)
-	Root.AddCommand(Link)
-	Root.AddCommand(List)
-	Root.AddCommand(Remove)
-	Root.AddCommand(Where)
-	Root.AddCommand(Sync)
-	Root.AddCommand(Clean)
+	Root.AddCommand(hooks.AddHooks(Init))
+	Root.AddCommand(hooks.AddHooks(Add))
+	Root.AddCommand(hooks.AddHooks(Link))
+	Root.AddCommand(hooks.AddHooks(List))
+	Root.AddCommand(hooks.AddHooks(Remove))
+	Root.AddCommand(hooks.AddHooks(Where))
+	Root.AddCommand(hooks.AddHooks(Sync))
+	Root.AddCommand(hooks.AddHooks(Clean))
 
 	for _, c := range Backend.Commands() {
-		Root.AddCommand(c)
+		Root.AddCommand(hooks.AddHooks(c))
 	}
 }
 
