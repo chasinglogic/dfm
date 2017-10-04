@@ -92,7 +92,7 @@ func CreateSymlinks(sourceDir, targetDir string, DryRun, overwrite bool) error {
 	for _, file := range files {
 		// Skip various files we want to "ignore"
 		if (file.Name() == ".git" && file.IsDir()) ||
-			file.Name() == "README.md" ||
+			strings.HasPrefix(file.Name(), "README") ||
 			file.Name() == "LICENSE" ||
 			file.Name() == ".dfm.yml" ||
 			file.Name() == ".gitignore" {
