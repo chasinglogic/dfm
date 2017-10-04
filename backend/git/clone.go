@@ -80,7 +80,7 @@ func CloneRepo(url, profileDir string) error {
 	c := exec.Command("git", "clone", url, profileDir)
 	_, err := c.CombinedOutput()
 	if err != nil && err.Error() == "exit status 128" {
-		fmt.Println("Profile exists, perhaps you meant dfm update or link?")
+		fmt.Println("Profile exists, perhaps you meant dfm link?")
 		os.Exit(128)
 	}
 
