@@ -1,7 +1,7 @@
 # dfm
 A dotfile manager for lazy people and pair programmers.
 
-**NOTE:** DFM does not require that the dotfiles in your repo start with dots
+**NOTE:** dfm does not require that the dotfiles in your repo start with dots
 though it handles either case equally well.
 
 ## Table of Contents
@@ -22,20 +22,20 @@ though it handles either case equally well.
 
 ## Features
 
-DFM Supports these features that I was unable to find in other Dotfile
+dfm Supports these features that I was unable to find in other Dotfile
 Management solutions.
 
 ### Multiple Dotfile Profiles
 
-DFM's core feature is the idea of "profiles". Profiles are simply a collection
-of dotfiles that DFM manages and links in the `$HOME` directory or config
+dfm's core feature is the idea of "profiles". Profiles are simply a collection
+of dotfiles that dfm manages and links in the `$HOME` directory or config
 directories. This means that you can have multiple profiles and overlap them.
 This feature is hard to write directly about so I will illustrate it's
 usefulness with two Use Cases:
 
 #### The Work Profile
 
-I use one laptop for work and personal projects in my DFM profiles I have my
+I use one laptop for work and personal projects in my dfm profiles I have my
 personal profile "chasinglogic" which contains all my dotfiles for Emacs, git,
 etc. and a "work" profile which only has a `.gitconfig` that has my work email
 in it. So my profile directory looks like this:
@@ -64,8 +64,8 @@ email. Simliarly when I leave work I just `dfm link chasinglogic` to switch back
 
 The original inspiration for this tool was pair programming with my friend
 [lionize](https://github.com/lionize). lionize has a dotfiles repo so I can
-clone it using the git backend for DFM with `dfm clone lionize/dotfiles`. Note
-that if a partial URL like this one is given DFM will assume you want to clone
+clone it using the git backend for dfm with `dfm clone lionize/dotfiles`. Note
+that if a partial URL like this one is given dfm will assume you want to clone
 via https from Github but full git-cloneable URLs (including SSH) can be passed
 to this command.
 
@@ -108,7 +108,7 @@ machines vice versa.
 
 ### Pre and Post command hooks
 
-DFM supports a `.dfm.yml` file in the root of your repo that has a "hooks"
+dfm supports a `.dfm.yml` file in the root of your repo that has a "hooks"
 key that allows you to specify before and after command bash scripts to run.
 For example, I use Spacemacs so whenever I run `dfm clone chasinglogic/dotfiles`
 I want it to install spacemacs. Additionally, I have it set up to update
@@ -141,33 +141,33 @@ it will add those to the repo appropriately.
 
 ### Skips relevant files
 
-Of course DFM skips your .git directory but additionally it will skip these
+Of course dfm skips your .git directory but additionally it will skip these
 files:
 
 - .gitignore
 
 If you would like to store a global `.gitignore` file you can either omit the
-leading dot (so just `gitignore`) or name the global one `.ggitignore` and DFM
+leading dot (so just `gitignore`) or name the global one `.ggitignore` and dfm
 will translate the name for you. Otherwise it assumes that `.gitignore` is the
 gitignore for the profile's repo and so skips it.
 
 - README
 
 Want to make a README for your dotfiles? Go ahead! As long as the file name
-starts with README DFM will ignore it. So `README.txt` `README.md` and
+starts with README dfm will ignore it. So `README.txt` `README.md` and
 `README.rst` or whatever other permutations you can dream up all work.
 
 - LICENSE
 
 You should put a LICENSE on all code you put on the internet and some dotfiles /
 configurations are actual code (See: Emacs). If you put a LICENSE in your
-profile DFM will respect you being a good internet citizen and not clutter your
+profile dfm will respect you being a good internet citizen and not clutter your
 `$HOME` directory.
 
 - .dfm.yml
 
-This is a special DFM file used for hooks today and in the future for other ways
-to extend DFM. As such DFM doesn't put it in your `$HOME` directory.
+This is a special dfm file used for hooks today and in the future for other ways
+to extend dfm. As such dfm doesn't put it in your `$HOME` directory.
 
 ## Installation
 
@@ -233,7 +233,7 @@ Use "dfm [command] --help" for more information about a command.
 
 ## Git Quick Start
 
-DFM supports pluggable backends, so if you don't like Git you can choose another
+dfm supports pluggable backends, so if you don't like Git you can choose another
 option, but git is the default backend so here is a Quick Start Guide to get you going!
 
 ### Quick Start (Existing dotfiles repo)
