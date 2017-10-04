@@ -244,22 +244,22 @@ command.
 **Note:** ssh urls will work as well.
 
 ```bash
-dfm clone https://github.com/chasinglogic/dfiles
+dfm clone https://github.com/chasinglogic/dotfiles
 ```
 
 If you're using github you can shortcut the domain:
 
 ```bash
-dfm clone chasinglogic/dfiles
+dfm clone chasinglogic/dotfiles
 ```
 
 If you want to clone and link the dotfiles in one command:
 
 ```bash
-dfm clone --link chasinglogic/dfiles
+dfm clone --link chasinglogic/dotfiles
 ```
 
-You may have to use `--force` as well if you have existing non-symlinked
+You may have to use `--overwrite` as well if you have existing non-symlinked
 versions of your dotfiles
 
 Once you have multiple profiles you can switch between them using `dfm link`
