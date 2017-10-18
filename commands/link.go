@@ -34,13 +34,13 @@ var Link = &cobra.Command{
 		}
 
 		userDir := filepath.Join(config.ProfileDir(), profile)
-		fmt.Println("Linking profile", args[0])
+		fmt.Println("Linking profile", profile)
 
 		if err := utils.CreateSymlinks(userDir, os.Getenv("HOME"), DryRun, overwrite); err != nil {
 			fmt.Println("ERROR:", err.Error())
 			os.Exit(1)
 		}
 
-		config.CurrentProfile = args[0]
+		config.CurrentProfile = profile
 	},
 }
