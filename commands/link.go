@@ -25,7 +25,15 @@ var Link = &cobra.Command{
 	Short: "link the profile with `NAME`",
 	Long:  "will generate and create the symlinks to the dotfiles in the profile",
 	Run: func(cmd *cobra.Command, args []string) {
-		userDir := filepath.Join(config.ProfileDir(), args[0])
+		profile := ""
+
+		if len(args) > 1 {
+			profile = args[0]
+		} else {
+			profile = config.CurrentProfile
+		}
+
+		userDir := filepath.Join(config.ProfileDir(), profile)
 		fmt.Println("Linking profile", args[0])
 
 		if err := utils.CreateSymlinks(userDir, os.Getenv("HOME"), DryRun, overwrite); err != nil {
