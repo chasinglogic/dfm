@@ -38,6 +38,7 @@ func init() {
 
 	if err != nil {
 		setupWizard()
+		return
 	}
 
 	err = json.Unmarshal(jsonBytes, &config)
@@ -96,6 +97,11 @@ func setupWizard() {
 		fmt.Println(string(jsn))
 
 		confirmation = getInput("Does this look correct? Y/n: ")
+	}
+
+	err := SaveConfig()
+	if err != nil {
+		fmt.Println("ERROR: ", err)
 	}
 }
 
