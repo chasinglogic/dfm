@@ -38,6 +38,7 @@ func init() {
 	Root.AddCommand(hooks.AddHooks(Where))
 	Root.AddCommand(hooks.AddHooks(Sync))
 	Root.AddCommand(hooks.AddHooks(Clean))
+	Root.AddCommand(RunHook)
 
 	for _, c := range Backend.Commands() {
 		Root.AddCommand(hooks.AddHooks(c))

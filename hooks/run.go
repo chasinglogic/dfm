@@ -11,7 +11,8 @@ import (
 
 // TODO: write a runCommand for windows
 
-func runCommands(commands []string) {
+// RunCommands will run the given slice of strings each as their own command
+func RunCommands(commands []string) {
 	for _, cmd := range commands {
 		c := exec.Command("bash", "-c", cmd)
 		out, err := c.CombinedOutput()
