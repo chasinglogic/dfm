@@ -15,15 +15,17 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type hooks map[string][]string
+// Hooks is a map of "hook_name" to a slice of string shell commands to run
+type Hooks map[string][]string
 
 // DFMYml is used for extending DFM. It is the .dfm.yml file found
 // in the root of a profile.
 type DFMYml struct {
-	Hooks hooks `yaml:"hooks"`
+	Hooks Hooks `yaml:"hooks"`
 }
 
-func loadHooks() hooks {
+// Load will load the hooks file for the current Profile
+func Load() Hooks {
 	userDir := filepath.Join(config.ProfileDir(), config.CurrentProfile)
 
 	dfmyml, err := ioutil.ReadFile(filepath.Join(userDir, ".dfm.yml"))
@@ -52,12 +54,12 @@ func AddHooks(command *cobra.Command) *cobra.Command {
 	runFunc := command.Run
 
 	command.Run = func(cmd *cobra.Command, args []string) {
-		hooks := loadHooks()
+		hooks := Load()
 		prof := config.CurrentProfile
 
 		commands, preHooks := hooks["before_"+command.Use]
 		if preHooks {
-			runCommands(commands)
+			RunCommands(commands)
 		}
 
 		// Run the real command
@@ -65,12 +67,12 @@ func AddHooks(command *cobra.Command) *cobra.Command {
 
 		if prof != config.CurrentProfile {
 			// Reload if profile changed
-			hooks = loadHooks()
+			hooks = Load()
 		}
 
 		commands, postHooks := hooks["after_"+command.Use]
 		if postHooks {
-			runCommands(commands)
+			RunCommands(commands)
 		}
 	}
 
