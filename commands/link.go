@@ -27,7 +27,6 @@ var Link = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		profile := ""
 
-		fmt.Println(args)
 		if len(args) >= 1 {
 			profile = args[0]
 		} else {
