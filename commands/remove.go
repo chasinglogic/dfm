@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	"github.com/chasinglogic/dfm/config"
+	"github.com/chasinglogic/dfm/dotdfm"
+	"github.com/chasinglogic/dfm/filemap"
 	"github.com/chasinglogic/dfm/utils"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +25,15 @@ var Remove = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		profile := args[0]
 		userDir := filepath.Join(config.ProfileDir(), profile)
-		links := utils.GenerateSymlinks(userDir, os.Getenv("HOME"))
+
+		dfmyml := dotdfm.LoadDotDFM(userDir)
+		mappings := append(dfmyml.Mappings, filemap.DefaultMappings()...)
+
+		links, err := utils.GenerateSymlinks(userDir, os.Getenv("HOME"), mappings)
+		if err != nil {
+			fmt.Println("ERROR:", err.Error())
+			os.Exit(1)
+		}
 
 		rmerr := os.RemoveAll(userDir)
 		if rmerr != nil {

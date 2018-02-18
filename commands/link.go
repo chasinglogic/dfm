@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/chasinglogic/dfm/config"
+	"github.com/chasinglogic/dfm/dotdfm"
+	"github.com/chasinglogic/dfm/filemap"
 	"github.com/chasinglogic/dfm/utils"
 	"github.com/spf13/cobra"
 )
@@ -36,7 +38,11 @@ var Link = &cobra.Command{
 		userDir := filepath.Join(config.ProfileDir(), profile)
 		fmt.Println("Linking profile", profile)
 
-		if err := utils.CreateSymlinks(userDir, os.Getenv("HOME"), DryRun, overwrite); err != nil {
+		dfmyml := dotdfm.LoadDotDFM(userDir)
+		mappings := append(dfmyml.Mappings, filemap.DefaultMappings()...)
+
+		err := utils.CreateSymlinks(userDir, os.Getenv("HOME"), DryRun, overwrite, mappings)
+		if err != nil {
 			fmt.Println("ERROR:", err.Error())
 			os.Exit(1)
 		}
