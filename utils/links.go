@@ -5,11 +5,14 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/chasinglogic/dfm/filemap"
 )
 
 // LinkInfo holds the src and destination for our symlink.
@@ -20,6 +23,25 @@ type LinkInfo struct {
 
 func (l *LinkInfo) String() string {
 	return fmt.Sprintf("%s -> %s", l.Dest, l.Src)
+}
+
+func (l *LinkInfo) Link(DryRun, overwrite bool) error {
+	if DryRun {
+		fmt.Println("Creating symlink", l)
+	}
+
+	e := removeIfNeeded(l, DryRun, overwrite)
+	if e != nil {
+		return e
+	}
+
+	if !DryRun {
+		if e := os.Symlink(l.Src, l.Dest); e != nil {
+			return e
+		}
+	}
+
+	return nil
 }
 
 // getTargetName determines if we need to add a dot to the destination or not.
@@ -33,20 +55,16 @@ func getTargetName(n string) string {
 
 // GenerateSymlink will create a LinkInfo with the appropriate destination,
 // handling the XDG_config.CONFIG_HOME special case.
-func GenerateSymlink(sourceDir, targetDir string, file os.FileInfo, DryRun bool) *LinkInfo {
+func GenerateSymlink(sourceDir, targetDir string, file os.FileInfo) LinkInfo {
 	target := getTargetName(file.Name())
 
-	if strings.HasSuffix(sourceDir, "config") {
+	if targetDir != os.Getenv("HOME") {
 		target = file.Name()
 	}
 
-	ln := &LinkInfo{
+	ln := LinkInfo{
 		filepath.Join(sourceDir, file.Name()),
 		filepath.Join(targetDir, target),
-	}
-
-	if DryRun {
-		fmt.Printf("Generated symlink %s\n", ln.String())
 	}
 
 	return ln
@@ -70,7 +88,13 @@ func removeIfNeeded(link *LinkInfo, DryRun, overwrite bool) error {
 		}
 
 	} else if err == nil {
-		return fmt.Errorf("%s already exists and is not a symlink, cowardly refusing to remove", link.Dest)
+		msg := fmt.Sprintf("%s already exists and is not a symlink, cowardly refusing to remove", link.Dest)
+		if DryRun {
+			fmt.Println(msg)
+			return nil
+		}
+
+		return errors.New(msg)
 	}
 
 	return nil
@@ -80,17 +104,35 @@ func removeIfNeeded(link *LinkInfo, DryRun, overwrite bool) error {
 // appropriate location in targetDir, if there is a folder named config in
 // sourceDir CreateSymlinks will run itself using that folder as sourceDir and
 // targetDir as XDG_config.CONFIG_HOME or HOME/.config if XDG_config.CONFIG_HOME is not set.
-func CreateSymlinks(sourceDir, targetDir string, DryRun, overwrite bool) error {
+func CreateSymlinks(sourceDir, targetDir string, DryRun, overwrite bool, mappings filemap.Mappings) error {
 	sourceDir, err := filepath.Abs(sourceDir)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
-	files, err := ioutil.ReadDir(sourceDir)
+	links, err := GenerateSymlinks(sourceDir, targetDir, mappings)
 	if err != nil {
-		fmt.Println(err)
 		return err
+	}
+
+	for _, link := range links {
+		err := link.Link(DryRun, overwrite)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// GenerateSymlinks will create the symlinks so we know what they were supposed
+// to be prior to removing the profile.
+func GenerateSymlinks(profileDir, target string, mappings filemap.Mappings) ([]LinkInfo, error) {
+	var lnks []LinkInfo
+
+	files, err := ioutil.ReadDir(profileDir)
+	if err != nil {
+		return lnks, err
 	}
 
 	for _, file := range files {
@@ -104,71 +146,30 @@ func CreateSymlinks(sourceDir, targetDir string, DryRun, overwrite bool) error {
 		}
 
 		// Handle XDG_config.CONFIG_HOME special case.
-		if (file.Name() == "config" || file.Name() == ".config") && file.IsDir() {
-			xdg := os.Getenv("XDG_CONFIG_HOME")
-			if xdg == "" {
-				xdg = filepath.Join(os.Getenv("HOME"), ".config")
-			}
+		mapping := mappings.Matches(file.Name())
+		if mapping != nil {
+			if mapping.Skip {
+				fmt.Printf("Skipping %s per profile config\n", file.Name())
+				continue
+			} else if mapping.IsDir {
+				newTargetDir := strings.Replace(mapping.Dest, "~", os.Getenv("HOME"), 1)
+				multiLinks, err := GenerateSymlinks(filepath.Join(profileDir, file.Name()), newTargetDir, mappings)
+				if err != nil {
+					return lnks, err
+				}
 
-			err := CreateSymlinks(filepath.Join(sourceDir, file.Name()), xdg,
-				DryRun, overwrite)
-			if err != nil {
-				return err
+				lnks = append(lnks, multiLinks...)
+			} else {
+				link := GenerateSymlink(profileDir, mapping.Dest, file)
+				lnks = append(lnks, link)
 			}
 
 			continue
 		}
 
-		link := GenerateSymlink(sourceDir, targetDir, file, DryRun)
-		if file.Name() == ".ggitignore" || file.Name() == "ggitignore" {
-			link.Dest = strings.Replace(link.Dest, "ggitignore", "gitignore", 1)
-		}
-
-		if DryRun {
-			fmt.Println("Creating symlink", link)
-		}
-
-		e := removeIfNeeded(link, DryRun, overwrite)
-		if e != nil {
-			fmt.Println(e)
-			continue
-		}
-
-		if !DryRun {
-			if err := os.Symlink(link.Src, link.Dest); err != nil {
-				fmt.Println(err)
-			}
-		}
+		link := GenerateSymlink(profileDir, target, file)
+		lnks = append(lnks, link)
 	}
 
-	return nil
-}
-
-// GenerateSymlinks will create the symlinks so we know what they were supposed
-// to be prior to removing the profile.
-func GenerateSymlinks(profileDir, target string) []LinkInfo {
-	var lnks []LinkInfo
-
-	files, err := ioutil.ReadDir(profileDir)
-	if err != nil {
-		fmt.Println(err)
-		return lnks
-	}
-
-	for _, file := range files {
-		// Handle the XDG_config.CONFIG_HOME special case
-		if file.Name() == "config" && file.IsDir() {
-			xdg := os.Getenv("XDG_config.CONFIG_HOME")
-			if xdg == "" {
-				xdg = filepath.Join(os.Getenv("HOME"), ".config")
-			}
-
-			lnks = append(lnks,
-				GenerateSymlinks(filepath.Join(profileDir, file.Name()), xdg)...)
-		}
-
-		lnks = append(lnks, *GenerateSymlink(profileDir, target, file, false))
-	}
-
-	return lnks
+	return lnks, nil
 }
