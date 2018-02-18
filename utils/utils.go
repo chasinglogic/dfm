@@ -9,6 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/chasinglogic/dfm/backend"
+	"github.com/chasinglogic/dfm/backend/dropbox"
+	"github.com/chasinglogic/dfm/backend/git"
 )
 
 func RenameAndLink(userDir, file string) error {
@@ -42,6 +46,19 @@ func RenameAndLink(userDir, file string) error {
 		}
 	}
 
-	CreateSymlinks(userDir, os.Getenv("HOME"), false, false)
+	CreateSymlinks(userDir, os.Getenv("HOME"), false, false, nil)
 	return nil
+}
+
+// LoadBackend loads the appropriate backend based on string name
+func LoadBackend(backendName string) backend.Backend {
+	switch backendName {
+	case "git":
+		return git.Backend{}
+	case "dropbox":
+		return dropbox.Backend{}
+	default:
+		fmt.Printf("Backend \"%s\" not found defaulting to git\n.", backendName)
+		return git.Backend{}
+	}
 }
