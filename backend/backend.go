@@ -4,7 +4,9 @@
 
 package backend
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
 // Backend represents any syncing service or store that DFM can use.
 type Backend interface {
