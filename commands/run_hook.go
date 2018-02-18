@@ -7,7 +7,10 @@ package commands
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"github.com/chasinglogic/dfm/config"
+	"github.com/chasinglogic/dfm/dotdfm"
 	"github.com/chasinglogic/dfm/hooks"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +26,8 @@ var RunHook = &cobra.Command{
 			os.Exit(128)
 		}
 
-		hookYaml := hooks.Load()
-		hooks.RunCommands(hookYaml[args[0]])
+		userDir := filepath.Join(config.ProfileDir(), config.CurrentProfile)
+		yml := dotdfm.LoadDotDFM(userDir)
+		hooks.RunCommands(yml.Hooks[args[0]])
 	},
 }
