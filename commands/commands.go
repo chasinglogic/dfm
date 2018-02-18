@@ -5,13 +5,10 @@
 package commands
 
 import (
-	"fmt"
-
-	"github.com/chasinglogic/dfm/backend"
-	"github.com/chasinglogic/dfm/backend/dropbox"
-	"github.com/chasinglogic/dfm/backend/git"
 	"github.com/chasinglogic/dfm/config"
+	"github.com/chasinglogic/dfm/dotdfm"
 	"github.com/chasinglogic/dfm/hooks"
+	"github.com/chasinglogic/dfm/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -23,37 +20,30 @@ var (
 	// Whether or not to overwrite existing files when linking
 	overwrite bool
 
-	Backend = loadBackend(config.Backend)
+	Backend = utils.LoadBackend(config.Backend)
 )
+
+func loadHooks(userDir string) hooks.Hooks {
+	dotdfm := dotdfm.LoadDotDFM(userDir)
+	return dotdfm.Hooks
+}
 
 func init() {
 	Root.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 	Root.PersistentFlags().BoolVarP(&DryRun, "dry-run", "d", false, "don't make changes just print what would happen")
 
-	Root.AddCommand(hooks.AddHooks(Init))
-	Root.AddCommand(hooks.AddHooks(Add))
-	Root.AddCommand(hooks.AddHooks(Link))
-	Root.AddCommand(hooks.AddHooks(List))
-	Root.AddCommand(hooks.AddHooks(Remove))
-	Root.AddCommand(hooks.AddHooks(Where))
-	Root.AddCommand(hooks.AddHooks(Sync))
-	Root.AddCommand(hooks.AddHooks(Clean))
+	Root.AddCommand(hooks.AddHooks(loadHooks, Init))
+	Root.AddCommand(hooks.AddHooks(loadHooks, Add))
+	Root.AddCommand(hooks.AddHooks(loadHooks, Link))
+	Root.AddCommand(hooks.AddHooks(loadHooks, List))
+	Root.AddCommand(hooks.AddHooks(loadHooks, Remove))
+	Root.AddCommand(hooks.AddHooks(loadHooks, Where))
+	Root.AddCommand(hooks.AddHooks(loadHooks, Sync))
+	Root.AddCommand(hooks.AddHooks(loadHooks, Clean))
 	Root.AddCommand(RunHook)
 
 	for _, c := range Backend.Commands() {
-		Root.AddCommand(hooks.AddHooks(c))
-	}
-}
-
-func loadBackend(backendName string) backend.Backend {
-	switch backendName {
-	case "git":
-		return git.Backend{}
-	case "dropbox":
-		return dropbox.Backend{}
-	default:
-		fmt.Printf("Backend \"%s\" not found defaulting to git\n.", backendName)
-		return git.Backend{}
+		Root.AddCommand(hooks.AddHooks(loadHooks, c))
 	}
 }
 
