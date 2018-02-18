@@ -5,57 +5,23 @@
 package hooks
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/chasinglogic/dfm/config"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // Hooks is a map of "hook_name" to a slice of string shell commands to run
 type Hooks map[string][]string
 
-// DFMYml is used for extending DFM. It is the .dfm.yml file found
-// in the root of a profile.
-type DFMYml struct {
-	Hooks Hooks `yaml:"hooks"`
-}
-
-// Load will load the hooks file for the current Profile
-func Load() Hooks {
-	userDir := filepath.Join(config.ProfileDir(), config.CurrentProfile)
-
-	dfmyml, err := ioutil.ReadFile(filepath.Join(userDir, ".dfm.yml"))
-	if err != nil {
-		if !os.IsNotExist(err) {
-			fmt.Println("ERROR loading hooks:", err.Error())
-		}
-
-		return nil
-	}
-
-	var yml DFMYml
-
-	err = yaml.Unmarshal(dfmyml, &yml)
-	if err != nil {
-		fmt.Println("ERROR loading hooks:", err.Error())
-		return yml.Hooks
-	}
-
-	return yml.Hooks
-}
-
 // AddHooks will add before and after hooks to the given command.
-func AddHooks(command *cobra.Command) *cobra.Command {
+func AddHooks(loadHooks func(userDir string) Hooks, command *cobra.Command) *cobra.Command {
 	// Store this for later use
 	runFunc := command.Run
 
 	command.Run = func(cmd *cobra.Command, args []string) {
-		hooks := Load()
 		prof := config.CurrentProfile
+		hooks := loadHooks(filepath.Join(config.ProfileDir(), prof))
 
 		commands, preHooks := hooks["before_"+command.Use]
 		if preHooks {
@@ -67,7 +33,8 @@ func AddHooks(command *cobra.Command) *cobra.Command {
 
 		if prof != config.CurrentProfile {
 			// Reload if profile changed
-			hooks = Load()
+			hooks = loadHooks(filepath.Join(config.ProfileDir(),
+				config.CurrentProfile))
 		}
 
 		commands, postHooks := hooks["after_"+command.Use]
