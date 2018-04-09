@@ -7,30 +7,42 @@ package commands
 import (
 	"github.com/chasinglogic/dfm/config"
 	"github.com/chasinglogic/dfm/dotdfm"
+	"github.com/chasinglogic/dfm/dotfiles"
 	"github.com/chasinglogic/dfm/hooks"
-	"github.com/chasinglogic/dfm/utils"
 	"github.com/spf13/cobra"
 )
 
 // Global variables to represent root flags available to sub commands
 var (
-	Verbose bool
-	DryRun  bool
+	verbose bool
+	dryRun  bool
 
 	// Whether or not to overwrite existing files when linking
 	overwrite bool
-
-	Backend = utils.LoadBackend(config.Backend)
 )
 
-func loadHooks(userDir string) hooks.Hooks {
-	dotdfm := dotdfm.LoadDotDFM(userDir)
-	return dotdfm.Hooks
+func loadHooks(profile dotfiles.Profile) hooks.Hooks {
+	var hooks hooks.Hooks
+
+	for _, location := range profile.Locations {
+		dotdfm := dotdfm.LoadDotDFM(location)
+
+		if hooks == nil {
+			hooks = dotdfm.Hooks
+			continue
+		}
+
+		for hookName := range hooks {
+			hooks[hookName] = append(hooks[hookName], dotdfm.Hooks[hookName]...)
+		}
+	}
+
+	return hooks
 }
 
 func init() {
-	Root.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
-	Root.PersistentFlags().BoolVarP(&DryRun, "dry-run", "d", false, "don't make changes just print what would happen")
+	Root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
+	Root.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "don't make changes just print what would happen")
 
 	Root.AddCommand(hooks.AddHooks(loadHooks, Init))
 	Root.AddCommand(hooks.AddHooks(loadHooks, Add))
@@ -41,10 +53,6 @@ func init() {
 	Root.AddCommand(hooks.AddHooks(loadHooks, Sync))
 	Root.AddCommand(hooks.AddHooks(loadHooks, Clean))
 	Root.AddCommand(RunHook)
-
-	for _, c := range Backend.Commands() {
-		Root.AddCommand(hooks.AddHooks(loadHooks, c))
-	}
 }
 
 // Root is the root dfm command.

@@ -8,20 +8,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
-
-	"github.com/chasinglogic/dfm/config"
-	"github.com/spf13/cobra"
 )
 
 func getUserMsg() string {
-	etc, ok := config.Etc["DFM_GIT_COMMIT_MSG"]
-	if !ok {
-		return ""
-	}
-
-	msg, _ := etc.(*string)
-	return *msg
+	return os.Getenv("DFM_GIT_COMMIT_MSG")
 }
 
 // Backend implements backend.Backend for a git based remote.
@@ -72,14 +62,6 @@ func (b Backend) NewProfile(userDir string) error {
 	return runGitCMD(userDir, "init")
 }
 
-// Commands adds some git specific funtionality
-func (b Backend) Commands() []*cobra.Command {
-	return []*cobra.Command{
-		Git,
-		Clone,
-	}
-}
-
 func runGitCMD(userDir string, args ...string) error {
 	command := exec.Command("git", args...)
 	command.Dir = userDir
@@ -90,19 +72,4 @@ func runGitCMD(userDir string, args ...string) error {
 	}
 
 	return err
-}
-
-// Git runs arbitrary git commands on the current profile
-var Git = &cobra.Command{
-	Use:                "git",
-	Args:               cobra.ArbitraryArgs,
-	Short:              "run the given git command on the current profile",
-	DisableFlagParsing: true,
-	Run: func(cmd *cobra.Command, args []string) {
-		userDir := filepath.Join(config.ProfileDir(), config.CurrentProfile)
-		if err := runGitCMD(userDir, args...); err != nil {
-			fmt.Println("ERROR:", err.Error())
-			os.Exit(1)
-		}
-	},
 }

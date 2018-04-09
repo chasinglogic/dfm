@@ -7,12 +7,11 @@ package commands
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/chasinglogic/dfm/config"
 	"github.com/chasinglogic/dfm/dotdfm"
 	"github.com/chasinglogic/dfm/filemap"
-	"github.com/chasinglogic/dfm/utils"
+	"github.com/chasinglogic/dfm/linking"
 	"github.com/spf13/cobra"
 )
 
@@ -27,26 +26,33 @@ var Link = &cobra.Command{
 	Short: "link the profile with `NAME`",
 	Long:  "will generate and create the symlinks to the dotfiles in the profile",
 	Run: func(cmd *cobra.Command, args []string) {
-		profile := ""
-
+		profile := config.CurrentProfile()
 		if len(args) >= 1 {
-			profile = args[0]
-		} else {
-			profile = config.CurrentProfile
+			profile = config.GetProfileByName(args[0])
 		}
 
-		userDir := filepath.Join(config.ProfileDir(), profile)
-		fmt.Println("Linking profile", profile)
+		fmt.Println("Linking profile", profile.Name)
 
-		dfmyml := dotdfm.LoadDotDFM(userDir)
-		mappings := append(dfmyml.Mappings, filemap.DefaultMappings()...)
+		mappings := filemap.DefaultMappings()
+		for _, location := range profile.Locations {
+			dfmyml := dotdfm.LoadDotDFM(location)
+			mappings = append(mappings, dfmyml.Mappings...)
+		}
 
-		err := utils.CreateSymlinks(userDir, os.Getenv("HOME"), DryRun, overwrite, mappings)
+		err := profile.Link(
+			os.Getenv("HOME"),
+			mappings,
+			linking.Config{
+				dryRun,
+				overwrite,
+			},
+		)
+
 		if err != nil {
 			fmt.Println("ERROR:", err.Error())
 			os.Exit(1)
 		}
 
-		config.CurrentProfile = profile
+		config.SetCurrentProfile(profile)
 	},
 }

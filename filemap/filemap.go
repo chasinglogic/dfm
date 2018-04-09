@@ -73,5 +73,35 @@ func DefaultMappings() Mappings {
 			Regexp: true,
 			Dest:   "gitignore",
 		},
+		{
+			Match:  "^\\.git",
+			IsDir:  true,
+			Regexp: true,
+			Skip:   true,
+		},
+		{
+			Match:  "^\\.gitignore$",
+			IsDir:  false,
+			Regexp: true,
+			Skip:   true,
+		},
+		{
+			Match:  "^LICENSE(\\.md)?$",
+			IsDir:  false,
+			Regexp: true,
+			Skip:   true,
+		},
+		{
+			Match:  "^\\.dfm\\.yml$",
+			IsDir:  false,
+			Regexp: true,
+			Skip:   true,
+		},
+		{
+			Match:  "^README(\\.md)?$",
+			IsDir:  false,
+			Regexp: true,
+			Skip:   true,
+		},
 	}
 }

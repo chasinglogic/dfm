@@ -13,7 +13,7 @@ import (
 	"github.com/chasinglogic/dfm/config"
 	"github.com/chasinglogic/dfm/dotdfm"
 	"github.com/chasinglogic/dfm/filemap"
-	"github.com/chasinglogic/dfm/utils"
+	"github.com/chasinglogic/dfm/linking"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +29,7 @@ var Remove = &cobra.Command{
 		dfmyml := dotdfm.LoadDotDFM(userDir)
 		mappings := append(dfmyml.Mappings, filemap.DefaultMappings()...)
 
-		links, err := utils.GenerateSymlinks(userDir, os.Getenv("HOME"), mappings)
+		links, err := linking.GenerateSymlinks(userDir, os.Getenv("HOME"), mappings)
 		if err != nil {
 			fmt.Println("ERROR:", err.Error())
 			os.Exit(1)
@@ -41,7 +41,7 @@ var Remove = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if Verbose {
+		if verbose {
 			fmt.Println("Removed profile directory:", userDir)
 		}
 
@@ -57,17 +57,17 @@ var Remove = &cobra.Command{
 // if so just verify that it doesn't contain the username of the profile
 // we're deleting. If the profile we're removing is the one that was currently
 // in use then both conditions should be true.
-func RemoveSymlinks(l []utils.LinkInfo, username string) error {
+func RemoveSymlinks(l []linking.LinkInfo, username string) error {
 	for _, link := range l {
 		// Check if the link is still valid after removing the profile, and if
 		if path, err := os.Readlink(link.Dest); err != nil ||
 			strings.Contains(path, username) {
 
-			if DryRun || Verbose {
+			if dryRun || verbose {
 				fmt.Printf("Removing symlink %s\n", link.Dest)
 			}
 
-			if !DryRun {
+			if !dryRun {
 				if err := os.Remove(link.Dest); err != nil {
 					return err
 				}

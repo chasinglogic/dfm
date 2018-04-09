@@ -5,136 +5,102 @@
 package config
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
-)
 
-var (
-	// Dir is where dfm will keep internal files and state.
-	// TODO: Move the .dfm config json here
-	Dir = GetDefaultConfigDir()
-
-	// Backend is a string use for loading the appropriate backend.
-	Backend = "git"
-
-	// CurrentProfile is the currently loaded profile.
-	CurrentProfile = ""
-
-	// Etc contains additionall information that the various backends can
-	// reference.
-	Etc map[string]interface{}
+	"github.com/chasinglogic/dfm/dotfiles"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func init() {
-	cfgFile := filepath.Join(os.Getenv("HOME"), ".dfm")
-	jsonBytes, err := ioutil.ReadFile(cfgFile)
-
-	var config configJSON
-
-	if err != nil {
-		setupWizard()
+	if checkForOldConfig() {
+		upgradeConfig()
 		return
 	}
 
-	err = json.Unmarshal(jsonBytes, &config)
-	if err != nil {
-		fmt.Println("ERROR:", err.Error())
-		os.Exit(1)
-	}
-
-	Backend = config.Backend
-	CurrentProfile = config.CurrentProfile
-	Dir = config.ConfigDir
-	Etc = config.Etc
-
-	err = os.MkdirAll(ProfileDir(), os.ModePerm)
-	if err != nil {
-		fmt.Println("ERROR:", err)
-		os.Exit(1)
-	}
+	loadConfig()
 }
 
-func getInput(prompt string) string {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print(prompt)
-	text, _ := reader.ReadString('\n')
-	return text[:len(text)-1]
+type Config struct {
+	// Dir is where dfm will keep internal files and state.
+	// TODO: Move the .dfm config json here
+	Dir string `yaml:"dir"`
+
+	// Backend is the backend used for new profiles.
+	DefaultBackend string `yaml:"default_backend"`
+
+	// Profiles is the available profiles and their
+	// associated configs
+	Profiles []dotfiles.Profile `yaml:"profiles"`
+
+	// CurrentProfileName is the currently loaded profile.
+	CurrentProfileName string `yaml:"current_profile"`
 }
 
-type configJSON struct {
-	Backend        string
-	ConfigDir      string
-	CurrentProfile string
-	Etc            map[string]interface{}
+func (c Config) CurrentProfile() dotfiles.Profile {
+	return c.GetProfileByName(c.CurrentProfileName)
 }
 
-func setupWizard() {
-	confirmation := "no"
-
-	for strings.HasPrefix(strings.ToLower(confirmation), "n") {
-		Backend = getInput(fmt.Sprintf("Which backend would you like to use? [git, dropbox] (Default: %s) ", Backend))
-		if Backend == "" {
-			Backend = "git"
+func (c Config) GetProfileByName(name string) dotfiles.Profile {
+	for _, profile := range c.Profiles {
+		if profile.Name == name {
+			return profile
 		}
-
-		fmt.Println("\nNOTE: Some backends will change this automatically and override your setting. (i.e. dropbox)")
-		Dir = getInput(fmt.Sprintf("Where would you like to store profiles? (Default: %s) ", Dir))
-		if Dir == "" {
-			Dir = GetDefaultConfigDir()
-		}
-
-		cfg := configJSON{
-			Backend:   Backend,
-			ConfigDir: Dir,
-		}
-
-		jsn, _ := json.MarshalIndent(cfg, "", "\t")
-		fmt.Println(string(jsn))
-
-		confirmation = getInput("Does this look correct? Y/n: ")
 	}
 
-	err := SaveConfig()
-	if err != nil {
-		fmt.Println("ERROR: ", err)
-	}
+	return dotfiles.Profile{}
+}
+
+func (c Config) AddProfile(profile dotfiles.Profile) {
+	c.Profiles = append(c.Profiles, profile)
+}
+
+var global Config
+
+func SetCurrentProfile(profile dotfiles.Profile) {
+	global.CurrentProfileName = profile.Name
+	SaveConfig()
+}
+
+func CurrentProfile() dotfiles.Profile {
+	return global.CurrentProfile()
+}
+
+func GetProfileByName(name string) dotfiles.Profile {
+	return global.GetProfileByName(name)
+}
+
+func AddProfile(profile dotfiles.Profile) {
+	global.AddProfile(profile)
+	SaveConfig()
+}
+
+func AvailableProfiles() []dotfiles.Profile {
+	return global.Profiles
+}
+
+func Dir() string {
+	return global.Dir
+}
+
+func DefaultBackend() string {
+	return global.DefaultBackend
 }
 
 // SaveConfig should be run after every command in dfm.
 func SaveConfig() error {
-	config := configJSON{
-		Backend:        Backend,
-		ConfigDir:      Dir,
-		CurrentProfile: CurrentProfile,
-		Etc:            Etc,
-	}
-
-	jsn, merr := json.MarshalIndent(config, "", "\t")
+	yml, merr := yaml.Marshal(global)
 	if merr != nil {
+		fmt.Println(merr)
 		return merr
 	}
 
-	return ioutil.WriteFile(filepath.Join(os.Getenv("HOME"), ".dfm"), jsn, 0644)
+	return ioutil.WriteFile(filepath.Join(os.Getenv("HOME"), ".dfm.yml"), yml, 0644)
 }
 
 // ProfileDir will return the config.Dir joined with profiles.
 func ProfileDir() string {
-	return filepath.Join(Dir, "profiles")
-}
-
-// GetDefaultConfigDir will return the default location to store profiles which
-// is $XDG_CONFIG_HOME/dfm or $HOME/.config/dfm
-func GetDefaultConfigDir() string {
-	xdg := os.Getenv("XDG_CONFIG_HOME")
-
-	if xdg == "" {
-		xdg = filepath.Join(os.Getenv("HOME"), ".config")
-	}
-
-	return filepath.Join(xdg, "dfm")
+	return filepath.Join(global.Dir, "profiles")
 }
