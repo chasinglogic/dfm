@@ -5,9 +5,8 @@
 package hooks
 
 import (
-	"path/filepath"
-
 	"github.com/chasinglogic/dfm/config"
+	"github.com/chasinglogic/dfm/dotfiles"
 	"github.com/spf13/cobra"
 )
 
@@ -15,13 +14,13 @@ import (
 type Hooks map[string][]string
 
 // AddHooks will add before and after hooks to the given command.
-func AddHooks(loadHooks func(userDir string) Hooks, command *cobra.Command) *cobra.Command {
+func AddHooks(loadHooks func(profile dotfiles.Profile) Hooks, command *cobra.Command) *cobra.Command {
 	// Store this for later use
 	runFunc := command.Run
 
 	command.Run = func(cmd *cobra.Command, args []string) {
-		prof := config.CurrentProfile
-		hooks := loadHooks(filepath.Join(config.ProfileDir(), prof))
+		prof := config.CurrentProfile().Name
+		hooks := loadHooks(config.CurrentProfile())
 
 		commands, preHooks := hooks["before_"+command.Use]
 		if preHooks {
@@ -31,10 +30,9 @@ func AddHooks(loadHooks func(userDir string) Hooks, command *cobra.Command) *cob
 		// Run the real command
 		runFunc(cmd, args)
 
-		if prof != config.CurrentProfile {
+		if prof != config.CurrentProfile().Name {
 			// Reload if profile changed
-			hooks = loadHooks(filepath.Join(config.ProfileDir(),
-				config.CurrentProfile))
+			hooks = loadHooks(config.CurrentProfile())
 		}
 
 		commands, postHooks := hooks["after_"+command.Use]

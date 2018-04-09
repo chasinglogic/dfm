@@ -1,8 +1,4 @@
-// Copyright 2017 Mathew Robinson <chasinglogic@gmail.com>. All rights reserved.
-// Use of this source code is governed by the GPLv3 license that can be found in
-// the LICENSE file.
-
-package utils
+package linking
 
 import (
 	"errors"
@@ -15,6 +11,17 @@ import (
 	"github.com/chasinglogic/dfm/filemap"
 )
 
+type Linker interface {
+	Link(mappings filemap.Mappings, config Config) error
+}
+
+// Config changes the behavior of linking functions, it acts as a
+// store for common functoin arguments
+type Config struct {
+	DryRun    bool
+	Overwrite bool
+}
+
 // LinkInfo holds the src and destination for our symlink.
 type LinkInfo struct {
 	Src  string
@@ -25,17 +32,17 @@ func (l *LinkInfo) String() string {
 	return fmt.Sprintf("%s -> %s", l.Dest, l.Src)
 }
 
-func (l *LinkInfo) Link(DryRun, overwrite bool) error {
-	if DryRun {
+func (l *LinkInfo) Link(config Config) error {
+	if config.DryRun {
 		fmt.Println("Creating symlink", l)
 	}
 
-	e := removeIfNeeded(l, DryRun, overwrite)
+	e := removeIfNeeded(l, config)
 	if e != nil {
 		return e
 	}
 
-	if !DryRun {
+	if !config.DryRun {
 		if e := os.Symlink(l.Src, l.Dest); e != nil {
 			return e
 		}
@@ -72,14 +79,14 @@ func GenerateSymlink(sourceDir, targetDir string, file os.FileInfo) LinkInfo {
 
 // removeIfNeeded will check if the link destination exists and delete it if
 // appropriate.
-func removeIfNeeded(link *LinkInfo, DryRun, overwrite bool) error {
+func removeIfNeeded(link *LinkInfo, config Config) error {
 	info, err := os.Lstat(link.Dest)
-	if err == nil && (overwrite || info.Mode()&os.ModeSymlink == os.ModeSymlink) {
-		if DryRun {
+	if err == nil && (config.Overwrite || info.Mode()&os.ModeSymlink == os.ModeSymlink) {
+		if config.DryRun {
 			fmt.Printf("%s already exists, removing.\n", link.Dest)
 		}
 
-		if !DryRun {
+		if !config.DryRun {
 			if rmerr := os.Remove(link.Dest); rmerr != nil {
 				return fmt.Errorf("Unable to remove %s: %s",
 					link.Dest,
@@ -89,7 +96,7 @@ func removeIfNeeded(link *LinkInfo, DryRun, overwrite bool) error {
 
 	} else if err == nil {
 		msg := fmt.Sprintf("%s already exists and is not a symlink, cowardly refusing to remove", link.Dest)
-		if DryRun {
+		if config.DryRun {
 			fmt.Println(msg)
 			return nil
 		}
@@ -104,7 +111,7 @@ func removeIfNeeded(link *LinkInfo, DryRun, overwrite bool) error {
 // appropriate location in targetDir, if there is a folder named config in
 // sourceDir CreateSymlinks will run itself using that folder as sourceDir and
 // targetDir as XDG_config.CONFIG_HOME or HOME/.config if XDG_config.CONFIG_HOME is not set.
-func CreateSymlinks(sourceDir, targetDir string, DryRun, overwrite bool, mappings filemap.Mappings) error {
+func CreateSymlinks(sourceDir, targetDir string, config Config, mappings filemap.Mappings) error {
 	sourceDir, err := filepath.Abs(sourceDir)
 	if err != nil {
 		return err
@@ -116,7 +123,7 @@ func CreateSymlinks(sourceDir, targetDir string, DryRun, overwrite bool, mapping
 	}
 
 	for _, link := range links {
-		err := link.Link(DryRun, overwrite)
+		err := link.Link(config)
 		if err != nil {
 			return err
 		}
@@ -136,20 +143,10 @@ func GenerateSymlinks(profileDir, target string, mappings filemap.Mappings) ([]L
 	}
 
 	for _, file := range files {
-		// Skip various files we want to "ignore"
-		if (file.Name() == ".git" && file.IsDir()) ||
-			strings.HasPrefix(file.Name(), "README") ||
-			file.Name() == "LICENSE" ||
-			file.Name() == ".dfm.yml" ||
-			file.Name() == ".gitignore" {
-			continue
-		}
-
 		// Handle XDG_config.CONFIG_HOME special case.
 		mapping := mappings.Matches(file.Name())
 		if mapping != nil {
 			if mapping.Skip {
-				fmt.Printf("Skipping %s per profile config\n", file.Name())
 				continue
 			} else if mapping.IsDir {
 				newTargetDir := strings.Replace(mapping.Dest, "~", os.Getenv("HOME"), 1)
