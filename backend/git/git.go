@@ -30,23 +30,30 @@ func (b Backend) Init() error {
 
 // Sync will add and commit all files in the repo then push.
 func (b Backend) Sync(userDir string) error {
-	err := runGitCMD(userDir, "add", "--all")
+	dirty, err := isDirty(userDir)
 	if err != nil {
 		return err
 	}
 
-	msg := "Files managed by DFM! https://github.com/chasinglogic/dfm"
-	if userMsg := os.Getenv("DFM_GIT_COMMIT_MSG"); userMsg != "" {
-		msg = userMsg
-	}
+	if dirty {
+		err := runGitCMD(userDir, "add", "--all")
+		if err != nil {
+			return err
+		}
 
-	if userMsg := getUserMsg(); userMsg != "" {
-		msg = userMsg
-	}
+		msg := "Files managed by DFM! https://github.com/chasinglogic/dfm"
+		if userMsg := os.Getenv("DFM_GIT_COMMIT_MSG"); userMsg != "" {
+			msg = userMsg
+		}
 
-	err = runGitCMD(userDir, "commit", "-m", msg)
-	if err != nil {
-		return err
+		if userMsg := getUserMsg(); userMsg != "" {
+			msg = userMsg
+		}
+
+		err = runGitCMD(userDir, "commit", "-m", msg)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = runGitCMD(userDir, "pull", "--rebase", "origin", "master")
@@ -54,12 +61,23 @@ func (b Backend) Sync(userDir string) error {
 		return err
 	}
 
-	return runGitCMD(userDir, "push", "origin", "master")
+	if dirty {
+		return runGitCMD(userDir, "push", "origin", "master")
+	}
+
+	return nil
 }
 
 // NewProfile will run git init in the directory
 func (b Backend) NewProfile(userDir string) error {
 	return runGitCMD(userDir, "init")
+}
+
+func isDirty(userDir string) (bool, error) {
+	command := exec.Command("git", "status", "--porcelain")
+	command.Dir = userDir
+	out, err := command.Output()
+	return string(out) != "", err
 }
 
 func runGitCMD(userDir string, args ...string) error {
