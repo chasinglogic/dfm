@@ -53,6 +53,8 @@ func init() {
 	Root.AddCommand(hooks.AddHooks(loadHooks, Sync))
 	Root.AddCommand(hooks.AddHooks(loadHooks, Clean))
 	Root.AddCommand(RunHook)
+	Root.AddCommand(Git)
+	Root.AddCommand(Clone)
 }
 
 // Root is the root dfm command.
