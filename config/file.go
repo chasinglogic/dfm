@@ -9,11 +9,28 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// XDG returns the appropriate XDG_CONFIG_HOME directory
+func XDG() string {
+	xdg := os.Getenv("XDG_CONFIG_HOME")
+	if xdg == "" {
+		xdg = filepath.Join(os.Getenv("HOME"), ".config")
+	}
+
+	return xdg
+}
+
+func configFile() string {
+	return filepath.Join(XDG(), "config.yml")
+}
+
 func loadConfig() {
-	cfgFile := filepath.Join(os.Getenv("HOME"), ".dfm.yml")
-	yamlBytes, err := ioutil.ReadFile(cfgFile)
+	yamlBytes, err := ioutil.ReadFile(configFile())
 	if err != nil {
-		setupWizard()
+		global = Config{
+			Dir:                GetDefaultConfigDir(),
+			CurrentProfileName: "",
+		}
+
 		return
 	}
 
@@ -33,11 +50,5 @@ func loadConfig() {
 // GetDefaultConfigDir will return the default location to store profiles which
 // is $XDG_CONFIG_HOME/dfm or $HOME/.config/dfm
 func GetDefaultConfigDir() string {
-	xdg := os.Getenv("XDG_CONFIG_HOME")
-
-	if xdg == "" {
-		xdg = filepath.Join(os.Getenv("HOME"), ".config")
-	}
-
-	return filepath.Join(xdg, "dfm")
+	return filepath.Join(XDG(), "dfm")
 }

@@ -17,9 +17,8 @@ var List = &cobra.Command{
 	Short: "list available profiles",
 	Run: func(cmd *cobra.Command, args []string) {
 		profiles := config.AvailableProfiles()
-
 		for _, profile := range profiles {
-			fmt.Println(profile.Name)
+			fmt.Println(profile)
 		}
 	},
 }

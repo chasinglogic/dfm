@@ -6,9 +6,6 @@ package commands
 
 import (
 	"github.com/chasinglogic/dfm/config"
-	"github.com/chasinglogic/dfm/dotdfm"
-	"github.com/chasinglogic/dfm/dotfiles"
-	"github.com/chasinglogic/dfm/hooks"
 	"github.com/spf13/cobra"
 )
 
@@ -21,37 +18,23 @@ var (
 	overwrite bool
 )
 
-func loadHooks(profile dotfiles.Profile) hooks.Hooks {
-	var hooks hooks.Hooks
-
-	for _, location := range profile.Locations {
-		dotdfm := dotdfm.LoadDotDFM(location)
-
-		if hooks == nil {
-			hooks = dotdfm.Hooks
-			continue
-		}
-
-		for hookName := range hooks {
-			hooks[hookName] = append(hooks[hookName], dotdfm.Hooks[hookName]...)
-		}
-	}
-
-	return hooks
+func loadHooks(profile string) config.Hooks {
+	profileCfg := config.LoadDotDFM(profile)
+	return profileCfg.Hooks
 }
 
 func init() {
 	Root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 	Root.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "don't make changes just print what would happen")
 
-	Root.AddCommand(hooks.AddHooks(loadHooks, Init))
-	Root.AddCommand(hooks.AddHooks(loadHooks, Add))
-	Root.AddCommand(hooks.AddHooks(loadHooks, Link))
-	Root.AddCommand(hooks.AddHooks(loadHooks, List))
-	Root.AddCommand(hooks.AddHooks(loadHooks, Remove))
-	Root.AddCommand(hooks.AddHooks(loadHooks, Where))
-	Root.AddCommand(hooks.AddHooks(loadHooks, Sync))
-	Root.AddCommand(hooks.AddHooks(loadHooks, Clean))
+	Root.AddCommand(config.AddHooks(loadHooks, Init))
+	Root.AddCommand(config.AddHooks(loadHooks, Add))
+	Root.AddCommand(config.AddHooks(loadHooks, Link))
+	Root.AddCommand(config.AddHooks(loadHooks, List))
+	Root.AddCommand(config.AddHooks(loadHooks, Remove))
+	Root.AddCommand(config.AddHooks(loadHooks, Where))
+	Root.AddCommand(config.AddHooks(loadHooks, Sync))
+	Root.AddCommand(config.AddHooks(loadHooks, Clean))
 	Root.AddCommand(RunHook)
 	Root.AddCommand(Git)
 	Root.AddCommand(Clone)
@@ -63,8 +46,8 @@ var Root = &cobra.Command{
 	Short: "Manage dotfiles.",
 	Long: `Dotfile management written for pair programmers. Examples on getting
 started with dfm are avialable at https://github.com/chasinglogic/dfm`,
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		_ = config.SaveConfig()
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		config.Init()
 	},
 }
 

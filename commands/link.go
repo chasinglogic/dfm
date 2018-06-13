@@ -9,15 +9,43 @@ import (
 	"os"
 
 	"github.com/chasinglogic/dfm/config"
-	"github.com/chasinglogic/dfm/dotdfm"
 	"github.com/chasinglogic/dfm/filemap"
+	"github.com/chasinglogic/dfm/git"
 	"github.com/chasinglogic/dfm/linking"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	Link.Flags().BoolVarP(&overwrite, "overwrite", "o", false,
-		"whether dfm should remove files that exist where a link should go")
+		"if provided dfm will remove files that exist where a link should go")
+}
+
+func linkModule(module config.Module, profile string, mappings filemap.Mappings) {
+	location := module.Location(config.ModuleDir(profile))
+	if _, err := os.Stat(location); os.IsNotExist(err) {
+		err = git.RunGitCMD(profile, "clone", module.Repo, location)
+		if err != nil {
+			fmt.Println("ERROR: Unable to clone module:", err)
+			return
+		}
+	}
+
+	moduleMappings := append(mappings, module.Mappings...)
+
+	err := linking.CreateSymlinks(
+		location,
+		os.Getenv("HOME"),
+		linking.Config{
+			DryRun:    dryRun,
+			Overwrite: overwrite,
+		},
+		moduleMappings,
+	)
+
+	if err != nil {
+		fmt.Println("ERROR:", err.Error())
+		os.Exit(1)
+	}
 }
 
 // Link will generate and create the symlinks to the dotfiles in the repo.
@@ -31,21 +59,24 @@ var Link = &cobra.Command{
 			profile = config.GetProfileByName(args[0])
 		}
 
-		fmt.Println("Linking profile", profile.Name)
+		fmt.Println("Linking profile", profile)
 
 		mappings := filemap.DefaultMappings()
-		for _, location := range profile.Locations {
-			dfmyml := dotdfm.LoadDotDFM(location)
-			mappings = append(mappings, dfmyml.Mappings...)
+		dfmyml := config.LoadDotDFM(profile)
+
+		for _, module := range dfmyml.PreLinkModules() {
+			linkModule(module, profile, mappings)
 		}
 
-		err := profile.Link(
+		parentMappings := append(mappings, dfmyml.Mappings...)
+		err := linking.CreateSymlinks(
+			profile,
 			os.Getenv("HOME"),
-			mappings,
 			linking.Config{
-				dryRun,
-				overwrite,
+				DryRun:    dryRun,
+				Overwrite: overwrite,
 			},
+			parentMappings,
 		)
 
 		if err != nil {
@@ -53,6 +84,8 @@ var Link = &cobra.Command{
 			os.Exit(1)
 		}
 
-		config.SetCurrentProfile(profile)
+		for _, module := range dfmyml.PostLinkModules() {
+			linkModule(module, profile, mappings)
+		}
 	},
 }

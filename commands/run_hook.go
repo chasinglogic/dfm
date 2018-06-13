@@ -9,8 +9,6 @@ import (
 	"os"
 
 	"github.com/chasinglogic/dfm/config"
-	"github.com/chasinglogic/dfm/dotdfm"
-	"github.com/chasinglogic/dfm/hooks"
 	"github.com/spf13/cobra"
 )
 
@@ -26,15 +24,7 @@ var RunHook = &cobra.Command{
 		}
 
 		profile := config.CurrentProfile()
-
-		allHooks := hooks.Hooks{}
-		for _, location := range profile.Locations {
-			yml := dotdfm.LoadDotDFM(location)
-			for hookName, hookCommands := range yml.Hooks {
-				allHooks[hookName] = append(allHooks[hookName], hookCommands...)
-			}
-		}
-
-		hooks.RunCommands(allHooks[args[0]])
+		yml := config.LoadDotDFM(profile)
+		config.RunCommands(yml.Hooks[args[0]])
 	},
 }

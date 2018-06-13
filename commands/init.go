@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/chasinglogic/dfm/config"
-	"github.com/chasinglogic/dfm/dotfiles"
+	"github.com/chasinglogic/dfm/git"
 	"github.com/spf13/cobra"
 )
 
@@ -24,18 +24,18 @@ var Init = &cobra.Command{
 			os.Exit(1)
 		}
 
-		profile := dotfiles.Profile{
-			Name:      args[0],
-			Locations: []string{filepath.Join(config.ProfileDir(), args[0])},
-			Backend:   config.DefaultBackend(),
+		profileDir := config.ProfileDir()
+		profile := filepath.Join(profileDir, args[0])
+		err := os.MkdirAll(profile, os.ModePerm)
+		if err != nil {
+			fmt.Println("ERROR: Unable create profile directory: ", profile, err)
+			os.Exit(1)
 		}
 
-		err := profile.Init()
+		err = git.Init(profile)
 		if err != nil {
 			fmt.Println("ERROR:", err.Error())
 			os.Exit(1)
 		}
-
-		config.AddProfile(profile)
 	},
 }
