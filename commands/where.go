@@ -17,6 +17,6 @@ var Where = &cobra.Command{
 	Short: "prints the first location for the current profile directory path",
 	Run: func(cmd *cobra.Command, args []string) {
 		profile := config.CurrentProfile()
-		fmt.Println(profile.Locations[0])
+		fmt.Println(profile)
 	},
 }

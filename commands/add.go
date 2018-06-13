@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/chasinglogic/dfm/config"
-	"github.com/chasinglogic/dfm/dotfiles"
+	"github.com/chasinglogic/dfm/git"
 	"github.com/chasinglogic/dfm/linking"
 	"github.com/spf13/cobra"
 )
@@ -67,7 +67,7 @@ var Add = &cobra.Command{
 			addFileToProfile(f, profile)
 		}
 
-		err := profile.Sync()
+		err := git.Sync(profile)
 		if err != nil {
 			fmt.Println("ERROR:", err.Error())
 			os.Exit(1)
@@ -75,7 +75,7 @@ var Add = &cobra.Command{
 	},
 }
 
-func addFileToProfile(f string, profile dotfiles.Profile) {
+func addFileToProfile(f string, profile string) {
 	file, err := filepath.Abs(f)
 	if err != nil {
 		fmt.Println("ERROR:", err.Error())
@@ -86,11 +86,9 @@ func addFileToProfile(f string, profile dotfiles.Profile) {
 		fmt.Println("Absolute path:", file)
 	}
 
-	for _, location := range profile.Locations {
-		err = renameAndLink(location, file)
-		if err != nil {
-			fmt.Println("ERROR:", err.Error())
-			os.Exit(1)
-		}
+	err = renameAndLink(profile, file)
+	if err != nil {
+		fmt.Println("ERROR:", err.Error())
+		os.Exit(1)
 	}
 }

@@ -2,11 +2,12 @@
 // Use of this source code is governed by the GPLv3 license that can be found in
 // the LICENSE file.
 
-package hooks
+package config
 
 import (
-	"github.com/chasinglogic/dfm/config"
-	"github.com/chasinglogic/dfm/dotfiles"
+	"fmt"
+	"os/exec"
+
 	"github.com/spf13/cobra"
 )
 
@@ -14,13 +15,13 @@ import (
 type Hooks map[string][]string
 
 // AddHooks will add before and after hooks to the given command.
-func AddHooks(loadHooks func(profile dotfiles.Profile) Hooks, command *cobra.Command) *cobra.Command {
+func AddHooks(loadHooks func(profile string) Hooks, command *cobra.Command) *cobra.Command {
 	// Store this for later use
 	runFunc := command.Run
 
 	command.Run = func(cmd *cobra.Command, args []string) {
-		prof := config.CurrentProfile().Name
-		hooks := loadHooks(config.CurrentProfile())
+		prof := CurrentProfile()
+		hooks := loadHooks(prof)
 
 		commands, preHooks := hooks["before_"+command.Use]
 		if preHooks {
@@ -30,9 +31,9 @@ func AddHooks(loadHooks func(profile dotfiles.Profile) Hooks, command *cobra.Com
 		// Run the real command
 		runFunc(cmd, args)
 
-		if prof != config.CurrentProfile().Name {
+		if prof != CurrentProfile() {
 			// Reload if profile changed
-			hooks = loadHooks(config.CurrentProfile())
+			hooks = loadHooks(CurrentProfile())
 		}
 
 		commands, postHooks := hooks["after_"+command.Use]
@@ -42,4 +43,19 @@ func AddHooks(loadHooks func(profile dotfiles.Profile) Hooks, command *cobra.Com
 	}
 
 	return command
+}
+
+// TODO: write a runCommand for windows
+
+// RunCommands will run the given slice of strings each as their own command
+func RunCommands(commands []string) {
+	for _, cmd := range commands {
+		c := exec.Command("bash", "-c", cmd)
+		out, err := c.CombinedOutput()
+		if err != nil {
+			fmt.Println("ERROR Running Command:", cmd, err.Error())
+			return
+		}
+		fmt.Print(string(out))
+	}
 }

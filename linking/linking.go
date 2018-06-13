@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/chasinglogic/dfm/config"
 	"github.com/chasinglogic/dfm/filemap"
 )
 
@@ -38,7 +39,9 @@ func (l *LinkInfo) Link(config Config) error {
 	}
 
 	e := removeIfNeeded(l, config)
-	if e != nil {
+	if e != nil && strings.Contains(e.Error(), "cowardly") {
+		fmt.Println(e)
+	} else if e != nil {
 		return e
 	}
 
@@ -95,12 +98,10 @@ func removeIfNeeded(link *LinkInfo, config Config) error {
 		}
 
 	} else if err == nil {
-		msg := fmt.Sprintf("%s already exists and is not a symlink, cowardly refusing to remove", link.Dest)
-		if config.DryRun {
-			fmt.Println(msg)
-			return nil
-		}
-
+		msg := fmt.Sprintf(
+			"%s already exists and is not a symlink, cowardly refusing to remove",
+			link.Dest,
+		)
 		return errors.New(msg)
 	}
 
@@ -149,7 +150,7 @@ func GenerateSymlinks(profileDir, target string, mappings filemap.Mappings) ([]L
 			if mapping.Skip {
 				continue
 			} else if mapping.IsDir {
-				newTargetDir := strings.Replace(mapping.Dest, "~", os.Getenv("HOME"), 1)
+				newTargetDir := config.ExpandFilePath(mapping.Dest)
 				multiLinks, err := GenerateSymlinks(filepath.Join(profileDir, file.Name()), newTargetDir, mappings)
 				if err != nil {
 					return lnks, err

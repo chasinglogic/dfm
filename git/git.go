@@ -14,29 +14,15 @@ func getUserMsg() string {
 	return os.Getenv("DFM_GIT_COMMIT_MSG")
 }
 
-// Backend implements backend.Backend for a git based remote.
-type Backend struct{}
-
-// Init checks for the existence of git as it's a requirement for this backend.
-func (b Backend) Init() error {
-	if _, err := exec.LookPath("git"); err != nil {
-		fmt.Println("ERROR: git is required for this backend.")
-		fmt.Println("Please install git then try again.")
-		os.Exit(1)
-	}
-
-	return nil
-}
-
 // Sync will add and commit all files in the repo then push.
-func (b Backend) Sync(userDir string) error {
-	dirty, err := isDirty(userDir)
+func Sync(workingDir string) error {
+	dirty, err := isDirty(workingDir)
 	if err != nil {
 		return err
 	}
 
 	if dirty {
-		err := runGitCMD(userDir, "add", "--all")
+		err := RunGitCMD(workingDir, "add", "--all")
 		if err != nil {
 			return err
 		}
@@ -50,39 +36,55 @@ func (b Backend) Sync(userDir string) error {
 			msg = userMsg
 		}
 
-		err = runGitCMD(userDir, "commit", "-m", msg)
+		err = RunGitCMD(workingDir, "commit", "-m", msg)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = runGitCMD(userDir, "pull", "--rebase", "origin", "master")
+	err = Pull(workingDir)
 	if err != nil {
 		return err
 	}
 
 	if dirty {
-		return runGitCMD(userDir, "push", "origin", "master")
+		return RunGitCMD(workingDir, "push", "origin", "master")
 	}
 
 	return nil
 }
 
-// NewProfile will run git init in the directory
-func (b Backend) NewProfile(userDir string) error {
-	return runGitCMD(userDir, "init")
+// Pull runs git pull --rebase origin master in the given workingDir
+func Pull(workingDir string) error {
+	err := RunGitCMD(workingDir, "pull", "--rebase", "origin", "master")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func isDirty(userDir string) (bool, error) {
+// Init will run git init in the directory
+func Init(workingDir string) error {
+	return RunGitCMD(workingDir, "init")
+}
+
+func isDirty(workingDir string) (bool, error) {
 	command := exec.Command("git", "status", "--porcelain")
-	command.Dir = userDir
+	fmt.Println(workingDir)
+	command.Dir = workingDir
 	out, err := command.Output()
+	if err != nil {
+		fmt.Println("ERROR Running Git Command: git status --porcelain", string(out))
+	}
+
 	return string(out) != "", err
 }
 
-func runGitCMD(userDir string, args ...string) error {
+// RunGitCMD runs git with the given args in workingDir
+func RunGitCMD(workingDir string, args ...string) error {
 	command := exec.Command("git", args...)
-	command.Dir = userDir
+	command.Dir = workingDir
 	out, err := command.CombinedOutput()
 	fmt.Println(string(out))
 	if err != nil {

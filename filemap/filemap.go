@@ -103,5 +103,11 @@ func DefaultMappings() Mappings {
 			Regexp: true,
 			Skip:   true,
 		},
+		{
+			Match:  "^\\.modules",
+			IsDir:  true,
+			Skip:   true,
+			Regexp: true,
+		},
 	}
 }

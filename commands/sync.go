@@ -9,8 +9,16 @@ import (
 	"os"
 
 	"github.com/chasinglogic/dfm/config"
+	"github.com/chasinglogic/dfm/git"
 	"github.com/spf13/cobra"
 )
+
+var syncModules bool
+
+func init() {
+	Sync.Flags().BoolVarP(&syncModules, "modules", "m", false,
+		"if provided dfm will sync modules as well as the primary profile")
+}
 
 // Sync will sync the current profile with the configured backend
 var Sync = &cobra.Command{
@@ -19,9 +27,30 @@ var Sync = &cobra.Command{
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		profile := config.CurrentProfile()
-		if err := profile.Sync(); err != nil {
+		if err := git.Sync(profile); err != nil {
 			fmt.Println("ERROR:", err.Error())
 			os.Exit(1)
+		}
+
+		yml := config.LoadDotDFM(profile)
+		if !(yml.SyncModules || syncModules) {
+			return
+		}
+
+		moduleDir := config.ModuleDir(profile)
+		for _, module := range yml.Modules {
+			location := module.Location(moduleDir)
+			if module.PullOnly {
+				err := git.Pull(location)
+				if err != nil {
+					fmt.Println("ERROR: Unable to update module:", err)
+				}
+			} else {
+				err := git.Sync(location)
+				if err != nil {
+					fmt.Println("ERROR: Unable to sync module:", err)
+				}
+			}
 		}
 	},
 }

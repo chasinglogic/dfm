@@ -9,98 +9,128 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/chasinglogic/dfm/dotfiles"
 	yaml "gopkg.in/yaml.v2"
 )
 
-func init() {
+func Init() {
 	if checkForOldConfig() {
 		upgradeConfig()
 		return
 	}
 
 	loadConfig()
+	err := saveConfig()
+	if err != nil {
+		fmt.Println("ERROR: Unable to save config:", err)
+		os.Exit(1)
+	}
 }
 
 type Config struct {
 	// Dir is where dfm will keep internal files and state.
-	// TODO: Move the .dfm config json here
 	Dir string `yaml:"dir"`
-
-	// Backend is the backend used for new profiles.
-	DefaultBackend string `yaml:"default_backend"`
-
-	// Profiles is the available profiles and their
-	// associated configs
-	Profiles []dotfiles.Profile `yaml:"profiles"`
-
 	// CurrentProfileName is the currently loaded profile.
 	CurrentProfileName string `yaml:"current_profile"`
 }
 
-func (c Config) CurrentProfile() dotfiles.Profile {
-	return c.GetProfileByName(c.CurrentProfileName)
+func (c Config) ProfileDir() string {
+	return filepath.Join(c.Dir, "profiles")
 }
 
-func (c Config) GetProfileByName(name string) dotfiles.Profile {
-	for _, profile := range c.Profiles {
-		if profile.Name == name {
-			return profile
+func (c Config) CurrentProfile() string {
+	profile := filepath.Join(c.ProfileDir(), c.CurrentProfileName)
+	if profile == c.ProfileDir() {
+		files, err := ioutil.ReadDir(c.ProfileDir())
+		if err != nil {
+			fmt.Println("ERROR: Unable to load profiles:", err)
+			os.Exit(1)
+		}
+
+		if len(files) == 0 {
+			fmt.Println("ERROR: No dfm profiles found")
+			os.Exit(1)
+		}
+
+		for _, file := range files {
+			if strings.HasPrefix(file.Name(), ".") {
+				continue
+			}
+
+			return filepath.Join(c.ProfileDir(), file.Name())
 		}
 	}
 
-	return dotfiles.Profile{}
+	return profile
 }
 
-func (c Config) AddProfile(profile dotfiles.Profile) {
-	c.Profiles = append(c.Profiles, profile)
+func (c Config) GetProfileByName(name string) string {
+	return filepath.Join(c.ProfileDir(), name)
+}
+
+func (c Config) AddProfile(name string) error {
+	return os.Mkdir(c.GetProfileByName(name), os.ModePerm)
+}
+
+func (c Config) AvailableProfiles() []string {
+	files, err := ioutil.ReadDir(c.ProfileDir())
+	if err != nil {
+		fmt.Println("ERROR: Unable to read config dir:", err)
+	}
+
+	var profiles []string
+
+	for _, f := range files {
+		if strings.HasPrefix(f.Name(), ".") {
+			continue
+		}
+
+		profiles = append(profiles, f.Name())
+	}
+
+	return profiles
 }
 
 var global Config
 
-func SetCurrentProfile(profile dotfiles.Profile) {
-	global.CurrentProfileName = profile.Name
-	SaveConfig()
-}
-
-func CurrentProfile() dotfiles.Profile {
+func CurrentProfile() string {
 	return global.CurrentProfile()
 }
 
-func GetProfileByName(name string) dotfiles.Profile {
+func GetProfileByName(name string) string {
 	return global.GetProfileByName(name)
 }
 
-func AddProfile(profile dotfiles.Profile) {
-	global.AddProfile(profile)
-	SaveConfig()
+func AddProfile(profile string) error {
+	return global.AddProfile(profile)
 }
 
-func AvailableProfiles() []dotfiles.Profile {
-	return global.Profiles
+func AvailableProfiles() []string {
+	return global.AvailableProfiles()
 }
 
 func Dir() string {
 	return global.Dir
 }
 
-func DefaultBackend() string {
-	return global.DefaultBackend
-}
-
-// SaveConfig should be run after every command in dfm.
-func SaveConfig() error {
+// saveConfig should be run after every command in dfm.
+func saveConfig() error {
 	yml, merr := yaml.Marshal(global)
 	if merr != nil {
 		fmt.Println(merr)
 		return merr
 	}
 
-	return ioutil.WriteFile(filepath.Join(os.Getenv("HOME"), ".dfm.yml"), yml, 0644)
+	err := os.MkdirAll(global.Dir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(configFile(), yml, 0644)
 }
 
 // ProfileDir will return the config.Dir joined with profiles.
 func ProfileDir() string {
-	return filepath.Join(global.Dir, "profiles")
+	return global.ProfileDir()
 }
