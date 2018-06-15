@@ -39,14 +39,14 @@ func (m Module) Name() string {
 }
 
 func (m Module) Location() string {
-	location := filepath.Join(moduleDir, m.Name())
+	location := filepath.Join(ModuleDir(), m.Name())
 	if m.UserLocation != "" {
 		location = ExpandFilePath(m.UserLocation)
 	}
 
 	if _, err := os.Stat(location); os.IsNotExist(err) {
 		err := git.RunGitCMD(
-			moduleDir,
+			ModuleDir(),
 			"clone",
 			m.Repo,
 			ExpandFilePath(location),

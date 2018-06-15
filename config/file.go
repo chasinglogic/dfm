@@ -20,14 +20,13 @@ func XDG() string {
 }
 
 func configFile() string {
-	return filepath.Join(XDG(), "config.yml")
+	return filepath.Join(GetDefaultConfigDir(), "config.json")
 }
 
 func loadConfig() {
 	yamlBytes, err := ioutil.ReadFile(configFile())
 	if err != nil {
 		global = Config{
-			Dir:                GetDefaultConfigDir(),
 			CurrentProfileName: "",
 		}
 

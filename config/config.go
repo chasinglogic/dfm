@@ -20,11 +20,6 @@ func Init() {
 	}
 
 	loadConfig()
-	err := saveConfig()
-	if err != nil {
-		fmt.Println("ERROR: Unable to save config:", err)
-		os.Exit(1)
-	}
 }
 
 type Config struct {
@@ -32,19 +27,45 @@ type Config struct {
 	CurrentProfileName string `yaml:"current_profile"`
 }
 
-func (c Config) CurrentProfile() string {
+var global Config
+
+func CurrentProfile() string {
+	profile := filepath.Join(ProfileDir(), global.CurrentProfileName)
+	if profile == ProfileDir() {
+		files, err := ioutil.ReadDir(ProfileDir())
+		if err != nil {
+			fmt.Println("ERROR: Unable to load profiles:", err)
+			os.Exit(1)
+		}
+
+		if len(files) == 0 {
+			fmt.Println("ERROR: No dfm profiles found")
+			os.Exit(1)
+		}
+
+		for _, file := range files {
+			if strings.HasPrefix(file.Name(), ".") {
+				continue
+			}
+
+			SetCurrentProfile(file.Name())
+			return filepath.Join(ProfileDir(), file.Name())
+		}
+	}
+
+	return profile
 }
 
-func (c Config) GetProfileByName(name string) string {
-	return filepath.Join(c.ProfileDir(), name)
+func GetProfileByName(name string) string {
+	return filepath.Join(ProfileDir(), name)
 }
 
-func (c Config) AddProfile(name string) error {
-	return os.Mkdir(c.GetProfileByName(name), os.ModePerm)
+func AddProfile(profile string) error {
+	return os.Mkdir(GetProfileByName(profile), os.ModePerm)
 }
 
-func (c Config) AvailableProfiles() []string {
-	files, err := ioutil.ReadDir(c.ProfileDir())
+func AvailableProfiles() []string {
+	files, err := ioutil.ReadDir(ProfileDir())
 	if err != nil {
 		fmt.Println("ERROR: Unable to read config dir:", err)
 	}
@@ -62,62 +83,29 @@ func (c Config) AvailableProfiles() []string {
 	return profiles
 }
 
-var global Config
-
-func CurrentProfile() string {
-	profile := filepath.Join(c.ProfileDir(), c.CurrentProfileName)
-	if profile == c.ProfileDir() {
-		files, err := ioutil.ReadDir(c.ProfileDir())
-		if err != nil {
-			fmt.Println("ERROR: Unable to load profiles:", err)
-			os.Exit(1)
-		}
-
-		if len(files) == 0 {
-			fmt.Println("ERROR: No dfm profiles found")
-			os.Exit(1)
-		}
-
-		for _, file := range files {
-			if strings.HasPrefix(file.Name(), ".") {
-				continue
-			}
-
-			return filepath.Join(c.ProfileDir(), file.Name())
-		}
-	}
-
-	return profile
-}
-
-func GetProfileByName(name string) string {
-	return global.GetProfileByName(name)
-}
-
-func AddProfile(profile string) error {
-	return global.AddProfile(profile)
-}
-
-func AvailableProfiles() []string {
-	return global.AvailableProfiles()
-}
-
 func Dir() string {
 	return GetDefaultConfigDir()
 }
 
-// SaveConfig should be run after every command in dfm.
-func SaveConfig() error {
+// SetCurrentProfile will save the config.json
+func SetCurrentProfile(profile string) error {
+	global.CurrentProfileName = profile
 	jsn, merr := json.Marshal(global)
 	if merr != nil {
 		fmt.Println(merr)
 		return merr
 	}
 
-	return ioutil.WriteFile(configFile(), yml, 0644)
+	return ioutil.WriteFile(configFile(), jsn, 0644)
 }
 
 // ProfileDir will return the config.Dir joined with profiles.
 func ProfileDir() string {
 	return filepath.Join(GetDefaultConfigDir(), "profiles")
+}
+
+// ProfileName returns the name of the profile from it's full path
+func ProfileName(path string) string {
+	split := strings.Split(path, string(filepath.Separator))
+	return split[len(split)-1]
 }

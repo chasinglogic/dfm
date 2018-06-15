@@ -43,9 +43,9 @@ var Clone = &cobra.Command{
 		}
 
 		yml := config.LoadDotDFM(userDir)
-		moduleDir := config.ModuleDir(userDir)
 		for _, module := range yml.Modules {
-			module.Location(moduleDir)
+			// Location will clone the module if it's not there
+			module.Location()
 		}
 
 		if link {

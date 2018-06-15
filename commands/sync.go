@@ -37,7 +37,6 @@ var Sync = &cobra.Command{
 			return
 		}
 
-		moduleDir := config.ModuleDir()
 		for _, module := range yml.Modules {
 			location := module.Location()
 			if module.PullOnly {
