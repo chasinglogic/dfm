@@ -16,7 +16,7 @@ type Mapping struct {
 	Match  string `yaml:"match"`
 	Dest   string `yaml:"dest"`
 	Regexp bool   `yaml:"regexp"`
-	IsDir  bool   `yaml:"isDir"`
+	IsDir  bool   `yaml:"is_dir"`
 	Skip   bool   `yaml:"skip"`
 }
 

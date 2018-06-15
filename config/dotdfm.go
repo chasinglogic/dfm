@@ -38,15 +38,7 @@ func (m Module) Name() string {
 	return split[len(split)-1]
 }
 
-func (m Module) Location(moduleDir string) string {
-	if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
-		err = os.MkdirAll(moduleDir, os.ModePerm)
-		if err != nil {
-			fmt.Println("ERROR: Unable to created module directory:", err)
-			return ""
-		}
-	}
-
+func (m Module) Location() string {
 	location := filepath.Join(moduleDir, m.Name())
 	if m.UserLocation != "" {
 		location = ExpandFilePath(m.UserLocation)
@@ -141,8 +133,17 @@ func LoadDotDFM(profileDir string) DFMYml {
 }
 
 // ModuleDir will return the module directory for the given profile
-func ModuleDir(profile string) string {
-	return filepath.Join(profile, ".modules")
+func ModuleDir() string {
+	moduleDir := filepath.Join(GetDefaultConfigDir(), "modules")
+	if _, err := os.Stat(moduleDir); os.IsNotExist(err) {
+		err = os.MkdirAll(moduleDir, os.ModePerm)
+		if err != nil {
+			fmt.Println("ERROR: Unable to created module directory:", err)
+			return ""
+		}
+	}
+
+	return moduleDir
 }
 
 // ExpandFilePath does bash-esque expansions on a filepath
