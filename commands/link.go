@@ -21,7 +21,7 @@ func init() {
 }
 
 func linkModule(module config.Module, profile string, mappings filemap.Mappings) {
-	location := module.Location(config.ModuleDir(profile))
+	location := module.Location()
 	if _, err := os.Stat(location); os.IsNotExist(err) {
 		err = git.RunGitCMD(profile, "clone", module.Repo, location)
 		if err != nil {
@@ -83,6 +83,8 @@ var Link = &cobra.Command{
 			fmt.Println("ERROR:", err.Error())
 			os.Exit(1)
 		}
+
+		config.SetCurrentProfile(config.ProfileName(profile))
 
 		for _, module := range dfmyml.PostLinkModules() {
 			linkModule(module, profile, mappings)
