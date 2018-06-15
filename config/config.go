@@ -5,13 +5,12 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
 func Init() {
@@ -29,40 +28,11 @@ func Init() {
 }
 
 type Config struct {
-	// Dir is where dfm will keep internal files and state.
-	Dir string `yaml:"dir"`
 	// CurrentProfileName is the currently loaded profile.
 	CurrentProfileName string `yaml:"current_profile"`
 }
 
-func (c Config) ProfileDir() string {
-	return filepath.Join(c.Dir, "profiles")
-}
-
 func (c Config) CurrentProfile() string {
-	profile := filepath.Join(c.ProfileDir(), c.CurrentProfileName)
-	if profile == c.ProfileDir() {
-		files, err := ioutil.ReadDir(c.ProfileDir())
-		if err != nil {
-			fmt.Println("ERROR: Unable to load profiles:", err)
-			os.Exit(1)
-		}
-
-		if len(files) == 0 {
-			fmt.Println("ERROR: No dfm profiles found")
-			os.Exit(1)
-		}
-
-		for _, file := range files {
-			if strings.HasPrefix(file.Name(), ".") {
-				continue
-			}
-
-			return filepath.Join(c.ProfileDir(), file.Name())
-		}
-	}
-
-	return profile
 }
 
 func (c Config) GetProfileByName(name string) string {
@@ -95,7 +65,29 @@ func (c Config) AvailableProfiles() []string {
 var global Config
 
 func CurrentProfile() string {
-	return global.CurrentProfile()
+	profile := filepath.Join(c.ProfileDir(), c.CurrentProfileName)
+	if profile == c.ProfileDir() {
+		files, err := ioutil.ReadDir(c.ProfileDir())
+		if err != nil {
+			fmt.Println("ERROR: Unable to load profiles:", err)
+			os.Exit(1)
+		}
+
+		if len(files) == 0 {
+			fmt.Println("ERROR: No dfm profiles found")
+			os.Exit(1)
+		}
+
+		for _, file := range files {
+			if strings.HasPrefix(file.Name(), ".") {
+				continue
+			}
+
+			return filepath.Join(c.ProfileDir(), file.Name())
+		}
+	}
+
+	return profile
 }
 
 func GetProfileByName(name string) string {
@@ -111,20 +103,15 @@ func AvailableProfiles() []string {
 }
 
 func Dir() string {
-	return global.Dir
+	return GetDefaultConfigDir()
 }
 
-// saveConfig should be run after every command in dfm.
-func saveConfig() error {
-	yml, merr := yaml.Marshal(global)
+// SaveConfig should be run after every command in dfm.
+func SaveConfig() error {
+	jsn, merr := json.Marshal(global)
 	if merr != nil {
 		fmt.Println(merr)
 		return merr
-	}
-
-	err := os.MkdirAll(global.Dir, os.ModePerm)
-	if err != nil {
-		return err
 	}
 
 	return ioutil.WriteFile(configFile(), yml, 0644)
@@ -132,5 +119,5 @@ func saveConfig() error {
 
 // ProfileDir will return the config.Dir joined with profiles.
 func ProfileDir() string {
-	return global.ProfileDir()
+	return filepath.Join(GetDefaultConfigDir(), "profiles")
 }

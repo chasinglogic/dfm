@@ -37,9 +37,9 @@ var Sync = &cobra.Command{
 			return
 		}
 
-		moduleDir := config.ModuleDir(profile)
+		moduleDir := config.ModuleDir()
 		for _, module := range yml.Modules {
-			location := module.Location(moduleDir)
+			location := module.Location()
 			if module.PullOnly {
 				err := git.Pull(location)
 				if err != nil {
