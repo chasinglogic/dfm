@@ -20,6 +20,7 @@ import (
 // profile.
 type Module struct {
 	Repo         string           `yaml:"repo"`
+	Branch       string           `yaml:"branch,omitempty"`
 	Link         string           `yaml:"link,omitempty"`
 	UserName     string           `yaml"name"`
 	UserLocation string           `yaml:"location,omitempty"`
@@ -45,12 +46,42 @@ func (m Module) Location() string {
 	}
 
 	if _, err := os.Stat(location); os.IsNotExist(err) {
+		branch := m.Branch
+		if branch == "" {
+			branch = "master"
+		}
+
 		err := git.RunGitCMD(
 			ModuleDir(),
 			"clone",
+			"-b", branch,
 			m.Repo,
 			ExpandFilePath(location),
 		)
+		if err != nil {
+			fmt.Println("ERROR: Unable to clone module:", err)
+			os.Exit(1)
+		}
+	}
+
+	currentBranch, err := git.Branch(location)
+	if err != nil {
+		fmt.Printf("ERROR: Unable to get current branch for module %s: %s\n", m.Name, err)
+		os.Exit(1)
+	}
+
+	desiredBranch := m.Branch
+	if desiredBranch == "" {
+		desiredBranch = "master"
+	}
+
+	if currentBranch != desiredBranch {
+		err := git.RunGitCMD(
+			location,
+			"checkout",
+			desiredBranch,
+		)
+
 		if err != nil {
 			fmt.Println("ERROR: Unable to clone module:", err)
 			os.Exit(1)
