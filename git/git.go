@@ -71,7 +71,6 @@ func Init(workingDir string) error {
 
 func isDirty(workingDir string) (bool, error) {
 	command := exec.Command("git", "status", "--porcelain")
-	fmt.Println(workingDir)
 	command.Dir = workingDir
 	out, err := command.Output()
 	if err != nil {
@@ -79,6 +78,14 @@ func isDirty(workingDir string) (bool, error) {
 	}
 
 	return string(out) != "", err
+}
+
+// Branch will return the git branch of the repo at dir
+func Branch(dir string) (string, error) {
+	command := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	command.Dir = dir
+	out, err := command.Output()
+	return string(out), err
 }
 
 // RunGitCMD runs git with the given args in workingDir
