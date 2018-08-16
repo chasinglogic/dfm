@@ -61,33 +61,37 @@ var Link = &cobra.Command{
 
 		fmt.Println("Linking profile", profile)
 
-		mappings := filemap.DefaultMappings()
-		dfmyml := config.LoadDotDFM(profile)
-
-		for _, module := range dfmyml.PreLinkModules() {
-			linkModule(module, profile, mappings)
-		}
-
-		parentMappings := append(mappings, dfmyml.Mappings...)
-		err := linking.CreateSymlinks(
-			profile,
-			os.Getenv("HOME"),
-			linking.Config{
-				DryRun:    dryRun,
-				Overwrite: overwrite,
-			},
-			parentMappings,
-		)
-
-		if err != nil {
-			fmt.Println("ERROR:", err.Error())
-			os.Exit(1)
-		}
-
-		config.SetCurrentProfile(config.ProfileName(profile))
-
-		for _, module := range dfmyml.PostLinkModules() {
-			linkModule(module, profile, mappings)
-		}
+		linkProfile(profile)
 	},
+}
+
+func linkProfile(profile string) {
+	mappings := filemap.DefaultMappings()
+	dfmyml := config.LoadDotDFM(profile)
+
+	for _, module := range dfmyml.PreLinkModules() {
+		linkModule(module, profile, mappings)
+	}
+
+	parentMappings := append(mappings, dfmyml.Mappings...)
+	err := linking.CreateSymlinks(
+		profile,
+		os.Getenv("HOME"),
+		linking.Config{
+			DryRun:    dryRun,
+			Overwrite: overwrite,
+		},
+		parentMappings,
+	)
+
+	if err != nil {
+		fmt.Println("ERROR:", err.Error())
+		os.Exit(1)
+	}
+
+	config.SetCurrentProfile(config.ProfileName(profile))
+
+	for _, module := range dfmyml.PostLinkModules() {
+		linkModule(module, profile, mappings)
+	}
 }
