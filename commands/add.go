@@ -12,7 +12,6 @@ import (
 
 	"github.com/chasinglogic/dfm/config"
 	"github.com/chasinglogic/dfm/git"
-	"github.com/chasinglogic/dfm/linking"
 	"github.com/spf13/cobra"
 )
 
@@ -47,7 +46,7 @@ func renameAndLink(userDir, file string) error {
 		}
 	}
 
-	linking.CreateSymlinks(userDir, os.Getenv("HOME"), linking.Config{false, false}, nil)
+	linkProfile(userDir)
 	return nil
 }
 
