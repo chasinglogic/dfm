@@ -1,11 +1,11 @@
 PYTHON := python3
 
 lint:
-	$(PYTHON) -m pydocstyle taskforge
-	$(PYTHON) -m pylint taskforge tests
+	$(PYTHON) -m pydocstyle src
+	$(PYTHON) -m pylint src tests
 
 fmt:
-	$(PYTHON) -m yapf --recursive -i taskforge tests
+	$(PYTHON) -m yapf --recursive -i src tests
 
 clean:
 	rm -rf build dist
@@ -50,7 +50,7 @@ help:
 .PHONY: help Makefile
 
 livehtml:
-	sphinx-autobuild --watch ../taskforge -b html $(SPHINXOPTS) "$(SOURCEDIR)" $(BUILDDIR)/html
+	sphinx-autobuild --watch ./src -b html $(SPHINXOPTS) "$(SOURCEDIR)" $(BUILDDIR)/html
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
