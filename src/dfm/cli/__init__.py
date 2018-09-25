@@ -1,5 +1,6 @@
 """Usage:
     dfm [options] <command> [<args>...]
+    dfm help
     dfm sync
     dfm link <profile>
 
@@ -20,12 +21,13 @@ Commands:
     list (ls)      List available profiles
     remove (rm)    Remove a profile
     run-hook (rh)  Run dfm hooks without using normal commands
-    where (w)      Prints the location of the current dofile profile
+    where (w)      Prints the location of the current dotfile profile
 
 See 'dfm help <command>' for more information on a specific command.
 """
 
 import sys
+import logging
 from importlib import import_module
 
 from docopt import docopt
@@ -52,6 +54,8 @@ def main():
     if not args['<command>']:
         print(__doc__)
         sys.exit(1)
+
+    logging.basicConfig(level=logging.DEBUG)
 
     command = args['<command>']
     try:
