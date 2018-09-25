@@ -1,9 +1,0 @@
-author: Mathew Robinson
-email: chasinglogic@gmail.com
-ident: GPL-3.0
-excludes:
-  - .travis.yml
-  - .projectile
-  - Gopkg.toml
-  - vendor
-  - .goreleaser.yml
