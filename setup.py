@@ -6,9 +6,9 @@ with open('README.md') as f:
     LONG_DESCRIPTION = f.read()
 
 setup(
-    name='taskforge-cli',
+    name='dfm',
     version='6.0.0',
-    url='https://github.com/chasinglogic/taskforge',
+    url='https://github.com/chasinglogic/dfm',
     license='GPL-3.0',
     author='Mathew Robinson',
     author_email='chasinglogic@gmail.com',
