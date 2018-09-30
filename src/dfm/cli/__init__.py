@@ -1,4 +1,5 @@
-"""Usage:
+"""
+Usage:
     dfm [options] <command> [<args>...]
     dfm help
     dfm sync
@@ -7,6 +8,7 @@
 Options:
     -d, --dry-run  If provided don't make any changes
     -v, --verbose  If provided print more logging info
+    --debug        If provided print debug level logging info
     -h, --help     Print this help information
 
 Commands:
@@ -26,8 +28,8 @@ Commands:
 See 'dfm help <command>' for more information on a specific command.
 """
 
-import sys
 import logging
+import sys
 from importlib import import_module
 
 from docopt import docopt
@@ -55,7 +57,10 @@ def main():
         print(__doc__)
         sys.exit(1)
 
-    logging.basicConfig(level=logging.DEBUG)
+    if args['--debug']:
+        logging.basicConfig(level=logging.DEBUG)
+    elif args['--verbose']:
+        logging.basicConfig(level=logging.INFO)
 
     command = args['<command>']
     try:

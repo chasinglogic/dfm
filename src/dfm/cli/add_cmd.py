@@ -1,4 +1,5 @@
-"""Usage: dfm add [options] <file>...
+"""
+Usage: dfm add [options] <file>...
 
 Add files to the current dotfile profile doing "reverse dotfile-ization" on them
 and linking back correctly.
@@ -11,8 +12,8 @@ Options:
 """
 
 import os
-import sys
 import shutil
+import sys
 
 from dfm.cli.utils import inject_profile
 

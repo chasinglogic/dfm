@@ -28,8 +28,16 @@ def dfm_dir():
 
 
 class Mapping:
-    def __init__(self, match, dest='', skip=False, location='',
-                 link_dir=False):
+    """
+    Maps a filename to a new destination.
+
+    This allows overriding of the default 'dotfile-ization' that dfm
+    does. It allows files to be skipped by dfm but tracked by git or
+    put in non-standard locations, for example VS Code configuration
+    files.
+    """
+
+    def __init__(self, match, dest='', skip=False, link_dir=False):
         self.match = match
         self.dest = dest
         self.rgx = re.compile(match)
@@ -42,7 +50,7 @@ class Mapping:
         return cls(**config)
 
     def matches(self, path):
-        """Determines if this mapping matches path."""
+        """Determine if this mapping matches path."""
         return self.rgx.search(path)
 
 
@@ -126,7 +134,15 @@ def unable_to_remove(filename, overwrite=False):
     return False
 
 
-class DotfileRepo:
+class DotfileRepo:  # pylint: disable=too-many-instance-attributes
+    """
+    A dotfile repo is a git repository storing dotfiles.
+
+    This class handles all syncing and linking of a dotfile repository.
+    It should not normally be used directly and instead one of Module
+    or Profile should be used.
+    """
+
     def __init__(self, where, target_dir=os.getenv('HOME')):
         self.config = None
         self.where = where
@@ -172,6 +188,17 @@ class DotfileRepo:
         return links
 
     def _git(self, cmd, cwd=False):
+        """
+        Run the git subcommand 'cmd' in this dotfile repo.
+
+        Sends all output and input to sys.stdout / sys.stdin.
+        cmd should be a string and will be split using shlex.split.
+
+        If cwd is set to None or a string then it will be passed to
+        Popen constructor as the cwd argument. Otherwise the cwd for
+        the process will be the location of the dotfile repo. Most
+        often you will not want to set this.
+        """
         try:
             if cwd or cwd is None:
                 cwd = cwd
@@ -190,20 +217,21 @@ class DotfileRepo:
             sys.exit(1)
 
     def _is_dirty(self):
-        """Return the output of 'git status --porcelain'.
+        """
+        Return the output of 'git status --porcelain'.
 
         This is useful because in Python an empty string is False. The
         --porcelain flag prints nothing if the git repo is not in a dirty state.
         Therefore 'if self._is_dirty()' will behave as expected.
         """
         try:
-            return subprocess.check_output(['git', 'status', '--porcelain'],
-                                           cwd=self.where)
+            return subprocess.check_output(
+                ['git', 'status', '--porcelain'], cwd=self.where)
         except OSError:
             return False
 
     def sync(self):
-        """Sync this profile with git"""
+        """Sync this profile with git."""
         dirty = self._is_dirty()
         if dirty:
             self._git('add --all')
@@ -213,6 +241,14 @@ class DotfileRepo:
             self._git('push origin master')
 
     def _generate_links(self):
+        """
+        Generate a list of kwargs for os.link.
+
+        All required arguments for os.link will always be provided and
+        optional arguments as required.
+
+        Uses :func:`translate_filename` to generate the dest argument.
+        """
         links = []
 
         for dotfile in self.files:
@@ -235,6 +271,22 @@ class DotfileRepo:
 
 
 class Module(DotfileRepo):
+    """
+    Module is a DotfileRepo that has additional options for syncing and linking.
+
+    Module provides a new option for syncing called 'pull_only' which
+    will not push to the remote repo.
+
+    Additionally a Module has a known location on the filesystem,
+    either auto-generated or manually specified, and if not found will
+    attempt to clone the repository provided as the argument 'repo'
+    into that location.
+
+    Module also feeds the pre or post property up to it's parent
+    profile to determine when it should be linked in relation to that
+    profile.
+    """
+
     def __init__(self, *args, **kwargs):
         self.repo = kwargs.pop('repo')
         self.name = kwargs.pop('name', '')
@@ -257,6 +309,7 @@ class Module(DotfileRepo):
         super().__init__(*args, **kwargs)
 
     def sync(self):
+        """Sync this repo using git, if self.pull_only will only pull updates."""
         if self.pull_only:
             self._git('pull --rebase origin master')
             return
@@ -265,10 +318,17 @@ class Module(DotfileRepo):
 
     @property
     def pre(self):
+        """If True this module should be linked before the parent Profile."""
         return self.link_mode == 'pre'
 
     @property
     def post(self):
+        """
+        If True this module should be linked after the parent Profile.
+
+        This is useful for when you want files from a module to
+        overwrite those from it's parent Profile.
+        """
         return self.link_mode == 'post'
 
     @classmethod
@@ -278,6 +338,8 @@ class Module(DotfileRepo):
 
 
 class Profile(DotfileRepo):
+    """Profile is a DotfileRepo that supports modules."""
+
     def __init__(self,
                  where,
                  always_sync_modules=False,
@@ -296,7 +358,12 @@ class Profile(DotfileRepo):
             Module.from_dict(mod) for mod in self.config.get('modules', [])
         ]
 
-    def sync(self, skip_modules=False):
+    def sync(self, skip_modules=False):  # pylint: disable=arguments-differ
+        """
+        Sync this profile and all modules.
+
+        If skip_modules is True modules will not be synced.
+        """
         print('{}:'.format(self.where))
         super().sync()
 
@@ -308,6 +375,7 @@ class Profile(DotfileRepo):
             module.sync()
 
     def _generate_links(self):
+        """Add module support to DotfileRepo's _generate_links."""
         links = []
 
         for module in self.modules:

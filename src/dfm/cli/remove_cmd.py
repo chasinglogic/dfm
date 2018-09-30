@@ -1,16 +1,18 @@
-"""Usage: dfm remove <profile>
+"""
+Usage: dfm remove <profile>
 
 Lists currently downloaded and available profiles.
 """
 
 import os
-import sys
 import shutil
+import sys
 
 from dfm.dotfile import dfm_dir
 
 
 def run(args):
+    """Run the remove subcommand."""
     profile_p = os.path.join(dfm_dir(), 'profiles', args['<profile>'])
     if not os.path.isdir(profile_p):
         print('no profile with that name exists')
