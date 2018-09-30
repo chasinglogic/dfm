@@ -33,11 +33,11 @@ def current_profile():
         return join(dfm_dir(), 'profiles', profile)
 
 
-def profile(fn):
-    """Inject a profile object based on dfm's internal state."""
+def inject_profile(wrapped):
+    """Inject the current profile as a keyword argument 'profile'."""
 
     def wrapper(*args, **kwargs):
         kwargs['profile'] = Profile(current_profile())
-        return fn(*args, **kwargs)
+        return wrapped(*args, **kwargs)
 
     return wrapper
