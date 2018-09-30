@@ -5,8 +5,10 @@ Usage:
     dfm sync
     dfm link <profile>
 
+Dotfile management written for pair programmers. Examples on getting
+started with dfm are avialable at https://github.com/chasinglogic/dfm
+
 Options:
-    -d, --dry-run  If provided don't make any changes
     -v, --verbose  If provided print more logging info
     --debug        If provided print debug level logging info
     -h, --help     Print this help information
