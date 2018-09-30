@@ -1,24 +1,25 @@
 # dfm
+
 A dotfile manager for lazy people and pair programmers.
 
-**NOTE:** dfm does not require that the dotfiles in your repo start with dots
-though it handles either case equally well.
+> dfm doesn't require that the dotfiles in your repository start with dots
+> though it handles either case equally well.
 
 ## Table of Contents
 
 - [Features](#features)
-  - [Multiple Dotfile Profiles](#multiple-dotfile-profiles)
-  - [Profile Modules](#profile-modules)
-  - [Pre and Post Command Hooks](#pre-and-post-command-hooks)
-  - [Respects $XDG\_CONFIG\_HOME](#respects-xdg_config_home)
-  - [Skips Relevant Files](#skips-relevant-files)
-  - [Configurable File Mappings](#file-mappings)
+  - [Multiple dotfile profiles](#multiple-dotfile-profiles)
+  - [Profile modules](#profile-modules)
+  - [Pre and post command hooks](#pre-and-post-command-hooks)
+  - [Respects `$XDG_CONFIG_HOME`](#respects-xdg_config_home)
+  - [Skips relevant files](#skips-relevant-files)
+  - [Configurable mappings](#file-mappings)
 - [Installation](#installation)
 - [Updating](#updating)
 - [Usage](#usage)
-- [Git Quick Start](#git-quick-start)
-  - [Existing Dotfiles Repo](#quick-start-existing-dotfiles-repo)
-  - [No Existing Dotfiles Repo](#quick-start-no-existing-dotfiles-repo)
+- [Git quick start](#git-quick-start)
+  - [Existing dotfiles repository](#quick-start-existing-dotfiles-repository)
+  - [No existing dotfiles repository](#quick-start-no-existing-dotfiles-repository)
 - [Configuration](#configuration)
 - [Contributing](#contributing)
 - [License](#license)
@@ -28,18 +29,20 @@ though it handles either case equally well.
 dfm supports these features that I was unable to find in other Dotfile
 Management solutions.
 
-### Multiple Dotfile Profiles
+### Multiple dotfile profiles
 
-dfm's core feature is the idea of "profiles". Profiles are simply a collection
-of dotfiles that dfm manages and links in the `$HOME` directory or config
-directories. This means that you can have multiple profiles and overlap them.
-This feature is hard to write directly about so I will illustrate it's
-usefulness with two Use Cases:
+dfm's core feature is the idea of profiles. Profiles are simply a
+collection of dotfiles that dfm manages and links in the `$HOME`
+directory or configuration directories. This means that you can have
+multiple profiles and overlap them.
 
-#### The Work Profile
+This feature is hard to describe, so I will illustrate it's usefulness
+with two use cases:
+
+#### The work profile
 
 I use one laptop for work and personal projects in my dfm profiles I have my
-personal profile "chasinglogic" which contains all my dotfiles for Emacs, git,
+personal profile `chasinglogic` which contains all my dotfiles for Emacs, git,
 etc. and a "work" profile which only has a `.gitconfig` that has my work email
 in it. So my profile directory looks like this:
 
@@ -59,22 +62,21 @@ profiles/
     └── gitconfig
 ```
 
-Sinc dfm when linking only does the deltas I can run `dfm link work` and still
-have access to my emacs config but my gitconfig has been updated to use my work
-email. Simliarly when I leave work I just `dfm link chasinglogic` to switch
-back.
+Since dfm when linking only overwrites the files which are in the new
+profile, I can run `dfm link work` and still have access to my emacs
+configuration but my `gitconfig` has been updated to use my work
+email. Similarly when I leave work I just `dfm link chasinglogic` to
+switch back.
 
 See [profile modules](#profile-modules) for an even better solution to this
 particular use case.
 
-#### Pair Programming
+#### Pair programming
 
-The original inspiration for this tool was pair programming with my friend
-[lionize](https://github.com/lionize). lionize has a dotfiles repo so I can
-clone it using the git backend for dfm with `dfm clone lionize/dotfiles`. Note
-that if a partial URL like this one is given dfm will assume you want to clone
-via https from Github but full git-cloneable URLs (including SSH) can be passed
-to this command.
+The original inspiration for this tool was pair programming with my
+friend [lionize](https://github.com/lionize). lionize has a dotfiles
+repository so I can clone it using the git backend for dfm with `dfm
+clone --name lionize https://github.com/lionize/dotfiles`.
 
 Now our profile directory looks like:
 
@@ -113,10 +115,10 @@ Now when I'm driving I simply `dfm link chasinglogic` and when passing back to
 lionize he runs `dfm link lionize` and we don't have to mess with multiple
 machines vice versa.
 
-### Profile Modules
+### Profile modules
 
 dfm supports profile modules which can be either additional dotfiles profiles as
-accepted by the `dfm clone` command or can be any git repo such as
+accepted by the `dfm clone` command or can be any git repository such as
 [Spacemacs](https://github.com/syl20bnr/spacemacs). You can get more info about
 how to use them and configure them in [Configuration](#configuration)
 
@@ -124,30 +126,35 @@ how to use them and configure them in [Configuration](#configuration)
 
 dfm supports pre and post command hooks. that allows you to specify before and
 after command shell scripts to run. For example, I use a profile module to keep
-certain ssh keys in an encrypted git repo. Whenever I run the `dfm sync` command
+certain ssh keys in an encrypted git repository. Whenever I run the `dfm sync` command
 I have hooks which fix the permissions of the keys and ssh-add them to my ssh
 agent. You can read about how to write your own hooks in
 [Configuration](#configuration)
 
-### Respects ``XDG\_CONFIG\_HOME`
+### Respects `$XDG_CONFIG_HOME`
 
-dfm respects dotfiles which exist in the $XDG\_CONFIG\_HOME directory, meaning
-if in your repo you have a folder named config or .config it will translate
-those into the $XDG\_CONFIG\_HOME directory appropriately. Similarly when using
-`dfm add` if inside your $XDG\_CONFIG\_HOME or $HOME/.config directories it will
-add those to the repo appropriately.
+dfm respects dotfiles which exist in the `$XDG_CONFIG_HOME` directory,
+meaning if in your repository you have a folder named `config` or
+`.config` it'll translate those into the `$XDG_CONFIG_HOME`
+directory automatically. Similarly when using `dfm add` if inside your
+`$XDG_CONFIG_HOME` or $HOME/.configuration directories it'll add those to
+the repository appropriately.
 
 ### Skips relevant files
 
-Of course dfm skips your .git directory but additionally it will skip these
-files:
+dfm by default will skip multiple relevant files.
+
+- .git
+
+dfm will skip .git directory your `$HOME` directory isn't turned into
+a git repository.
 
 - .gitignore
 
 If you would like to store a global `.gitignore` file you can either omit the
 leading dot (so just `gitignore`) or name the global one `.ggitignore` and dfm
 will translate the name for you. Otherwise it assumes that `.gitignore` is the
-gitignore for the profile's repo and so skips it.
+gitignore for the profile's repository and so skips it.
 
 - README
 
@@ -159,7 +166,7 @@ starts with README dfm will ignore it. So `README.txt` `README.md` and
 
 You should put a LICENSE on all code you put on the internet and some dotfiles /
 configurations are actual code (See: Emacs). If you put a LICENSE in your
-profile dfm will respect you being a good internet citizen and not clutter your
+profile dfm will respect you being a good open source citizen and not clutter your
 `$HOME` directory.
 
 - .dfm.yml
@@ -167,10 +174,10 @@ profile dfm will respect you being a good internet citizen and not clutter your
 This is a special dfm file used for hooks today and in the future for other ways
 to extend dfm. As such dfm doesn't put it in your `$HOME` directory.
 
-### File Mappings
+### Custom mappings
 
-The above ignores are implemented as a DFM feature called File Mappings. You can
-write your own file mappings to either skip or translate files to different
+The above ignores are implemented as a dfm feature called Mappings. You can
+write your own mappings to either skip or translate files to different
 locations than dfm would normally place them. You can read how to configure your
 own mappings in [Configuration](#configuration)
 
@@ -178,83 +185,75 @@ own mappings in [Configuration](#configuration)
 
 ### Install from Release
 
-1. Navigate to [the Releases Page](https://github.com/chasinglogic/dfm/releases)
-2. Find the tar ball for your platform / architecture. For example, on 64 bit
-   Mac OSX, the archive is named `dfm_{version}_darwin_amd64.tar.gz`
-3. Extract the tar ball
-4. Put the dfm binary in your `$PATH`
+dfm is available on PyPi and should be installed from there:
+
+```text
+$ pip3 install dfm
+```
+
+dfm supports Python 3+.
 
 ### Install from Source
 
-Simply run go get:
+Clone the repository and run `make install`:
 
 ```bash
-$ go get github.com/chasinglogic/dfm
+git clone https://github.com/chasinglogic/dfm
+cd dfm
+make install
 ```
 
-If your `$GOPATH/bin` is in your `$PATH` then you now have dfm installed.
-
-## Updating
-
-`dfm` can update itself to bring in the latest bug fixes and features. Simply
-run:
-
-```bash
-dfm update
-```
-
-To update.
+> It's possible that for your system you will need to run the make
+> command with sudo.
 
 ## Usage
 
 ```text
+Usage:
+    dfm [options] <command> [<args>...]
+    dfm help
+    dfm sync
+    dfm link <profile>
+
 Dotfile management written for pair programmers. Examples on getting
 started with dfm are avialable at https://github.com/chasinglogic/dfm
 
-Usage:
-  dfm [command]
+Options:
+    -v, --verbose  If provided print more logging info
+    --debug        If provided print debug level logging info
+    -h, --help     Print this help information
 
-Available Commands:
-  add         Add a file to the current profile.
-  clean       clean dead symlinks
-  clone       git clone an existing profile from `URL`
-  git         run the given git command on the current profile
-  help        Help about any command
-  init        create a new profile with `NAME`
-  link        link the profile with `NAME`
-  list        list available profiles
-  remove      remove the profile with `NAME`
-  sync        sync the current profile with the configured backend
-  update      downlaod and install dfm updates
-  version     print version information for dfm
-  where       prints the current profile directory path
+Commands:
+    help           Print usage information about dfm commands
+    sync (s)       Sync your dotfiles
+    add (a)        Add the file to the current dotfile profile
+    clean (x)      Clean dead symlinks
+    clone (c)      Use git clone to download an existing profile
+    git (g)        Run the given git command on the current profile
+    init (i)       Create a new profile
+    link (l)       Create links for a profile
+    list (ls)      List available profiles
+    remove (rm)    Remove a profile
+    run-hook (rh)  Run dfm hooks without using normal commands
+    where (w)      Prints the location of the current dotfile profile
 
-Flags:
-  -d, --dry-run   don't make changes just print what would happen
-  -h, --help      help for dfm
-  -v, --verbose   verbose output
-
-Use "dfm [command] --help" for more information about a command.
+See 'dfm help <command>' for more information on a specific command.
 ```
 
-## Git Quick Start
+## Quick start
 
-dfm supports pluggable backends, so if you don't like Git you can choose another
-option, but git is the default backend so here is a Quick Start Guide to get you
-going!
+### Quick start (Existing dotfiles repository)
 
-### Quick Start (Existing dotfiles repo)
-
-If you already have a dotfiles repo you can start by cloning it using the clone
+If you already have a dotfiles repository you can start by cloning it using the clone
 command.
 
-**Note:** ssh urls will work as well.
+> SSH URLs will work as well.
 
 ```bash
 dfm clone https://github.com/chasinglogic/dotfiles
 ```
 
-If you're using github you can shortcut the domain:
+If you're using GitHub you can shortcut the domain:
 
 ```bash
 dfm clone chasinglogic/dotfiles
@@ -278,9 +277,9 @@ dfm link some-other-profile
 See the Usage Notes below for some quick info on what to expect from other dfm
 commands.
 
-### Quick Start (No existing dotfiles repo)
+### Quick Start (No existing dotfiles repository)
 
-If you do not have a dotfiles repo the best place to start is with `dfm init`
+If you don't have a dotfiles repository the best place to start is with `dfm init`
 
 ```bash
 dfm init my-new-profile
@@ -293,7 +292,7 @@ profiles
 dfm link my-new-profile
 ```
 
-Once that is done you can start adding your dotfiles
+Once that's done you can start adding your dotfiles
 
 ```bash
 dfm add ~/.bashrc
@@ -305,12 +304,12 @@ Alternatively you can add multiple files at once
 dfm add ~/.bashrc ~/.vimrc ~/.vim ~/.emacs.d
 ```
 
-Then create your dotfiles repo on Github. Instructions for how to do that can be
-found [here](https://help.github.com/articles/create-a-repo/). Once that's done
-get the "clone" URL for your new repo and set it as origin for the profile:
+Then create your dotfiles repository on GitHub. Instructions for how to do that can be
+found [here](https://help.github.com/articles/create-a-repository/). Once that's done
+get the "clone" URL for your new repository and set it as origin for the profile:
 
-**Note:** When creating the remote repo do not choose any options such as
-"initialize this repo with a README" otherwise git will get cranky when you add
+**Note:** When creating the remote repository don't choose any options such as
+"initialize this repository with a README" otherwise git'll get cranky when you add
 the remote because of a recent git update and how it handles [unrelated
 histories](http://stackoverflow.com/questions/37937984/git-refusing-to-merge-unrelated-histories)
 if you do don't worry the linked post explains how to get past it.
@@ -328,9 +327,10 @@ Now you're done!
 
 ## Configuration
 
-dfm supports a `.dfm.yml` file in the root of your repo that provides various
-configuration options. This file will be ignored when doing a `dfm link` so will
-not end up in your home directory. The `.dfm.yml` can be used to configure these
+dfm supports a `.dfm.yml` file in the root of your repository that
+changes dfm's behavior when syncing and linking your profile. This
+file will be ignored when doing a `dfm link` so won't end up in
+your home directory. The `.dfm.yml` can be used to configure these
 features:
 
 - [Modules](#modules)
@@ -339,38 +339,38 @@ features:
 
 ### Modules
 
-Modules in dfm are like sub profiles. They are git repos that are cloned into a
-a special directory: `$XDG_CONFIG_HOME/dfm/modules`. They are shared across
-profiles so if two dotfile profiles have the same module they will share that
+Modules in dfm are like sub profiles. They're git repositories that are cloned into a
+a special directory: `$XDG_CONFIG_HOME/dfm/modules`. They're shared across
+profiles so if two dotfile profiles have the same module they'll share that
 module.
 
 The syntax for defining a minimum module is as follows:
 
 ```yaml
 modules:
-    - repo: git@github.com:chasinglogic/dotfiles
+    - repository: git@github.com:chasinglogic/dotfiles
 ```
 
-This would clone my dotfiles repo as a module into
+This would clone my dotfiles repository as a module into
 `$XDG_CONFIG_HOME/dfm/modules/dotfiles`. If I wanted to use a unique name or
 some other folder name so it wouldn't be shared you can specify an additional
-key `name`:
+option `name`:
 
 ```yaml
 modules:
-    - repo: git@github.com:chasinglogic/dotfiles
+    - repository: git@github.com:chasinglogic/dotfiles
       name: chasinglogic-dotfiles
 ```
 
-Which would instead clone into 
+Which would instead clone into
 `$XDG_CONFIG_HOME/dfm/modules/chasinglogic-dotfiles`. You can define multiple
 modules:
 
 ```yaml
 modules:
-    - repo: git@github.com:chasinglogic/dotfiles
+    - repository: git@github.com:chasinglogic/dotfiles
       name: chasinglogic-dotfiles
-    - repo: git@github.com:lionize/dotfiles
+    - repository: git@github.com:lionize/dotfiles
 ```
 
 Make sure that you specify a name if the resulting clone location as defined by
@@ -378,14 +378,14 @@ git would conflict as we see here. Both of these would have been cloned into
 dotfiles which would cause the clone to fail for the second module if we didn't
 specify name for chasinglogic's dotfiles.
 
-An additional use for modules is that of a git repo you want to clone but not
+An additional use for modules is that of a git repository you want to clone but not
 link. An example use would be for downloading
 [Spacemacs](https://github.com/syl20bnr/spacemacs) or any such community
 configuration like oh-my-zsh, etc.
 
 ```yaml
 modules:
-    - repo: git@github.com:syl20bnr/spacemacs
+    - repository: git@github.com:syl20bnr/spacemacs
       link: none
       pull_only: true
       location: ~/.emacs.d
@@ -395,25 +395,25 @@ Here we specify a few extra keys. There purpose should be self explanatory but
 if you're curious [below](#available-keys) is a detailed explanation of all keys
 that each module configuration supports.
 
-#### Available Keys
+#### Available keys
 
-- [repo](#repo)
+- [repository](#repository)
 - [name](#name)
 - [location](#location)
 - [link](#link)
 - [pull\_only](#pull\_only)
 - [mappings](#mappings)
 
-##### repo
+##### repository
 
-Required, this is the git repo to clone for the module.
+Required, this is the git repository to clone for the module.
 
 ##### name
 
-This changes the cloned name. This only has an effect if location is not
-provided. Normally a git repo would be cloned into
+This changes the cloned name. This only has an effect if location isn't
+provided. Normally a git repository would be cloned into
 `$XDG_CONFIG_HOME/dfm/modules` and the resulting folder would be named whatever
-git decides it should be based on the git url. If this is provided it will be
+git decides it should be based on the git URL. If this is provided it'll be
 cloned into the modules directory with the specified name. This is useful if
 multiple profiles use the same module.
 
@@ -422,27 +422,28 @@ multiple profiles use the same module.
 If provided module will be cloned into the specified location. You can use the
 `~` bash expansion here to represent `$HOME`. No other expansions are available.
 This option is useful for cloning community configurations like oh-my-zsh or
-spacemacs. 
+spacemacs.
 
 ##### link
 
-Determines when to link the module. Link in this context means that it will be
+Determines when to link the module. Link in this context means that it'll be
 treated like a normal dotfile profile, so all files will go through the same
 translation rules as a regular profile and be linked accordingly. Available
-values are "post", "pre", and "none". "post" is the default and means that the
+values are `post`, `pre`, and `none`. `post` is the default and means that the
 module will be linked after the parent profile. "pre" means this will be linked
 before the parent profile, use this if for instance you want to use most files
 from this profile and override a few files with those from the parent file since
 dfm will overwrite the links with the last one found. "none" means the module is
-not a dotfiles profile and should not be linked at all, an example being
+not a dotfiles profile and shouldn't be linked at all, an example being
 community configuration repositories like oh-my-zsh or spacemacs.
 
 ##### pull\_only
 
-If set to `true` will not attempt to push any changes. Note that dfm always
-tries to push to origin master, so if you don't have write access to the repo or
-don't want it to automatically push to master then you should set this to true.
-Useful for community configuration repositories.
+If set to `true` won't attempt to push any changes. It's important to
+know that dfm always tries to push to origin master, so if you don't
+have write access to the repository or don't want it to automatically
+push to master then you should set this to true. This is useful for
+community configuration repositories.
 
 ##### mappings
 
@@ -452,56 +453,64 @@ described in [Skips Relevant Files](#skips-relevant-files)
 
 ### Mappings
 
-Mappings are a way of defining custom file locations. For instance if dfm finds
-a file or folder in your dotfile repo that is named `my_config` it will try and
-"translate" that to `$HOME/.my_config` and create a symlink there pointing at
-the one in your dotfile repo. With mappings you could replace this behavior and
-make it so dfm will link .my_config wherever you wish. For example Visual Studio
-Code has a non-standard (at least in the XDG\_CONFIG\_HOME / standard unix
-dotfile sense) place to store it's configuration. So if you wanted to keep your
-Visual Studio Code configuration in a dotfile repo you could add these mappings
-to your `.dfm.yml` (assuming you're on a Mac):
+Mappings are a way of defining custom file locations. To understand
+mappings one must understand dfm's default link behavior:
+
+#### Default behavior
+
+For an example let's say you have a file named `my_config` in your
+dotfile repository. dfm will try and translate that to a new location
+of `$HOME/.my_config`. It'll then create a symlink at that location
+pointing to `my_config` in your dotfile repository.
+
+#### Using mappings
+
+With mappings you can replace this behavior and make it so dfm will
+link `my_config` wherever you wish. This is especially useful for
+tools like Visual Studio Code that have non-standard, at least in the
+`$XDG_CONFIG_HOME` / standard Unix dotfile sense, configuration
+locations. So if you wanted to keep your Visual Studio Code
+configuration in a dotfile repository you would add these mappings to
+your `.dfm.yml` (assuming you're on a Mac):
 
 ```yaml
 mappings:
   - match: my_vs_code_config
-    is_dir: true
-    dest: ~/Library/Application Support/Code/User/
-  - match: .vscode
+    link_dir: true
+    dest: ~/Library/Application Support/Code/User
+  - match: \\.vscode
     skip: true
 ```
 
-Here dfm would find my_\vs\_code\_config in your dotfile repo, recognize that it
-has a mapping and perform the correct behavior based on your configuration. In
-this case it would link each file inside of my\_vs\_code\_config and to the
-corresponding file name in `~/Library/Application Support/Code/User`.
-Additionally, it would skip any file that was an exact match for `.vscode` since
-this directory we likely want in git but not linked via dfm.
+Here dfm uses the match as a regular expression to match the file paths in your dotfile repository. When it finds a path which matches the regular expression it adds an alternative linking behavior.
 
-#### Available Configuration
+In this example dfm would find `my_vs_code_config` in your dotfile
+repository, recognize that it has a mapping and link all files in
+`my_vs_code_config` into the directory
+`$HOME/Library/Application Support/Code/User/`.
 
-Filemaps support many configuration options:
+Additionally any file or directory which matches the regex `\.vscode`
+would be skipped.
+
+#### Available configuration
+
+Mappings support many configuration options:
 
 - [match](#match)
 - [skip](#skip)
 - [dest](#dest)
 - [regexp](#regexp)
-- [is\_dir](#is\_dir)
+- [link\_dir](#link\_dir)
 
 ##### match
 
-Match is a required configuration option. This indicates what files match this
-mapping. By default the file's actual name with no leading directories is taken
-as a literal "is equal to" comparison. As an example if you have a file that's
-in `$HOME/.config/dfm/profiles/my_profile/somefile` the correct match would be
-simply `match: somefile` since dfm will do the comparison against the final file
-name in the path. Note that this only works for files which are in the "root"
-directory of your dotfile repo or in `$DOTFILE_ROOT/config`.
+Match is a regular expression used to match the file path of any files
+in your dotfile repository. This is used to determine if the custom
+linking behavior for a file should be used.
 
-If more complicated match logic is required you can set [regexp](#regexp) to
-true in which case the value of match is compiled into a regular expression
-using the go standard library [regexp](https://golang.org/pkg/regexp/). See that
-libraries docs for more info.
+These are python style regular expressions and are matched using the
+[`re.findall`](https://docs.python.org/3/library/re.html#re.findall)
+method so are by default fuzzy matching.
 
 ##### skip
 
@@ -510,42 +519,69 @@ If provided `dest` is ignored and the file is simply skipped if it matches
 
 ##### dest
 
-Where to link the file instead of `$HOME`. The `~` expansion for `$HOME` is
+Where to link the file to. The `~` expansion for `$HOME` is
 supported here but no other expansions are available. This should be the
 directory in which you want the file linked.
 
 ##### regexp
 
-If true then `match` is treated as a 
+If true then `match` is treated as a
 [go regular expression](https://golang.org/pkg/regexp/)
 
-##### is_dir
+##### link\_dir
 
-If is_dir is true then all files inside of the matched directory will be linked
-at the new `dest` directory. If not provided and it is a directory that
-directory would simply be linked using the normal logic. 
+If `link_dir` is true then all files inside of the matched directory will be linked
+at the new `dest` directory.
+
+For example if you have a directory like:
+
+```text
+example
+└── my_link_dir
+    ├── README.txt
+    └── example.txt
+```
+
+and a mapping such as:
+
+```yaml
+mappings:
+    - match: my_link_dir
+      link_dir: true
+      dest: new_target_dir
+```
+
+Then you'll end up with the following at `new_target_dir`:
+
+```text
+new_target_dir
+├── README.txt => my_link_dir/README.txt
+└── example.txt => my_link_dir/example.txt
+```
 
 ### Hooks
 
 Hooks in dfm are used for those few extra tasks that you need to do whenever
-your dotfiles are synced or cloned. One example is that I have ansible code in
-my dotfiles that I like to run whenever I sync. So I wrote an `after_sync` hook
-to do just that:
+your dotfiles are synced or linked.
+
+An example from my personal dotfiles is running an Ansible playbook
+whenever I sync my dotfiles. To accomplish this I wrote an
+`after_sync` hook as follows:
 
 ```yaml
 hooks:
   after_sync:
-    - ansible-playbook ~/.config/dfm/profiles/chasinglogic/ansible/dev-mac.yml
+    - ansible-playbook ansible/dev-mac.yml
 ```
 
-Now whenever I sync my dotfiles ansible will run my dev-mac playbook to make
+Now whenever I sync my dotfiles Ansible will run my `dev-mac` playbook to make
 sure that my packages etc are also in sync!
 
-You can wrap any dfm subcommand. `hooks` is simply map where the key is when to
-run the hook. Which is specified using the syntax `before_{command_name}` or
-`after_{command_name}`. The value of the key should then be a yaml list of bash
-commands to run. A slightly more complex example (though a completely useless
-one):
+The hooks option is just a YAML map which supports the following keys:
+`after_link`, `before_link`, `after_sync`, and `before_sync`. The
+values of any of those keys is a YAML list of strings which will be
+executed in a shell via `/bin/sh -c '$YOUR COMMAND'`. An example would
+be:
 
 ```yaml
 hooks:
@@ -555,14 +591,10 @@ hooks:
     - echo "All done!"
 ```
 
-The current process environment is passed down to the shell so you can use
-`$HOME` etc environment variables in your commands.
-
-**NOTE:** the before and after clone hooks rarely work how you expect.
-`after_clone` will be run from the freshly cloned repo. However if there is
-already a current profile then both `before_clone` and `after_clone` will be run
-from whatever the current profile is. It's best to avoid writing hooks around
-clone since this behavior is hard to intuit. 
+All commands are ran with a working directory of your dotfile
+repository and the current process environment is passed down to the
+process so you can use `$HOME` etc environment variables in your
+commands.
 
 ## Contributing
 
@@ -579,7 +611,7 @@ All pull requests should go to the develop branch not master. Thanks!
 This code is distributed under the GNU General Public License
 
 ```
-    Copyright (C) 2017 Mathew Robinson
+    Copyright (C) 2018 Mathew Robinson
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
