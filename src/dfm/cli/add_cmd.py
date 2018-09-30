@@ -14,11 +14,12 @@ import os
 import sys
 import shutil
 
-from dfm.cli.utils import profile
+from dfm.cli.utils import inject_profile
 
 
-@profile
+@inject_profile
 def run(args, profile=None):
+    """Run the add command with args."""
     for filename in args['<file>']:
         oldfile = os.path.abspath(filename)
         if not os.path.exists(oldfile):
