@@ -9,6 +9,7 @@ from dfm.dotfile import Profile
 def setup_module():
     """Set up the DFM_CONFIG_DIR for this module run."""
     os.environ['DFM_CONFIG_DIR'] = TemporaryDirectory().name
+    os.environ['DFM_DISABLE_MODULES'] = '1'
 
 
 def test_list_files(dotfile_dir):
@@ -35,10 +36,10 @@ mappings:
     - match: emacs
       skip: true
     - match: vimrc
-      location: ~/.config/nvim/init.vim
+      dest: ~/.config/nvim/init.vim
 """)
     profile = Profile(directory)
-    assert len(profile.mappings) == 10
+    assert len(profile.mappings) == 9
 
 
 def test_module_loading(dotdfm):
@@ -48,15 +49,6 @@ modules:
   - repo: https://github.com/robbyrussell/oh-my-zsh
     link: none
     location: ~/.oh-my-zsh
-  - repo: keybase://private/chasinglogic/secrets
-  - repo: keybase://private/chasinglogic/personal-infrastructure
-    link: none
-  - repo: keybase://private/chasinglogic/Notes
-    location: ~/Notes
-  - repo: https://github.com/tmux-plugins/tpm
-    link: none
-    pull_only: true
-    location: ~/.tmux/plugins/tpm
 """)
     profile = Profile(directory)
     assert profile.modules

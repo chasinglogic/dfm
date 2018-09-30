@@ -4,7 +4,7 @@ import os
 from operator import itemgetter
 from tempfile import TemporaryDirectory
 
-from dfm.dotfile import Profile
+from dfm.dotfile import Profile, xdg_dir
 
 
 def setup_module():
@@ -44,7 +44,7 @@ def test_translation(dotdfm):
         assert link['src'] == expected['src']
         assert link['dst'] == expected['dst']
         assert link.get('target_is_directory') == expected.get(
-            'target_is_directory')
+            'target_is_directory', False)
 
 
 def test_linking(dotdfm):
@@ -60,3 +60,14 @@ def test_linking(dotdfm):
         print(created)
         print(dest)
         assert dest == created
+
+
+def test_xdg_config(tmpdir):
+    dotfiles = tmpdir.mkdir('dotfiles')
+    dotfiles.mkdir('config').mkdir('nvim').join('init.vim')
+    links = Profile(dotfiles).link(dry_run=True)
+    assert links == [{
+        'src': os.path.join(dotfiles, 'config', 'nvim'),
+        'dst': os.path.join(xdg_dir(), 'nvim'),
+        'target_is_directory': True,
+    }]

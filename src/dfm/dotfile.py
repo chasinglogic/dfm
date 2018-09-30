@@ -39,7 +39,7 @@ class Mapping:
 
     def __init__(self, match, dest='', skip=False, link_dir=False):
         self.match = match
-        self.dest = dest
+        self.dest = dest.replace('~', os.getenv('HOME'))
         self.rgx = re.compile(match)
         self.skip = skip
         self.link_dir = link_dir
@@ -55,17 +55,13 @@ class Mapping:
 
 
 DEFAULT_MAPPINGS = [
+    Mapping(r'^[.]?config$', link_dir=True, dest=xdg_dir()),
     Mapping(
-        r'^[.]?config',
-        link_dir=True,
-        dest=os.getenv('XDG_CONFIG_HOME',
-                       os.path.join(os.getenv('HOME'), '.config'))),
-    Mapping(
-        r'^[.]?ggitignore',
-        dest='.gitignore',
+        r'^[.]?ggitignore$',
+        dest='~/.gitignore',
     ),
     Mapping(
-        r'^\.git',
+        r'^\.git$',
         skip=True,
     ),
     Mapping(
@@ -85,29 +81,6 @@ DEFAULT_MAPPINGS = [
         skip=True,
     ),
 ]
-
-
-def translate_filename(filename, target_dir, mappings=None):
-    """Dotfile-ifies a filename"""
-    if mappings is None:
-        mappings = []
-
-    for mapping in mappings:
-        if not mapping.matches(filename):
-            continue
-
-        if mapping.skip:
-            return None
-
-        if mapping.link_dir:
-            return os.path.join(mapping.dest, filename)
-
-        return os.path.join(target_dir, mapping.dest)
-
-    if not filename.startswith('.'):
-        filename = '.{}'.format(filename)
-
-    return os.path.join(target_dir, filename)
 
 
 def unable_to_remove(filename, overwrite=False):
@@ -153,6 +126,7 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         self.name = os.path.basename(where)
         self.files = os.listdir(where)
         self.mappings = DEFAULT_MAPPINGS
+        self.links = []
         self.hooks = {}
 
         dotdfm = os.path.join(where, '.dfm.yml')
@@ -174,18 +148,33 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         ]
 
     def link(self, dry_run=False, overwrite=False):
-        """Link this profile to self.target_dir"""
-        links = self._generate_links()
-        if dry_run:
-            return links
+        """
+        Link this profile to self.target_dir
 
-        for link in links:
+        If the destination of a link is missing intervening
+        directories this function will attempt to create them.
+        """
+        if not dry_run:
+            self.run_hook('before_link')
+
+        if not self.links:
+            self._generate_links()
+
+        for link in self.links:
             logger.info('Linking %s to %s', link['src'], link['dst'])
+            if dry_run:
+                continue
+
             if unable_to_remove(link['dst'], overwrite=overwrite):
                 continue
+
+            os.makedirs(os.path.dirname(link['dst']), exist_ok=True)
             os.symlink(**link)
 
-        return links
+        if not dry_run:
+            self.run_hook('after_link')
+
+        return self.links
 
     def _git(self, cmd, cwd=False):
         """
@@ -258,34 +247,65 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         if dirty:
             self._git('push origin master')
 
+        self.run_hook('after_sync')
+
+    def _generate_link(self, filename):
+        """Dotfile-ifies a filename"""
+        if not filename.startswith('.'):
+            dest = '.{}'.format(filename)
+        else:
+            dest = filename
+
+        # Get the absolute path to src
+        src = os.path.join(self.where, filename)
+        dest = os.path.join(self.target_dir, dest)
+
+        for mapping in self.mappings:
+            # If the mapping doesn't match skip to the next one
+            if not mapping.matches(filename):
+                continue
+
+            # If the mapping did match and is a skip mapping then end
+            # function without adding a link to self.links
+            if mapping.skip:
+                return
+
+            # If it's a link_dir mapping then recursively link those
+            # files into the dest which is the new 'target_dir' for
+            # those files.
+            if mapping.link_dir:
+                for name in os.listdir(src):
+                    fullpath = os.path.join(src, name)
+                    self.links.append({
+                        'src':
+                        fullpath,
+                        'dst':
+                        os.path.join(mapping.dest, name),
+                        'target_is_directory':
+                        os.path.isdir(fullpath)
+                    })
+
+                return
+
+            # Else hardcode dest to the mapping.dest
+            dest = mapping.dest
+            break
+
+        self.links.append({
+            'src': src,
+            'dst': dest,
+            'target_is_directory': os.path.isdir(src)
+        })
+
     def _generate_links(self):
         """
         Generate a list of kwargs for os.link.
 
         All required arguments for os.link will always be provided and
         optional arguments as required.
-
-        Uses :func:`translate_filename` to generate the dest argument.
         """
-        links = []
-
         for dotfile in self.files:
-            dest = translate_filename(
-                dotfile, target_dir=self.target_dir, mappings=self.mappings)
-            if not dest:
-                continue
-
-            link = {
-                'src': os.path.join(self.where, dotfile),
-                'dst': dest,
-            }
-
-            if os.path.isdir(link['src']):
-                link['target_is_directory'] = True
-
-            links.append(link)
-
-        return links
+            self._generate_link(dotfile)
 
 
 class Module(DotfileRepo):
@@ -320,7 +340,8 @@ class Module(DotfileRepo):
                 os.makedirs(module_dir)
             self.location = os.path.join(module_dir, self.name)
 
-        if not os.path.isdir(self.location):
+        if not os.path.isdir(
+                self.location) and not os.getenv('DFM_DISABLE_MODULES'):
             self._git('clone {} {}'.format(self.repo, self.location), cwd=None)
 
         kwargs['where'] = self.location
@@ -394,16 +415,12 @@ class Profile(DotfileRepo):
 
     def _generate_links(self):
         """Add module support to DotfileRepo's _generate_links."""
-        links = []
-
         for module in self.modules:
             if module.pre:
-                links += module.link(dry_run=True)
+                self.links += module.link(dry_run=True)
 
-        links += super()._generate_links()
+        super()._generate_links()
 
         for module in self.modules:
             if module.post:
-                links += module.link(dry_run=True)
-
-        return links
+                self.links += module.link(dry_run=True)
