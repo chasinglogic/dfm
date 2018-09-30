@@ -230,8 +230,26 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         except OSError:
             return False
 
+    def run_hook(self, name):
+        """Run the hook with name."""
+        commands = self.hooks.get(name, [])
+        for command in commands:
+            try:
+                subprocess.call(
+                    ['/bin/sh', '-c', command],
+                    cwd=self.where,
+                    stdin=sys.stdin,
+                    stdout=sys.stdout,
+                    stderr=sys.stderr,
+                )
+            except subprocess.CalledProcessError as proc_err:
+                logger.error('command %s exited with non-zero error: %s',
+                             command, proc_err)
+
     def sync(self):
         """Sync this profile with git."""
+        self.run_hook('before_sync')
+
         dirty = self._is_dirty()
         if dirty:
             self._git('add --all')
