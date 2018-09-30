@@ -2,7 +2,8 @@ PYTHON := python3
 
 lint:
 	$(PYTHON) -m pydocstyle src
-	$(PYTHON) -m pylint src tests
+	$(PYTHON) -m pylint src
+	$(PYTHON) -m pylint --disable=W0621 tests
 
 fmt:
 	$(PYTHON) -m yapf --recursive -i src tests
@@ -17,7 +18,6 @@ install:
 
 install-dev:
 	pip install --editable .
-	pip install --editable ".[mongo]"
 	pip install -r requirements.dev.txt
 
 test:

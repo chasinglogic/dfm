@@ -1,4 +1,5 @@
-"""Usage: dfm where
+"""
+Usage: dfm where
 
 Prints the location of the current profile
 """

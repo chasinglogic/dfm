@@ -8,5 +8,5 @@ build/
 .coverage
 
 .venv/*
-.mypy_cache/*
+*mypy_cache*
 .pytest_cache/*

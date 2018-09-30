@@ -7,6 +7,7 @@ import pytest
 
 @pytest.fixture
 def dotfile_dir(tmpdir):
+    """Return a pre-populated dotfile directory with some files."""
     dotfiles = [
         'vimrc',
         'bashrc',

@@ -1,4 +1,5 @@
-"""Usage:
+"""
+Usage:
   dfm link [options] [<profile>]
 
 Link / activate dfm dotfile profiles. If no profile is provided relinks the
@@ -13,10 +14,11 @@ Options:
 
 import logging
 
-from dfm.cli.utils import load_profile, switch_profile, current_profile
+from dfm.cli.utils import current_profile, load_profile, switch_profile
 
 
 def run(args):
+    """Run the link subcommand, setting the current_profile."""
     dry_run = args['--dry-run']
     if args['<profile>'] and not dry_run:
         profile = switch_profile(args['<profile>'])
