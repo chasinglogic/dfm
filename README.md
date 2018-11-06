@@ -458,49 +458,42 @@ mappings one must understand dfm's default link behavior:
 
 #### Default behavior
 
-For an example let's say you have a file named `my_config` in your
+For an example let's say you have a file named `my_config.txt` in your
 dotfile repository. dfm will try and translate that to a new location
-of `$HOME/.my_config`. It'll then create a symlink at that location
-pointing to `my_config` in your dotfile repository.
+of `$HOME/.my_config.txt`. It'll then create a symlink at that location
+pointing to `my_config.txt` in your dotfile repository.
 
 #### Using mappings
 
 With mappings you can replace this behavior and make it so dfm will
-link `my_config` wherever you wish. This is especially useful for
-tools like Visual Studio Code that have non-standard, at least in the
-`$XDG_CONFIG_HOME` / standard Unix dotfile sense, configuration
-locations. So if you wanted to keep your Visual Studio Code
-configuration in a dotfile repository you would add these mappings to
-your `.dfm.yml` (assuming you're on a Mac):
+link `my_config` wherever you wish. This is useful if you need to
+store config files that are actually global. Such as configuration
+files that would go into `/etc/` or if you want to sync some files in
+your repo but not link them.
+
+Here is a simple example:
 
 ```yaml
 mappings:
-  - match: my_vs_code_config
-    link_dir: true
-    dest: ~/Library/Application Support/Code/User
-  - match: \\.vscode
+  - match: my_global_etc_files
+    target_dir: /etc/
+  - match: something_want_to_skip_but_sync
     skip: true
 ```
 
-Here dfm uses the match as a regular expression to match the file paths in your dotfile repository. When it finds a path which matches the regular expression it adds an alternative linking behavior.
-
-In this example dfm would find `my_vs_code_config` in your dotfile
-repository, recognize that it has a mapping and link all files in
-`my_vs_code_config` into the directory
-`$HOME/Library/Application Support/Code/User/`.
-
-Additionally any file or directory which matches the regex `\.vscode`
-would be skipped.
+Here dfm uses the match as a regular expression to match the file
+paths in your dotfile repository. When it finds a path which matches
+the regular expression it adds an alternative linking behavior. For
+anything where `skip` is true it simply skips linking. For anything
+with `target_dir` that value will override `$HOME` when linking.
 
 #### Available configuration
 
-Mappings support many configuration options:
+Mappings support the following configuration options:
 
 - [match](#match)
 - [skip](#skip)
-- [dest](#dest)
-- [regexp](#regexp)
-- [link\_dir](#link\_dir)
+- [target\_dir](#target\_dir)
 
 ##### match
 
@@ -514,50 +507,14 @@ method so are by default fuzzy matching.
 
 ##### skip
 
-If provided `dest` is ignored and the file is simply skipped if it matches
-`match` instead of linked.
+If provided the file/s will not be linked.
 
-##### dest
+##### target_dir
 
-Where to link the file to. The `~` expansion for `$HOME` is
-supported here but no other expansions are available. This should be the
-directory in which you want the file linked.
-
-##### regexp
-
-If true then `match` is treated as a
-[go regular expression](https://golang.org/pkg/regexp/)
-
-##### link\_dir
-
-If `link_dir` is true then all files inside of the matched directory will be linked
-at the new `dest` directory.
-
-For example if you have a directory like:
-
-```text
-example
-└── my_link_dir
-    ├── README.txt
-    └── example.txt
-```
-
-and a mapping such as:
-
-```yaml
-mappings:
-    - match: my_link_dir
-      link_dir: true
-      dest: new_target_dir
-```
-
-Then you'll end up with the following at `new_target_dir`:
-
-```text
-new_target_dir
-├── README.txt => my_link_dir/README.txt
-└── example.txt => my_link_dir/example.txt
-```
+Where to link the file to. The `~` expansion for `$HOME` is supported
+here but no other expansions are available. It is worth noting that if
+you're using `~` in your target_dir then you should probably just
+create the directory structure in your git repo.
 
 ### Hooks
 

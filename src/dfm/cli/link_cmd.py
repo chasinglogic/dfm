@@ -28,6 +28,3 @@ def run(args):
         profile = load_profile(current_profile())
 
     links = profile.link(overwrite=args['--overwrite'], dry_run=dry_run)
-    if dry_run:
-        for link in links:
-            logging.info('Linking %s -> %s', link['src'], link['dst'])
