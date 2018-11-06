@@ -31,7 +31,7 @@ class Mapping:
     """
     Maps a filename to a new destination.
 
-    Allows for dotfiles to be skipped or redirected to a target directory other than 'HOME'
+    Allows for dotfiles to be skipped, or redirected to a target directory other than 'HOME'
     """
 
     def __init__(self, match, target_dir='', skip=False):
@@ -81,7 +81,7 @@ def unable_to_remove(filename, overwrite=False):
         return False
 
     # Doesn't exist
-    if not (os.path.isdir(filename) or os.path.isdir(filename)):
+    if not (os.path.isdir(filename) or os.path.isfile(filename)):
         return False
 
     if not overwrite:
@@ -257,9 +257,6 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         # does not contain the trailing slash.
         if dest.startswith('/'):
             dest = dest[1:]
-
-        if not dest.startswith('.'):
-            dest = '.{}'.format(dest)
 
         dest = os.path.join(self.target_dir, dest)
 
