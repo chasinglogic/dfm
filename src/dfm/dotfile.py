@@ -31,18 +31,14 @@ class Mapping:
     """
     Maps a filename to a new destination.
 
-    This allows overriding of the default 'dotfile-ization' that dfm
-    does. It allows files to be skipped by dfm but tracked by git or
-    put in non-standard locations, for example VS Code configuration
-    files.
+    Allows for dotfiles to be skipped or redirected to a target directory other than 'HOME'
     """
 
-    def __init__(self, match, dest='', skip=False, link_dir=False):
+    def __init__(self, match, target_dir='', skip=False):
         self.match = match
-        self.dest = dest.replace('~', os.getenv('HOME'))
-        self.rgx = re.compile(match)
+        self.target_dir = target_dir.replace('~', os.getenv('HOME'))
         self.skip = skip
-        self.link_dir = link_dir
+        self.rgx = re.compile(match)
 
     @classmethod
     def from_dict(cls, config):
@@ -55,29 +51,24 @@ class Mapping:
 
 
 DEFAULT_MAPPINGS = [
-    Mapping(r'^[.]?config$', link_dir=True, dest=xdg_dir()),
     Mapping(
-        r'^[.]?ggitignore$',
-        dest='~/.gitignore',
-    ),
-    Mapping(
-        r'^\.git$',
+        r'\/\.git\/',
         skip=True,
     ),
     Mapping(
-        r'^\.gitignore$',
+        r'\/.gitignore$',
         skip=True,
     ),
     Mapping(
-        r'^LICENSE(\.md)?$',
+        r'\/LICENSE(\.md)?$',
         skip=True,
     ),
     Mapping(
-        r'^\.dfm\.yml$',
+        r'\/\.dfm\.yml$',
         skip=True,
     ),
     Mapping(
-        r'^README(\.md)?$',
+        r'\/README(\.md)?$',
         skip=True,
     ),
 ]
@@ -124,7 +115,13 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             'DFM_GIT_COMMIT_MSG',
             'Files managed by DFM! https://github.com/chasinglogic/dfm')
         self.name = os.path.basename(where)
-        self.files = os.listdir(where)
+
+        self.files = []
+
+        for root, dirs, files in os.walk(where):
+            dirs[:] = [d for d in dirs if d != '.git']
+            self.files += [os.path.join(root, f) for f in files]
+
         self.mappings = DEFAULT_MAPPINGS
         self.links = []
         self.hooks = {}
@@ -251,13 +248,19 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
 
     def _generate_link(self, filename):
         """Dotfile-ifies a filename"""
-        if not filename.startswith('.'):
-            dest = '.{}'.format(filename)
-        else:
-            dest = filename
-
         # Get the absolute path to src
-        src = os.path.join(self.where, filename)
+        src = os.path.abspath(filename)
+        dest = src.replace(self.where, '')
+
+        # self.where does not always contain a trailing slash
+        # This removes a leading slash from the front of dest if where
+        # does not contain the trailing slash.
+        if dest.startswith('/'):
+            dest = dest[1:]
+
+        if not dest.startswith('.'):
+            dest = '.{}'.format(dest)
+
         dest = os.path.join(self.target_dir, dest)
 
         for mapping in self.mappings:
@@ -270,26 +273,8 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             if mapping.skip:
                 return
 
-            # If it's a link_dir mapping then recursively link those
-            # files into the dest which is the new 'target_dir' for
-            # those files.
-            if mapping.link_dir:
-                for name in os.listdir(src):
-                    fullpath = os.path.join(src, name)
-                    self.links.append({
-                        'src':
-                        fullpath,
-                        'dst':
-                        os.path.join(mapping.dest, name),
-                        'target_is_directory':
-                        os.path.isdir(fullpath)
-                    })
-
-                return
-
-            # Else hardcode dest to the mapping.dest
-            dest = mapping.dest
-            break
+            # Replace self.target_dir with the mapping target_dir
+            dest = dest.replace(self.target_dir, mapping.target_dir)
 
         self.links.append({
             'src': src,
@@ -354,6 +339,13 @@ class Module(DotfileRepo):
             return
 
         super().sync()
+
+    def link(self, dry_run=False, overwrite=False):
+        """Wrap super()._generate_links"""
+        if self.link_mode == 'none':
+            return []
+
+        return super().link(dry_run=dry_run, overwrite=overwrite)
 
     @property
     def pre(self):
