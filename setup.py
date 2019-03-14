@@ -7,7 +7,7 @@ with open('README.md') as f:
 
 setup(
     name='dfm',
-    version='7.1.0',
+    version='7.2.0',
     url='https://github.com/chasinglogic/dfm',
     license='GPL-3.0',
     author='Mathew Robinson',
@@ -20,7 +20,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     platforms='any',
-    install_requires=['docopt', 'pyyaml'],
+    install_requires=['docopt', 'pyyaml==5.1'],
     entry_points={
         'console_scripts': [
             'dfm = dfm.cli:main',

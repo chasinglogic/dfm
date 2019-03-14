@@ -111,9 +111,7 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         self.config = None
         self.where = where
         self.target_dir = target_dir
-        self.commit_msg = os.getenv(
-            'DFM_GIT_COMMIT_MSG',
-            'Files managed by DFM! https://github.com/chasinglogic/dfm')
+        self.commit_msg = os.getenv('DFM_GIT_COMMIT_MSG', '')
         self.name = os.path.basename(where)
 
         self.files = []
@@ -131,7 +129,7 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             return
 
         with open(dotdfm) as dfmconfig:
-            self.config = yaml.load(dfmconfig)
+            self.config = yaml.load(dfmconfig, Loader=yaml.FullLoader)
 
         # This indicates an empty config file
         if self.config is None:
@@ -213,6 +211,9 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         try:
             return subprocess.check_output(
                 ['git', 'status', '--porcelain'], cwd=self.where)
+        # Something unexpected happened while running git so let's
+        # assume we can't run anymore git commands and skip trying to
+        # sync.
         except OSError:
             return False
 
@@ -238,6 +239,12 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
 
         dirty = self._is_dirty()
         if dirty:
+            if not self.commit_msg and self.config.get(
+                    'prompt_for_commit_message'):
+                self.commit_msg = input('Commit message: ')
+            elif not self.commit_msg:
+                self.commit_msg = 'Files managed by DFM! https://github.com/chasinglogic/dfm'
+
             self._git('add --all')
             self._git('commit -m "{}"'.format(self.commit_msg))
         self._git('pull --rebase origin master')
