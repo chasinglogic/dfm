@@ -20,7 +20,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     platforms='any',
-    install_requires=['docopt', 'pyyaml==5.1'],
+    install_requires=['docopt', 'pyyaml>=3.13'],
     entry_points={
         'console_scripts': [
             'dfm = dfm.cli:main',
