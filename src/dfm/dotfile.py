@@ -129,7 +129,11 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             return
 
         with open(dotdfm) as dfmconfig:
-            self.config = yaml.load(dfmconfig, Loader=yaml.FullLoader)
+            # This means it's a newer version of pyyaml
+            if hasattr(yaml, "FullLoader"):
+                self.config = yaml.load(dfmconfig, Loader=yaml.FullLoader)
+            else:
+                self.config = yaml.load(dfmconfig)
 
         # This indicates an empty config file
         if self.config is None:
