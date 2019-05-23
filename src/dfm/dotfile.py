@@ -6,12 +6,14 @@ import re
 import shlex
 import subprocess
 import sys
+import platform
 from shutil import rmtree
 
 import yaml
 
 logger = logging.getLogger(__name__)
 
+CUR_OS = platform.system()
 
 def xdg_dir():
     """Return the XDG_CONFIG_HOME or default."""
@@ -34,9 +36,13 @@ class Mapping:
     Allows for dotfiles to be skipped, or redirected to a target directory other than 'HOME'
     """
 
-    def __init__(self, match, target_dir='', skip=False):
+    def __init__(self, match, target_dir='', skip=False, target_os=None):
         self.match = match
         self.target_dir = target_dir.replace('~', os.getenv('HOME'))
+        if target_os is not None:
+            self.target_os = target_os
+        else:
+            self.target_os = []
         self.skip = skip
         self.rgx = re.compile(match)
 
@@ -280,6 +286,18 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             # function without adding a link to self.links
             if mapping.skip:
                 return
+
+            if mapping.target_os:
+                if isinstance(mapping.target_os, list):
+                    if CUR_OS in mapping.target_os:
+                        continue
+                    else:
+                        return
+                elif isinstance(mapping.target_os, str):
+                    if CUR_OS == mapping.target_os:
+                        continue
+                    else:
+                        return
 
             # Replace self.target_dir with the mapping target_dir
             dest = dest.replace(self.target_dir, mapping.target_dir)

@@ -13,7 +13,7 @@ A dotfile manager for lazy people and pair programmers.
   - [Pre and post command hooks](#pre-and-post-command-hooks)
   - [Respects `$XDG_CONFIG_HOME`](#respects-xdg_config_home)
   - [Skips relevant files](#skips-relevant-files)
-  - [Configurable mappings](#file-mappings)
+  - [Configurable mappings](#custom-mappings)
 - [Installation](#installation)
 - [Updating](#updating)
 - [Usage](#usage)
@@ -146,8 +146,8 @@ dfm by default will skip multiple relevant files.
 
 - .git
 
-dfm will skip .git directory your `$HOME` directory isn't turned into
-a git repository.
+dfm will skip the .git directory so your `$HOME` directory isn't
+turned into a git repository.
 
 - .gitignore
 
@@ -176,10 +176,11 @@ to extend dfm. As such dfm doesn't put it in your `$HOME` directory.
 
 ### Custom mappings
 
-The above ignores are implemented as a dfm feature called Mappings. You can
-write your own mappings to either skip or translate files to different
-locations than dfm would normally place them. You can read how to configure your
-own mappings in [Configuration](#configuration)
+The above ignores are implemented as a dfm feature called
+Mappings. You can write your own mappings to either skip, skip based
+on platform or translate files to different locations than dfm would
+normally place them. You can read how to configure your own mappings
+in [Configuration](#configuration)
 
 ## Installation
 
@@ -385,7 +386,7 @@ configuration like oh-my-zsh, etc.
 
 ```yaml
 modules:
-    - repository: git@github.com:syl20bnr/spacemacs
+    - repo: git@github.com:syl20bnr/spacemacs
       link: none
       pull_only: true
       location: ~/.emacs.d
@@ -397,14 +398,14 @@ that each module configuration supports.
 
 #### Available keys
 
-- [repository](#repository)
+- [repo](#repo)
 - [name](#name)
 - [location](#location)
 - [link](#link)
 - [pull\_only](#pull\_only)
 - [mappings](#mappings)
 
-##### repository
+##### repo
 
 Required, this is the git repository to clone for the module.
 
@@ -479,13 +480,21 @@ mappings:
     target_dir: /etc/
   - match: something_want_to_skip_but_sync
     skip: true
+  - match: something_only_for_macos
+    target_os: "Darwin"
+  - match: some_file_for_mac_and_linux_only
+    target_os:
+        - "Linux"
+        - "Darwin"
 ```
 
 Here dfm uses the match as a regular expression to match the file
 paths in your dotfile repository. When it finds a path which matches
 the regular expression it adds an alternative linking behavior. For
 anything where `skip` is true it simply skips linking. For anything
-with `target_dir` that value will override `$HOME` when linking.
+with `target_dir` that value will override `$HOME` when linking. For
+anything with a `target_os` value the file will only be linked if dfm
+is being run on the given os.
 
 #### Available configuration
 
@@ -494,6 +503,7 @@ Mappings support the following configuration options:
 - [match](#match)
 - [skip](#skip)
 - [target\_dir](#target\_dir)
+- [target\_os](#target\_os)
 
 ##### match
 
@@ -509,12 +519,20 @@ method so are by default fuzzy matching.
 
 If provided the file/s will not be linked.
 
-##### target_dir
+##### target\_dir
 
 Where to link the file to. The `~` expansion for `$HOME` is supported
 here but no other expansions are available. It is worth noting that if
 you're using `~` in your target_dir then you should probably just
 create the directory structure in your git repo.
+
+##### target\_os
+
+A string or list of strings matching the OS's to link this file
+on. A non-exhaustive list of common values are: `Linux`, `Darwin`, or
+`Windows`. This matches the string returned by [Python's
+`platform.system()`
+function.](https://docs.python.org/3/library/platform.html#platform.system)
 
 ### Hooks
 
