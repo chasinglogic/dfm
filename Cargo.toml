@@ -1,0 +1,17 @@
+[package]
+name = "dfm"
+version = "0.1.0"
+authors = ["Mathew Robinson <chasinglogic@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+regex = "*"
+serde_yaml = "*"
+walkdir = "2.2.8"
+text_io = "0.1.7"
+clap = "2.33.0"
+dirs = "2.0.1"
+
+[dependencies.serde]
+version = "*"
+features = ["derive"]

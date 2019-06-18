@@ -1,12 +1,2 @@
-*.pyc
-
-dist/
-build/
-*.egg-info/
-
-.tox/
-.coverage
-
-.venv/*
-*mypy_cache*
-.pytest_cache/*
+/target
+**/*.rs.bk
