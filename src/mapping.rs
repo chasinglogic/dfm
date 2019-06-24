@@ -148,8 +148,8 @@ skip: true
         .unwrap();
         let mapping = Mapping::from(mapping_config);
         assert!(mapping.matches(path));
-        let info = link_info_fixture(&path);
-        assert!(mapping.change(info).is_none());
+        let mut info = link_info_fixture(&path);
+        assert!(mapping.change(&mut info).is_none());
     }
 
     #[test]
@@ -175,9 +175,9 @@ target_dir: /etc
         .unwrap();
         let mapping = Mapping::from(mapping_config);
         let src = Path::new("/home/foo/.config/dfm/profile/bar/mongod.conf");
-        let info = link_info_fixture(&src);
+        let mut info = link_info_fixture(&src);
         assert!(mapping.matches(&src));
-        let new_info = mapping.change(info);
+        let new_info = mapping.change(&mut info);
         assert!(new_info.is_some());
         assert_eq!(
             new_info.unwrap().get_dst(),
@@ -188,7 +188,7 @@ target_dir: /etc
     #[test]
     fn test_target_os() {
         let src = Path::new("/home/foo/.config/dfm/profile/bar/.bashrc");
-        let info = link_info_fixture(&src);
+        let mut info = link_info_fixture(&src);
 
         let darwin_mapping_config: MappingConfig = from_str(
             "match: bashrc
@@ -200,9 +200,9 @@ target_os:
         let darwin_mapping = Mapping::from(darwin_mapping_config);
         assert!(darwin_mapping.matches(&src));
         if cfg!(target_os = "macos") {
-            assert!(darwin_mapping.change(info.clone()).is_some());
+            assert!(darwin_mapping.change(&mut info).is_some());
         } else {
-            assert!(darwin_mapping.change(info.clone()).is_none());
+            assert!(darwin_mapping.change(&mut info).is_none());
         }
 
         let linux_mapping_config: MappingConfig = from_str(
@@ -215,9 +215,9 @@ target_os:
         let linux_mapping = Mapping::from(linux_mapping_config);
         assert!(linux_mapping.matches(&src));
         if cfg!(target_os = "linux") {
-            assert!(linux_mapping.change(info.clone()).is_some());
+            assert!(linux_mapping.change(&mut info).is_some());
         } else {
-            assert!(linux_mapping.change(info.clone()).is_none());
+            assert!(linux_mapping.change(&mut info).is_none());
         }
 
         let windows_mapping_config: MappingConfig = from_str(
@@ -230,9 +230,9 @@ target_os:
         let windows_mapping = Mapping::from(windows_mapping_config);
         assert!(windows_mapping.matches(&src));
         if cfg!(target_os = "windows") {
-            assert!(windows_mapping.change(info.clone()).is_some());
+            assert!(windows_mapping.change(&mut info).is_some());
         } else {
-            assert!(windows_mapping.change(info.clone()).is_none());
+            assert!(windows_mapping.change(&mut info).is_none());
         }
 
         let unix_mapping_config: MappingConfig = from_str(
@@ -246,9 +246,9 @@ target_os:
         let unix_mapping = Mapping::from(unix_mapping_config);
         assert!(unix_mapping.matches(&src));
         if cfg!(unix) {
-            assert!(unix_mapping.change(info.clone()).is_some());
+            assert!(unix_mapping.change(&mut info).is_some());
         } else {
-            assert!(unix_mapping.change(info.clone()).is_none());
+            assert!(unix_mapping.change(&mut info).is_none());
         }
     }
 }

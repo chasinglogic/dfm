@@ -24,6 +24,9 @@ impl Hooks {
 
         for cmd in cmds.iter() {
             let mut child = process::Command::new("sh");
+            child.stdin(process::Stdio::inherit());
+            child.stdout(process::Stdio::inherit());
+            child.stderr(process::Stdio::inherit());
             child.args(vec!["-c", cmd]);
             let mut proc = child
                 .current_dir(wd)

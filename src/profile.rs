@@ -9,56 +9,68 @@ use crate::hooks::{HookConfig, Hooks};
 use crate::mapping::{MappingConfig, Mappings};
 use crate::repo::Repo;
 
+fn default_off() -> bool {
+    false
+}
+
 #[derive(Deserialize)]
 pub struct ProfileConfig {
+    #[serde(default = "String::new")]
+    target_dir: String,
+    #[serde(default = "String::new")]
     location: String,
+    #[serde(default = "default_off")]
     pull_only: bool,
+    #[serde(default = "String::new")]
     link: String,
 
-    target_dir: String,
+    #[serde(default = "String::new")]
     commit_msg: String,
+    #[serde(default = "default_off")]
     prompt_for_commit_message: bool,
-    hooks: HookConfig,
-    mappings: Vec<MappingConfig>,
-    modules: Vec<ProfileConfig>,
+    hooks: Option<HookConfig>,
+    mappings: Option<Vec<MappingConfig>>,
+    modules: Option<Vec<ProfileConfig>>,
 }
 
 impl ProfileConfig {
     pub fn default() -> ProfileConfig {
         ProfileConfig {
             location: String::new(),
-            link: "post",
+            link: "post".to_string(),
             pull_only: false,
 
             target_dir: env::var("HOME").unwrap_or("".to_string()),
             commit_msg: env::var("DFM_COMMIT_MSG").unwrap_or("".to_string()),
             prompt_for_commit_message: false,
-            hooks: HookConfig::new(),
-            mappings: Vec::new(),
-            modules: Vec::new(),
+            hooks: None,
+            mappings: None,
+            modules: None,
         }
     }
 }
 
 pub struct Profile {
+    pub hooks: Hooks,
+    pub repo: Repo,
+
     commit_msg: String,
-    hooks: Hooks,
     link_when: String,
     mappings: Mappings,
     modules: Vec<Profile>,
     prompt_for_commit_message: bool,
     pull_only: bool,
     target_dir: PathBuf,
-    repo: Repo,
 }
 
 impl Profile {
     fn from(profile_dir: &Path, mut config: ProfileConfig) -> Profile {
         let target_dir = PathBuf::from(config.target_dir);
-        let hooks = Hooks::from(config.hooks);
-        let mappings = Mappings::from(config.mappings.clone());
+        let hooks = Hooks::from(config.hooks.unwrap_or(HookConfig::new()));
+        let mappings = Mappings::from(config.mappings.unwrap_or(Vec::new()));
         let modules = config
             .modules
+            .unwrap_or(Vec::new())
             .drain(..)
             .map(|cfg| {
                 let location = cfg.location.clone();
@@ -105,7 +117,10 @@ impl Profile {
         }
 
         let input: String;
-        let msg: &str = if self.prompt_for_commit_message {
+        // TODO: show a diff when prompting
+        let msg: &str = if self.repo.is_dirty() && self.prompt_for_commit_message {
+            print!("Commit msg: ");
+            io::stdout().flush();
             input = read!("{}\n");
             &input
         } else {

@@ -14,8 +14,11 @@ impl Repo {
         }
     }
 
-    fn git(&self, cmd: &[&str]) -> Result<(), io::Error> {
+    pub fn git(&self, cmd: &[&str]) -> Result<(), io::Error> {
         let mut child = process::Command::new("git");
+        child.stdin(process::Stdio::inherit());
+        child.stdout(process::Stdio::inherit());
+        child.stderr(process::Stdio::inherit());
         let args = cmd;
         child.args(args);
         let mut proc = child.current_dir(&self.path).spawn()?;
@@ -26,7 +29,7 @@ impl Repo {
     }
 
     // TODO: would using libgit be better here / in general?
-    fn is_dirty(&self) -> bool {
+    pub fn is_dirty(&self) -> bool {
         match process::Command::new("git")
             .args(&["status", "--porcelain"])
             .output()
