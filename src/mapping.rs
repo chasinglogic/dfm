@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 use crate::link;
 
-#[derive(Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct MappingConfig {
     #[serde(rename = "match")]
     match_str: String,
@@ -16,6 +16,7 @@ pub struct MappingConfig {
     skip: Option<bool>,
 }
 
+#[derive(Debug)]
 pub struct Mapping {
     rgx: regex::Regex,
     config: MappingConfig,
@@ -34,6 +35,17 @@ impl From<MappingConfig> for Mapping {
             },
             config: cfg,
         }
+    }
+}
+
+impl From<&str> for Mapping {
+    fn from(rgx: &str) -> Mapping {
+        Mapping::from(MappingConfig {
+            match_str: rgx.to_string(),
+            skip: Some(true),
+            target_dir: None,
+            target_os: None,
+        })
     }
 }
 
@@ -75,50 +87,73 @@ impl Mapping {
     }
 }
 
+#[derive(Debug)]
 pub struct Mappings {
     mappings: Vec<Mapping>,
 }
 
 impl From<Vec<MappingConfig>> for Mappings {
     fn from(cfgs: Vec<MappingConfig>) -> Mappings {
-        Mappings {
-            mappings: cfgs.iter().map(Mapping::from).collect(),
-        }
+        let mut defaults = vec![
+            Mapping::from("/\\.git/"),
+            Mapping::from("\\.dfm\\.yml$"),
+            Mapping::from("\\.gitignore$"),
+            Mapping::from("LICENSE(\\.md)?$"),
+            Mapping::from("README(\\.md)?$"),
+        ];
+        let mut user_mappings = cfgs.iter().map(Mapping::from).collect();
+        defaults.append(&mut user_mappings);
+        Mappings { mappings: defaults }
     }
 }
 
 impl Mappings {
-    pub fn link(&self, from: &Path, target_dir: &Path) -> Result<Vec<link::Info>, io::Error> {
-        let wkd: Vec<Result<walkdir::DirEntry, walkdir::Error>> = walkdir::WalkDir::new(from)
-            .into_iter()
-            .filter_entry(|e| e.file_type().is_file())
-            .collect();
-        let mut links = Vec::with_capacity(wkd.len());
+    pub fn link(&self, from: &Path, target_dir: &Path, overwrite: bool) -> Result<Vec<link::Info>, io::Error> {
+        let mut wkd = walkdir::WalkDir::new(from).into_iter();
+        let mut links = Vec::new();
 
-        'dir: for dir_entry in wkd.iter() {
-            if let Ok(path) = dir_entry {
-                let src = path.path();
-                let mut info = link::Info::new(src, from, target_dir);
+        'dir: loop {
+            let dir_entry = match wkd.next() {
+                Some(Ok(d)) => d,
+                Some(Err(e)) => {
+                    let str_err = format!("{}", e);
+                    return Err(e
+                        .into_io_error()
+                        .unwrap_or(io::Error::new(io::ErrorKind::Other, str_err)));
+                }
+                None => return Ok(links),
+            };
 
-                for mapping in self.mappings.iter() {
-                    if !mapping.matches(src) {
-                        continue;
-                    }
+            let src = dir_entry.path();
+            let mut info = link::Info::new(src, from, target_dir);
+            info.overwrite = overwrite;
 
-                    match mapping.change(&mut info) {
-                        Some(new_info) => {
-                            info = new_info;
-                            break;
-                        }
-                        None => continue 'dir,
-                    }
+            'mapping: for mapping in self.mappings.iter() {
+                if !mapping.matches(src) {
+                    continue 'mapping;
                 }
 
-                links.push(info);
-            }
-        }
+                match mapping.change(&mut info) {
+                    Some(new_info) => {
+                        info = new_info;
+                        break 'mapping;
+                    }
+                    None => {
+                        if dir_entry.file_type().is_dir() {
+                            wkd.skip_current_dir();
+                        }
 
-        Ok(links)
+                        continue 'dir;
+                    }
+                }
+            }
+
+            if dir_entry.file_type().is_dir() {
+                continue;
+            }
+
+            links.push(info);
+        }
     }
 }
 
@@ -179,10 +214,7 @@ target_dir: /etc
         assert!(mapping.matches(&src));
         let new_info = mapping.change(&mut info);
         assert!(new_info.is_some());
-        assert_eq!(
-            new_info.unwrap().get_dst(),
-            PathBuf::from("/etc/mongod.conf")
-        );
+        assert_eq!(new_info.unwrap().dst, PathBuf::from("/etc/mongod.conf"));
     }
 
     #[test]

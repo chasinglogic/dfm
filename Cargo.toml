@@ -11,6 +11,8 @@ walkdir = "2.2.8"
 text_io = "0.1.7"
 clap = "2.33.0"
 dirs = "2.0.1"
+log = "0.4.6"
+simplelog = "0.6.0"
 
 [dependencies.serde]
 version = "*"

@@ -1,12 +1,13 @@
-use crate::util;
-use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
+use std::path::Path;
 use std::process;
 
-#[derive(Deserialize, Serialize)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct State {
     pub current_profile: String,
 }
@@ -18,8 +19,7 @@ impl State {
         }
     }
 
-    pub fn load() -> Option<State> {
-        let sf = util::state_file_p();
+    pub fn load(sf: &Path) -> Option<State> {
         let mut contents = String::new();
         match File::open(sf) {
             Ok(mut f) => {
@@ -36,8 +36,7 @@ impl State {
         }
     }
 
-    pub fn save(self) -> Result<(), io::Error> {
-        let sf = util::state_file_p();
+    pub fn save(self, sf: &Path) -> Result<(), io::Error> {
         let display = sf.display();
 
         let mut file = match File::create(&sf) {

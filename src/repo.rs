@@ -2,7 +2,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process;
 
-// TODO: module support
+#[derive(Debug)]
 pub struct Repo {
     pub path: PathBuf,
 }
@@ -32,9 +32,13 @@ impl Repo {
     pub fn is_dirty(&self) -> bool {
         match process::Command::new("git")
             .args(&["status", "--porcelain"])
+            .current_dir(&self.path)
             .output()
         {
-            Ok(proc) => std::str::from_utf8(&proc.stdout).unwrap_or("") != "",
+            Ok(proc) => {
+                let output = std::str::from_utf8(&proc.stdout).unwrap_or("");
+                output != ""
+            }
             Err(_) => false,
         }
     }

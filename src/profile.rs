@@ -5,6 +5,8 @@ use std::io;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
+use log::debug;
+
 use crate::hooks::{HookConfig, Hooks};
 use crate::mapping::{MappingConfig, Mappings};
 use crate::repo::Repo;
@@ -50,9 +52,11 @@ impl ProfileConfig {
     }
 }
 
+#[derive(Debug)]
 pub struct Profile {
     pub hooks: Hooks,
     pub repo: Repo,
+    pub target_dir: PathBuf,
 
     commit_msg: String,
     link_when: String,
@@ -60,12 +64,15 @@ pub struct Profile {
     modules: Vec<Profile>,
     prompt_for_commit_message: bool,
     pull_only: bool,
-    target_dir: PathBuf,
 }
 
 impl Profile {
-    fn from(profile_dir: &Path, mut config: ProfileConfig) -> Profile {
-        let target_dir = PathBuf::from(config.target_dir);
+    fn from(profile_dir: &Path, config: ProfileConfig) -> Profile {
+        let target_dir = if config.target_dir != "" {
+            PathBuf::from(config.target_dir)
+        } else {
+            PathBuf::from(env::var("HOME").unwrap_or("".to_string()))
+        };
         let hooks = Hooks::from(config.hooks.unwrap_or(HookConfig::new()));
         let mappings = Mappings::from(config.mappings.unwrap_or(Vec::new()));
         let modules = config
@@ -73,8 +80,12 @@ impl Profile {
             .unwrap_or(Vec::new())
             .drain(..)
             .map(|cfg| {
-                let location = cfg.location.clone();
-                Profile::from(Path::new(&location), cfg)
+                let location = cfg
+                    .location
+                    .clone()
+                    .replace("~", &env::var("HOME").unwrap_or("".to_string()));
+                let path = Path::new(&location);
+                Profile::from(path, cfg)
             })
             .collect();
         Profile {
@@ -88,6 +99,14 @@ impl Profile {
             target_dir: target_dir,
             repo: Repo::new(profile_dir),
         }
+    }
+
+    pub fn set_commit_msg(&mut self, msg: &str) {
+        self.commit_msg = msg.to_string();
+    }
+
+    pub fn set_prompt(&mut self, prompt: bool) {
+        self.prompt_for_commit_message = prompt;
     }
 
     pub fn load(profile_dir: &Path) -> Result<Profile, io::Error> {
@@ -110,17 +129,21 @@ impl Profile {
     }
 
     pub fn sync(&self) -> Result<(), io::Error> {
+        debug!("running pre sync hooks");
         self.hooks.pre(&self.repo.path, "sync")?;
 
         for module in self.modules.iter().filter(|p| p.link_when == "pre") {
+            debug!("syncing module: {:?}", module);
             module.sync()?;
         }
 
+        println!("\n{}:", self.repo.path.display());
         let input: String;
         // TODO: show a diff when prompting
         let msg: &str = if self.repo.is_dirty() && self.prompt_for_commit_message {
+            self.repo.git(&["diff"])?;
             print!("Commit msg: ");
-            io::stdout().flush();
+            io::stdout().flush().expect("unable to flush stdout");
             input = read!("{}\n");
             &input
         } else {
@@ -129,20 +152,42 @@ impl Profile {
         self.repo.sync(msg, self.pull_only)?;
 
         for module in self.modules.iter().filter(|p| p.link_when != "pre") {
+            debug!("syncing module: {:?}", module);
             module.sync()?;
         }
 
+        debug!("running post sync hooks");
         self.hooks.post(&self.repo.path, "sync")?;
         Ok(())
     }
 
-    pub fn link(&self) -> Result<(), io::Error> {
+    pub fn init(&self) -> Result<(), io::Error> {
+        self.repo.git(&["init"])
+    }
+
+    pub fn link(&self, overwrite: bool) -> Result<(), io::Error> {
         self.hooks.pre(&self.repo.path, "link")?;
         let target_dir = Path::new(&self.target_dir);
-        let links = self.mappings.link(&self.repo.path, target_dir)?;
+        for module in self.modules.iter().filter(|p| p.link_when == "pre") {
+            debug!("linking module: {:?}", module);
+            module.link(overwrite)?;
+        }
+
+        debug!("target directory: {}", target_dir.display());
+        // doesn't link modules?
+        let links = self
+            .mappings
+            .link(&self.repo.path, &target_dir, overwrite)?;
         for link in links.iter() {
+            debug!("link {} => {}", link.src.display(), link.dst.display());
             link.link()?;
         }
+
+        for module in self.modules.iter().filter(|p| p.link_when != "pre") {
+            debug!("linking module: {:?}", module);
+            module.link(overwrite)?;
+        }
+
         self.hooks.post(&self.repo.path, "link")?;
         Ok(())
     }
