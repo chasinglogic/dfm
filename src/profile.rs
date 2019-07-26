@@ -54,8 +54,8 @@ impl ProfileConfig {
             link: "post".to_string(),
             pull_only: false,
 
-            target_dir: env::var("HOME").unwrap_or("".to_string()),
-            commit_msg: env::var("DFM_COMMIT_MSG").unwrap_or("".to_string()),
+            target_dir: env::var("HOME").unwrap_or_default(),
+            commit_msg: env::var("DFM_COMMIT_MSG").unwrap_or_default(),
             prompt_for_commit_message: false,
             hooks: None,
             mappings: None,
@@ -83,32 +83,33 @@ impl Profile {
         let target_dir = if config.target_dir != "" {
             PathBuf::from(config.target_dir)
         } else {
-            PathBuf::from(env::var("HOME").unwrap_or("".to_string()))
+            PathBuf::from(env::var("HOME").unwrap_or_default())
         };
-        let hooks = Hooks::from(config.hooks.unwrap_or(HookConfig::new()));
-        let mappings = Mappings::from(config.mappings.unwrap_or(Vec::new()));
+        let hooks = Hooks::from(config.hooks.unwrap_or_default());
+        let mappings = Mappings::from(config.mappings.unwrap_or_default());
         let modules = config
             .modules
-            .unwrap_or(Vec::new())
+            .unwrap_or_default()
             .drain(..)
             .map(|cfg| {
                 let location = cfg
                     .location
                     .clone()
-                    .replace("~", &env::var("HOME").unwrap_or("".to_string()));
+                    .replace("~", &env::var("HOME").unwrap_or_default());
                 let path = Path::new(&location);
                 Profile::from(path, cfg)
             })
             .collect();
         Profile {
+            mappings,
+            modules,
+            target_dir,
+            hooks,
+
             commit_msg: config.commit_msg,
-            hooks: hooks,
             link_when: config.link,
-            mappings: mappings,
-            modules: modules,
             prompt_for_commit_message: config.prompt_for_commit_message,
             pull_only: config.pull_only,
-            target_dir: target_dir,
             repo: Repo::new(profile_dir),
         }
     }

@@ -9,7 +9,7 @@ extern crate log;
 extern crate simplelog;
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process;
 
 use clap::{App, AppSettings, Arg, SubCommand};
@@ -158,12 +158,12 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
         ("add", Some(args)) => {
             let profile = util::load_profile(
                 args.value_of("profile")
-                    .unwrap_or(state.current_profile.as_str()),
+                    .unwrap_or_else(|| state.current_profile.as_str()),
                 &cfd,
             );
             let profile_dir = util::profile_dir(
                 args.value_of("profile")
-                    .unwrap_or(state.current_profile.as_str()),
+                    .unwrap_or_else(|| state.current_profile.as_str()),
                 &cfd,
             );
 
@@ -223,21 +223,18 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
             child.stderr(process::Stdio::inherit());
             child.args(&["clone", repo, &new_profile_dir.to_string_lossy()]);
             let mut proc = child.spawn().expect("Unable to run git clone");
-            if let Err(_) = proc.wait() {
+            if proc.wait().is_err() {
                 process::exit(1)
             };
         }
         ("git", Some(args)) => {
             let profile = util::load_profile(
                 args.value_of("profile")
-                    .unwrap_or(state.current_profile.as_str()),
+                    .unwrap_or_else(|| state.current_profile.as_str()),
                 &cfd,
             );
 
-            let cmd: Vec<&str> = args
-                .values_of("cmd")
-                .unwrap_or(clap::Values::default())
-                .collect();
+            let cmd: Vec<&str> = args.values_of("cmd").unwrap_or_default().collect();
             if let Err(e) = profile.repo.git(&cmd) {
                 println!("Unexpected error: {}", e);
                 process::exit(1);
@@ -254,7 +251,7 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
         ("link", Some(args)) => {
             let name = args
                 .value_of("profile")
-                .unwrap_or(state.current_profile.as_str());
+                .unwrap_or_else(|| state.current_profile.as_str());
             let profile = util::load_profile(name, &cfd);
 
             if let Err(e) = profile.link(args.is_present("overwrite")) {
@@ -271,7 +268,7 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
         ("run-hook", Some(args)) => {
             let profile = util::load_profile(
                 args.value_of("profile")
-                    .unwrap_or(state.current_profile.as_str()),
+                    .unwrap_or_else(|| state.current_profile.as_str()),
                 &cfd,
             );
 
@@ -289,7 +286,7 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
         ("sync", Some(args)) => {
             let mut profile = util::load_profile(
                 args.value_of("profile")
-                    .unwrap_or(state.current_profile.as_str()),
+                    .unwrap_or_else(|| state.current_profile.as_str()),
                 &cfd,
             );
 
@@ -310,7 +307,7 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
         ("where", Some(args)) => {
             let profile_dir = util::profile_dir(
                 args.value_of("profile")
-                    .unwrap_or(state.current_profile.as_str()),
+                    .unwrap_or_else(|| state.current_profile.as_str()),
                 &cfd,
             );
             println!("{}", profile_dir.display());
@@ -318,7 +315,7 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
         ("remove", Some(args)) => {
             let dir = util::profile_dir(
                 args.value_of("profile")
-                    .unwrap_or(state.current_profile.as_str()),
+                    .unwrap_or_else(|| state.current_profile.as_str()),
                 &cfd,
             );
 

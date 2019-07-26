@@ -108,7 +108,12 @@ impl From<Vec<MappingConfig>> for Mappings {
 }
 
 impl Mappings {
-    pub fn link(&self, from: &Path, target_dir: &Path, overwrite: bool) -> Result<Vec<link::Info>, io::Error> {
+    pub fn link(
+        &self,
+        from: &Path,
+        target_dir: &Path,
+        overwrite: bool,
+    ) -> Result<Vec<link::Info>, io::Error> {
         let mut wkd = walkdir::WalkDir::new(from).into_iter();
         let mut links = Vec::new();
 
@@ -119,7 +124,7 @@ impl Mappings {
                     let str_err = format!("{}", e);
                     return Err(e
                         .into_io_error()
-                        .unwrap_or(io::Error::new(io::ErrorKind::Other, str_err)));
+                        .unwrap_or_else(|| io::Error::new(io::ErrorKind::Other, str_err)));
                 }
                 None => return Ok(links),
             };

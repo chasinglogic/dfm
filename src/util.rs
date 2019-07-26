@@ -18,7 +18,7 @@ pub fn xdg_dir() -> PathBuf {
     match env::var("XDG_CONFIG_HOME") {
         Ok(path) => PathBuf::from(path),
         Err(_) => {
-            let home = env::var("HOME").unwrap_or("".to_string());
+            let home = env::var("HOME").unwrap_or_default();
             let mut home_p = PathBuf::from(home);
             home_p.push(".config");
             home_p
@@ -76,6 +76,11 @@ pub fn load_profile(name: &str, cfd: &Path) -> Profile {
         process::exit(1);
     }
 
-    // TODO: handle error better
-    Profile::load(&dir).expect(&format!("Unable to load profile: {}", name))
+    match Profile::load(&dir) {
+        Ok(p) => p,
+        Err(e) => {
+            println!("Unable to load profile {}: {}", name, e);
+            process::exit(1);
+        }
+    }
 }

@@ -1,5 +1,5 @@
-use std::io;
 use std::fs::{remove_file, symlink_metadata};
+use std::io;
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 
@@ -36,22 +36,24 @@ impl Info {
         match symlink_metadata(&self.dst) {
             Ok(metadata) => {
                 if metadata.file_type().is_file() && !self.overwrite {
-                    println!("File {} already exists, refusing to remove without --overwrite", self.dst.display());
+                    println!(
+                        "File {} already exists, refusing to remove without --overwrite",
+                        self.dst.display()
+                    );
                     // While we want to report to the user we did
                     // nothing we don't want to stop execution of the
                     // program so report an Ok result.
-                    return Ok(())
+                    return Ok(());
                 }
 
                 remove_file(&self.dst)?;
-            },
-            Err(e) => match e.kind() {
-                // if the user doesn't have read access to the file
-                // this should be fatal
-                io::ErrorKind::PermissionDenied => {
+            }
+            // if the user doesn't have read access to the file
+            // this should be fatal
+            Err(e) => {
+                if let io::ErrorKind::PermissionDenied = e.kind() {
                     return Err(e);
-                },
-                _ => (),
+                }
             }
         };
 

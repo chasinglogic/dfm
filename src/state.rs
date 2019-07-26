@@ -23,7 +23,7 @@ impl State {
         let mut contents = String::new();
         match File::open(sf) {
             Ok(mut f) => {
-                if let Err(_) = f.read_to_string(&mut contents) {
+                if f.read_to_string(&mut contents).is_err() {
                     return None;
                 };
 
