@@ -11,7 +11,8 @@ function cleanup() {
     fi
 
     if [[ -n $1 ]]; then
-        log "Test failed, printing environment:"
+        log "\e[31mTEST FAILURE\e[0m"
+        log "Test Environment:"
         log "\tHOME_DIR   = $HOME_DIR"
         log "\tCONFIG_DIR = $CONFIG_DIR"
         log "\tDFM        = $DFM_BIN"
@@ -116,6 +117,12 @@ function dfm_init_test() {
 
     x init $PROFILE_NAME
     x link $PROFILE_NAME
+
+    if [[ $(x list) != "integration\n" ]]; then
+        log "expected list to show integration profile, got:"
+        log $(x list)
+        cleanup 1
+    fi
 
     echo "a dotfile" > $HOME_DIR/.dotfile
 
