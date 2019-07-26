@@ -44,6 +44,7 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
                 .short("c")
                 .takes_value(true),
         )
+        .arg(Arg::with_name("verbose").long("verbose").takes_value(false))
         .subcommand(
             SubCommand::with_name("sync")
                 .alias("s")
@@ -94,6 +95,7 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
                     Arg::with_name("name")
                         .long("name")
                         .short("n")
+                        .required(true)
                         .takes_value(true),
                 )
                 .arg(
@@ -153,6 +155,11 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
         Some(s) => s,
         None => state::State::default(),
     };
+
+    if matches.is_present("verbose") {
+        simplelog::SimpleLogger::init(simplelog::LevelFilter::Debug, simplelog::Config::default())
+            .unwrap();
+    }
 
     match matches.subcommand() {
         ("add", Some(args)) => {
