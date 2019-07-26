@@ -16,7 +16,7 @@ pub struct MappingConfig {
     skip: Option<bool>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Mapping {
     rgx: regex::Regex,
     config: MappingConfig,
@@ -87,7 +87,7 @@ impl Mapping {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Mappings {
     mappings: Vec<Mapping>,
 }

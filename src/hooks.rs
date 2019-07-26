@@ -5,7 +5,7 @@ use std::process;
 
 pub type HookConfig = HashMap<String, Vec<String>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Hooks {
     config: HookConfig,
 }

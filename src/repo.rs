@@ -2,7 +2,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Repo {
     pub path: PathBuf,
 }

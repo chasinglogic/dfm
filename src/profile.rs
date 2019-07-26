@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use std::env;
+use std::fmt;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
@@ -10,6 +11,17 @@ use log::debug;
 use crate::hooks::{HookConfig, Hooks};
 use crate::mapping::{MappingConfig, Mappings};
 use crate::repo::Repo;
+
+pub struct Error {
+    profile: Profile,
+    error: io::Error,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.profile.repo.path.display(), self.error)
+    }
+}
 
 fn default_off() -> bool {
     false
@@ -52,7 +64,7 @@ impl ProfileConfig {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Profile {
     pub hooks: Hooks,
     pub repo: Repo,
@@ -128,9 +140,9 @@ impl Profile {
         Ok(Profile::from(profile_dir, config))
     }
 
-    pub fn sync(&self) -> Result<(), io::Error> {
+    pub fn sync(&self) -> Result<(), Error> {
         debug!("running pre sync hooks");
-        self.hooks.pre(&self.repo.path, "sync")?;
+        self.run_hooks("pre", "sync")?;
 
         for module in self.modules.iter().filter(|p| p.link_when == "pre") {
             debug!("syncing module: {:?}", module);
@@ -141,7 +153,7 @@ impl Profile {
         let input: String;
         // TODO: show a diff when prompting
         let msg: &str = if self.repo.is_dirty() && self.prompt_for_commit_message {
-            self.repo.git(&["diff"])?;
+            self.git(&["diff"])?;
             print!("Commit msg: ");
             io::stdout().flush().expect("unable to flush stdout");
             input = read!("{}\n");
@@ -149,7 +161,13 @@ impl Profile {
         } else {
             &self.commit_msg
         };
-        self.repo.sync(msg, self.pull_only)?;
+
+        if let Err(e) = self.repo.sync(msg, self.pull_only) {
+            return Err(Error {
+                profile: self.clone(),
+                error: e,
+            });
+        };
 
         for module in self.modules.iter().filter(|p| p.link_when != "pre") {
             debug!("syncing module: {:?}", module);
@@ -157,38 +175,80 @@ impl Profile {
         }
 
         debug!("running post sync hooks");
-        self.hooks.post(&self.repo.path, "sync")?;
+        self.run_hooks("post", "sync")?;
         Ok(())
     }
 
-    pub fn init(&self) -> Result<(), io::Error> {
-        self.repo.git(&["init"])
+    pub fn init(&self) -> Result<(), Error> {
+        self.git(&["init"])
     }
 
-    pub fn link(&self, overwrite: bool) -> Result<(), io::Error> {
-        self.hooks.pre(&self.repo.path, "link")?;
+    pub fn link(&self, overwrite: bool) -> Result<(), Error> {
+        if self.link_when == "none" {
+            return Ok(());
+        }
+
+        self.run_hooks("pre", "link")?;
         let target_dir = Path::new(&self.target_dir);
         for module in self.modules.iter().filter(|p| p.link_when == "pre") {
-            debug!("linking module: {:?}", module);
+            debug!("linking module: {}", module.repo.path.display());
             module.link(overwrite)?;
         }
 
         debug!("target directory: {}", target_dir.display());
         // doesn't link modules?
-        let links = self
-            .mappings
-            .link(&self.repo.path, &target_dir, overwrite)?;
+        let links = match self.mappings.link(&self.repo.path, &target_dir, overwrite) {
+            Ok(links) => links,
+            Err(e) => {
+                return Err(Error {
+                    profile: self.clone(),
+                    error: e,
+                })
+            }
+        };
         for link in links.iter() {
             debug!("link {} => {}", link.src.display(), link.dst.display());
-            link.link()?;
+            if let Err(e) = link.link() {
+                return Err(Error {
+                    profile: self.clone(),
+                    error: e,
+                });
+            };
         }
 
         for module in self.modules.iter().filter(|p| p.link_when != "pre") {
-            debug!("linking module: {:?}", module);
+            debug!("linking module: {}", module.repo.path.display());
             module.link(overwrite)?;
         }
 
-        self.hooks.post(&self.repo.path, "link")?;
+        self.run_hooks("post", "link")?;
+        Ok(())
+    }
+
+    fn run_hooks(&self, when: &str, name: &str) -> Result<(), Error> {
+        let res = if when == "pre" {
+            self.hooks.pre(&self.repo.path, name)
+        } else {
+            self.hooks.post(&self.repo.path, name)
+        };
+
+        match res {
+            Err(e) => Err(Error {
+                profile: self.clone(),
+                error: e,
+            }),
+            Ok(_) => Ok(()),
+        }
+    }
+
+    fn git(&self, cmd: &[&str]) -> Result<(), Error> {
+        if let Err(e) = self.repo.git(cmd) {
+            return Err(Error {
+                profile: self.clone(),
+                error: e,
+            });
+        }
+
         Ok(())
     }
 }
