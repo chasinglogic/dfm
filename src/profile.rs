@@ -69,13 +69,13 @@ pub struct Profile {
     pub hooks: Hooks,
     pub repo: Repo,
     pub target_dir: PathBuf,
+    pub pull_only: bool,
 
     commit_msg: String,
     link_when: String,
     mappings: Mappings,
     modules: Vec<Profile>,
     prompt_for_commit_message: bool,
-    pull_only: bool,
 }
 
 impl Profile {

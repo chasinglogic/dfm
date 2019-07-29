@@ -73,6 +73,12 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
                         .short("p")
                         .help("The profile to operate on"),
                 )
+                .arg(
+                    Arg::with_name("no-git")
+                        .long("no-git")
+                        .short("n")
+                        .help("Skip all git operations for this add"),
+                )
                 .arg(Arg::with_name("file").multiple(true)),
         )
         .subcommand(
@@ -139,7 +145,13 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
             SubCommand::with_name("run-hook")
                 .alias("rh")
                 .about("Run dfm hooks without runnign the associated command")
-                .arg(Arg::with_name("profile").long("profile").short("p")),
+                .arg(
+                    Arg::with_name("profile")
+                        .long("profile")
+                        .short("p")
+                        .takes_value(true),
+                )
+                .arg(Arg::with_name("hook-name").takes_value(true)),
         )
         .subcommand(
             SubCommand::with_name("where")
@@ -175,6 +187,7 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
             );
 
             let files = args.values_of("file").unwrap();
+            let mut auto_msg = String::new();
             for file in files {
                 let fp = Path::new(file);
                 let new_file = match fp.strip_prefix(&profile.target_dir) {
@@ -199,15 +212,20 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
                     println!("unable to remove {}: {}", fp.display(), e);
                     process::exit(1);
                 }
+
+                auto_msg.push_str(&format!("added: {}\n", new_file.display()));
             }
 
             if let Err(e) = profile.link(false) {
-                println!(
-                    "Error linking profile {}: {}",
-                    profile.repo.path.display(),
-                    e
-                );
+                println!("Error linking profile: {}", e);
                 process::exit(1);
+            }
+
+            if !args.is_present("no-git") {
+                if let Err(e) = profile.repo.sync(&auto_msg, profile.pull_only) {
+                    println!("Error committing changes: {}", e);
+                    process::exit(1);
+                }
             }
         }
         ("init", Some(args)) => {

@@ -43,6 +43,20 @@ impl Repo {
         }
     }
 
+    fn has_remote(&self) -> bool {
+        match process::Command::new("git")
+            .args(&["remote", "--verbose"])
+            .current_dir(&self.path)
+            .output()
+        {
+            Ok(proc) => {
+                let output = std::str::from_utf8(&proc.stdout).unwrap_or_default();
+                output.contains("origin")
+            }
+            Err(_) => false,
+        }
+    }
+
     pub fn sync(&self, msg: &str, pull_only: bool) -> Result<(), io::Error> {
         let repo_is_dirty = self.is_dirty();
         if repo_is_dirty && !pull_only {
@@ -50,10 +64,12 @@ impl Repo {
             self.git(&["commit", "--message", &msg])?;
         }
 
-        self.git(&["pull", "--rebase", "origin", "master"])?;
+        if self.has_remote() {
+            self.git(&["pull", "--rebase", "origin", "master"])?;
 
-        if repo_is_dirty && !pull_only {
-            self.git(&["push", "origin", "master"])?;
+            if repo_is_dirty && !pull_only {
+                self.git(&["push", "origin", "master"])?;
+            }
         }
 
         Ok(())
