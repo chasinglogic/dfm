@@ -150,7 +150,7 @@ impl Profile {
             module.sync()?;
         }
 
-        println!("\n{}:", self.repo.path.display());
+        println!("{}:", self.repo.path.display());
         let input: String;
         // TODO: show a diff when prompting
         let msg: &str = if self.repo.is_dirty() && self.prompt_for_commit_message {
@@ -169,6 +169,9 @@ impl Profile {
                 error: e,
             });
         };
+
+        // Print a newline after sync to separate git output from repo path.
+        println!("");
 
         for module in self.modules.iter().filter(|p| p.link_when != "pre") {
             debug!("syncing module: {:?}", module);
