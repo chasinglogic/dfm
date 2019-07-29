@@ -1,5 +1,15 @@
 #!/bin/bash
 
+function filetime() {
+    local FILETIME
+    if [[ $(uname) == "Darwin" ]]; then
+        FILETIME=$(stat -t %s -f %m $1)
+    else
+        FILETIME=$(stat $1 -c %Y)
+    fi
+    echo "$FILETIME"
+}
+
 function log() {
     echo -e "[$(date)]" $@
 }
@@ -11,21 +21,29 @@ function cleanup() {
     fi
 
     if [[ -n $1 ]]; then
-        log "\e[31mTEST FAILURE\e[0m"
-        log "Test Environment:"
-        log "\tHOME_DIR   = $HOME_DIR"
-        log "\tCONFIG_DIR = $CONFIG_DIR"
-        log "\tDFM        = $DFM_BIN"
         exit $1
     fi
 }
 
+function fail() {
+    log "\e[31mTest Failure:\e[0m $@"
+    log "Failing command:"
+    log "\t$LAST_CMD"
+    log "Test Environment:"
+    log "\tHOME_DIR   = $HOME_DIR"
+    log "\tCONFIG_DIR = $CONFIG_DIR"
+    log "\tDFM        = $DFM_BIN"
+    cleanup 1
+}
+
+LAST_CMD=""
+
 function x() {
-    $DFM_BIN --config-dir $CONFIG_DIR $@
+    LAST_CMD="$DFM_BIN --config-dir $CONFIG_DIR $@"
+    $LAST_CMD
     if [[ $? != 0 ]]; then
         FAILED_CODE=$?
-        log "Failed to run:"
-        log "\tHOME=$HOME_DIR $DFM_BIN --config-dir $CONFIG_DIR $@"
+        fail "Non-zero exit code"
 
         if [[ $DEBUG_ON_ERROR == true ]]; then
             rust-lldb -- $@
@@ -62,34 +80,28 @@ function dfm_clone_test() {
     x clone --name $PROFILE_NAME $PROFILE_REPO
     x link $PROFILE_NAME
 
-    dotfiles=(.dotfile)
-    for file in $dotfiles; do
-        if [[ ! -f $HOME_DIR/$file ]]; then
-            log "Missing file: $HOME_DIR/$file" 
-            log "Failed command:"
-            log "\tHOME=$HOME_DIR $DFM_BIN --config-dir $CONFIG_DIR link $PROFILE_NAME"
-            cleanup 1
-        fi
-    done
-
     dotfiles=(.dotfile after_link_ran before_link_ran)
     for file in $dotfiles; do
         local full_path=$HOME_DIR/$file
         if [[ ! -e $full_path ]]; then
-            log "$full_path should exist and does not"
-            exit 1
+            fail "$full_path should exist and does not"
         fi
     done
 
     skipped_dotfiles=(.dfm.yml .git .gitignore LICENSE.md README.md)
     for file in $skipped_dotfiles; do
         if [[ -e $HOME_DIR/$file ]]; then
-            log "Found file that should have been skipped: $HOME_DIR/$file" 
-            log "Failed command:"
-            log "\tHOME=$HOME_DIR $DFM_BIN --config-dir $CONFIG_DIR link $PROFILE_NAME"
-            cleanup 1
+            fail "Found file that should have been skipped: $HOME_DIR/$file" 
         fi
     done
+
+    CURTIME=$(filetime $HOME_DIR/after_link_ran)
+    x run-hook after_link
+    NOWTIME=$(filetime $HOME_DIR/after_link_ran)
+    TIMEDIFF=$(expr $CURTIME - $NOWTIME)
+    if [[ $TIMEDIFF -gt 0 ]]; then
+        fail "$HOME_DIR/after_link_ran was expected to be newer than $CURTIME got $NOWTIME"
+    fi
 
     log "clone and link test -- SUCCESS"
     cleanup
@@ -118,28 +130,32 @@ function dfm_init_test() {
     x init $PROFILE_NAME
     x link $PROFILE_NAME
 
-    if [[ $(x list) != "integration\n" ]]; then
-        log "expected list to show integration profile, got:"
-        log $(x list)
-        cleanup 1
+    LIST_OUTPUT=$(x list)
+    if [[ $LIST_OUTPUT != "$PROFILE_NAME" ]]; then
+        fail "expected list to show integration profile, got: $LIST_OUTPUT"
     fi
 
     echo "a dotfile" > $HOME_DIR/.dotfile
 
-    x add $HOME_DIR/.dotfile
+    x add --no-git $HOME_DIR/.dotfile
 
     local fp="$CONFIG_DIR/dfm/profiles/$PROFILE_NAME/.dotfile"
     if [[ ! -f $fp ]]; then
-        log "expected $fp to be a file and is not." 
-        cleanup 1
+        fail "expected $fp to be a file and is not." 
     fi
 
     if [[ ! -L $HOME_DIR/.dotfile ]]; then
-        log "expected $HOME_DIR/.dotfile to be a link and is not."
-        cleanup 1
+        fail "expected $HOME_DIR/.dotfile to be a link and is not."
     fi
 
-    log "init and add test -- SUCCESS"
+    OUTPUT=$(x git status --porcelain)
+    if [[ $OUTPUT != "?? .dotfile" ]]; then
+        fail "expected $DFM_BIN git status --porcelain to succeed and return ?? .dotfile got: $OUTPUT"
+    fi
+
+    x remove $PROFILE_NAME 
+
+    log "init, add, and remove test -- SUCCESS"
     cleanup
 }
 
