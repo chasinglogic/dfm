@@ -13,6 +13,7 @@ use std::path::Path;
 use std::process;
 
 use clap::{App, AppSettings, Arg, SubCommand};
+use log::debug;
 
 mod hooks;
 mod link;
@@ -189,25 +190,34 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
             let files = args.values_of("file").unwrap();
             let mut auto_msg = String::new();
             for file in files {
-                let fp = Path::new(file);
-                let new_file = match fp.strip_prefix(&profile.target_dir) {
-                    Ok(f) => f,
-                    Err(_) => {
-                        println!("file does not belong to profile's target dir, cannot add automatically");
+                let fp = match Path::new(file).canonicalize() {
+                    Ok(p) => p,
+                    Err(e) => {
+                        println!("unable to canonicalize path: {}", e);
                         process::exit(1);
                     }
                 };
+
+                let new_file = match fp.strip_prefix(&profile.target_dir) {
+                    Ok(f) => f,
+                    Err(e) => {
+                        println!("file does not belong to profile's target dir, cannot add automatically");
+                        debug!("{}", e);
+                        process::exit(1);
+                    }
+                };
+
                 let mut pd = profile_dir.clone();
                 pd.push(new_file);
-                if let Err(e) = fs::copy(fp, &pd) {
+                if let Err(e) = fs::copy(&fp, &pd) {
                     println!("unable to copy {} to {}: {}", fp.display(), pd.display(), e);
                     process::exit(1);
                 }
 
                 if let Err(e) = if fp.is_dir() {
-                    fs::remove_dir_all(fp)
+                    fs::remove_dir_all(&fp)
                 } else {
-                    fs::remove_file(fp)
+                    fs::remove_file(&fp)
                 } {
                     println!("unable to remove {}: {}", fp.display(), e);
                     process::exit(1);
