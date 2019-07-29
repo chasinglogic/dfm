@@ -1,0 +1,4 @@
+language: rust
+script:
+  - cargo test
+  - ./scripts/integration_test.sh -b ./target/debug/dfm -c
