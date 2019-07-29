@@ -1,6 +1,6 @@
 [package]
 name = "dfm"
-version = "0.1.0"
+version = "8.0.0"
 authors = ["Mathew Robinson <chasinglogic@gmail.com>"]
 edition = "2018"
 
