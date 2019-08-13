@@ -5,6 +5,20 @@ use std::process;
 
 use crate::profile::Profile;
 
+pub fn default_profile_name(path_or_url: &str) -> String {
+    let mut elems = if path_or_url.starts_with("git") {
+        path_or_url.split('/').next().unwrap_or_default().split(':')
+    } else {
+        path_or_url.split('/')
+    };
+
+    if path_or_url.starts_with("http") {
+        elems.next_back();
+    };
+
+    elems.next_back().unwrap_or_default().to_string()
+}
+
 pub fn ensure_exists(p: &Path) {
     if !p.exists() {
         if let Err(e) = create_dir_all(p) {
@@ -82,5 +96,26 @@ pub fn load_profile(name: &str, cfd: &Path) -> Profile {
             println!("Unable to load profile {}: {}", name, e);
             process::exit(1);
         }
+    }
+}
+
+#[cfg(test)]
+pub mod test {
+    use super::*;
+
+    #[test]
+    fn test_profile_name() {
+        assert_eq!(
+            "chasinglogic",
+            default_profile_name("git@github.com:chasinglogic/dotfiles")
+        );
+        assert_eq!(
+            "chasinglogic",
+            default_profile_name("https://github.com/chasinglogic/dotfiles")
+        );
+        assert_eq!(
+            "secrets",
+            default_profile_name("keybase://private/chasinglogic/secrets")
+        );
     }
 }

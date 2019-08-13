@@ -8,10 +8,23 @@ pub struct Repo {
 }
 
 impl Repo {
-    pub fn new(path: &Path) -> Repo {
-        Repo {
-            path: path.to_path_buf(),
+    pub fn new(path: &Path, url: &str) -> Result<Repo, io::Error> {
+        let pb = path.to_path_buf();
+        if !pb.exists() {
+            let mut child = process::Command::new("git");
+            child.stdin(process::Stdio::inherit());
+            child.stdout(process::Stdio::inherit());
+            child.stderr(process::Stdio::inherit());
+            child.args(&["clone", url, &path.to_string_lossy()]);
+            let mut proc = child.spawn()?;
+            if let Err(e) = proc.wait() {
+                return Err(e);
+            }
         }
+
+        Ok(Repo {
+            path: path.to_path_buf(),
+        })
     }
 
     pub fn git(&self, cmd: &[&str]) -> Result<(), io::Error> {

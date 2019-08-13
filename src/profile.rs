@@ -11,15 +11,16 @@ use log::debug;
 use crate::hooks::{HookConfig, Hooks};
 use crate::mapping::{MappingConfig, Mappings};
 use crate::repo::Repo;
+use crate::util;
 
 pub struct Error {
-    profile: Profile,
+    profile_path: PathBuf,
     error: io::Error,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {}", self.profile.repo.path.display(), self.error)
+        write!(f, "{}: {}", self.profile_path.display(), self.error)
     }
 }
 
@@ -29,6 +30,8 @@ fn default_off() -> bool {
 
 #[derive(Deserialize)]
 pub struct ProfileConfig {
+    #[serde(default = "String::new")]
+    repo: String,
     #[serde(default = "String::new")]
     target_dir: String,
     #[serde(default = "String::new")]
@@ -50,6 +53,7 @@ pub struct ProfileConfig {
 impl ProfileConfig {
     pub fn default() -> ProfileConfig {
         ProfileConfig {
+            repo: String::new(),
             location: String::new(),
             link: "post".to_string(),
             pull_only: false,
@@ -79,7 +83,7 @@ pub struct Profile {
 }
 
 impl Profile {
-    fn from(profile_dir: &Path, config: ProfileConfig) -> Profile {
+    fn from(profile_dir: &Path, config: ProfileConfig) -> Result<Profile, Error> {
         let target_dir = if config.target_dir != "" {
             PathBuf::from(config.target_dir)
         } else {
@@ -87,20 +91,26 @@ impl Profile {
         };
         let hooks = Hooks::from(config.hooks.unwrap_or_default());
         let mappings = Mappings::from(config.mappings.unwrap_or_default());
-        let modules = config
-            .modules
-            .unwrap_or_default()
-            .drain(..)
-            .map(|cfg| {
-                let location = cfg
-                    .location
-                    .clone()
-                    .replace("~", &env::var("HOME").unwrap_or_default());
-                let path = Path::new(&location);
-                Profile::from(path, cfg)
-            })
-            .collect();
-        Profile {
+        let module_configs = config.modules.unwrap_or_default();
+
+        let mut modules = Vec::with_capacity(module_configs.len());
+        for cfg in module_configs {
+            let location = cfg
+                .location
+                .clone()
+                .replace("~", &env::var("HOME").unwrap_or_default());
+
+            let path = if location == "" {
+                let name = util::default_profile_name(&cfg.repo);
+                util::profile_dir(&name, &util::cfg_dir(None))
+            } else {
+                PathBuf::from(&location)
+            };
+
+            modules.push(Profile::from(&path, cfg)?);
+        }
+
+        Ok(Profile {
             mappings,
             modules,
             target_dir,
@@ -110,8 +120,16 @@ impl Profile {
             link_when: config.link,
             prompt_for_commit_message: config.prompt_for_commit_message,
             pull_only: config.pull_only,
-            repo: Repo::new(profile_dir),
-        }
+            repo: match Repo::new(profile_dir, &config.repo) {
+                Ok(r) => r,
+                Err(e) => {
+                    return Err(Error {
+                        profile_path: profile_dir.to_path_buf(),
+                        error: e,
+                    })
+                }
+            },
+        })
     }
 
     pub fn set_commit_msg(&mut self, msg: &str) {
@@ -122,23 +140,44 @@ impl Profile {
         self.prompt_for_commit_message = prompt;
     }
 
-    pub fn load(profile_dir: &Path) -> Result<Profile, io::Error> {
+    pub fn load(profile_dir: &Path) -> Result<Profile, Error> {
         let dir = profile_dir.to_path_buf();
         let mut cfg_file = dir.clone();
         cfg_file.push(".dfm.yml");
         let config = if cfg_file.exists() && cfg_file.is_file() {
-            let mut cfg = File::open(&cfg_file)?;
+            let mut cfg = match File::open(&cfg_file) {
+                Ok(f) => f,
+                Err(e) => {
+                    return Err(Error {
+                        profile_path: profile_dir.to_path_buf(),
+                        error: e,
+                    })
+                }
+            };
             let mut contents = String::new();
-            cfg.read_to_string(&mut contents)?;
+            if let Err(e) = cfg.read_to_string(&mut contents) {
+                return Err(Error {
+                    profile_path: profile_dir.to_path_buf(),
+                    error: e,
+                });
+            }
             match serde_yaml::from_str(&contents) {
                 Ok(c) => c,
-                Err(e) => return Err(io::Error::new(io::ErrorKind::Other, format!("{}", e))),
+                Err(e) => {
+                    return Err(Error {
+                        profile_path: profile_dir.to_path_buf(),
+                        error: io::Error::new(
+                            io::ErrorKind::Other,
+                            format!("Invalid YAML in .dfm.yml: {}", e),
+                        ),
+                    })
+                }
             }
         } else {
             ProfileConfig::default()
         };
 
-        Ok(Profile::from(profile_dir, config))
+        Ok(Profile::from(profile_dir, config)?)
     }
 
     pub fn sync(&self) -> Result<(), Error> {
@@ -165,13 +204,13 @@ impl Profile {
 
         if let Err(e) = self.repo.sync(msg, self.pull_only) {
             return Err(Error {
-                profile: self.clone(),
+                profile_path: self.repo.path.clone(),
                 error: e,
             });
         };
 
         // Print a newline after sync to separate git output from repo path.
-        println!("");
+        println!();
 
         for module in self.modules.iter().filter(|p| p.link_when != "pre") {
             debug!("syncing module: {:?}", module);
@@ -200,12 +239,11 @@ impl Profile {
         }
 
         debug!("target directory: {}", target_dir.display());
-        // doesn't link modules?
         let links = match self.mappings.link(&self.repo.path, &target_dir, overwrite) {
             Ok(links) => links,
             Err(e) => {
                 return Err(Error {
-                    profile: self.clone(),
+                    profile_path: self.repo.path.clone(),
                     error: e,
                 })
             }
@@ -214,7 +252,7 @@ impl Profile {
             debug!("link {} => {}", link.src.display(), link.dst.display());
             if let Err(e) = link.link() {
                 return Err(Error {
-                    profile: self.clone(),
+                    profile_path: self.repo.path.clone(),
                     error: e,
                 });
             };
@@ -238,7 +276,7 @@ impl Profile {
 
         match res {
             Err(e) => Err(Error {
-                profile: self.clone(),
+                profile_path: self.repo.path.clone(),
                 error: e,
             }),
             Ok(_) => Ok(()),
@@ -248,7 +286,7 @@ impl Profile {
     fn git(&self, cmd: &[&str]) -> Result<(), Error> {
         if let Err(e) = self.repo.git(cmd) {
             return Err(Error {
-                profile: self.clone(),
+                profile_path: self.repo.path.clone(),
                 error: e,
             });
         }
