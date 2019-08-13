@@ -2,6 +2,10 @@
 name = "dfm"
 version = "8.0.0"
 authors = ["Mathew Robinson <chasinglogic@gmail.com>"]
+documentation = "https://github.com/chasinglogic/dfm/blob/master/README.md"
+homepage = "https://github.com/chasinglogic/dfm"
+repository = "https://github.com/chasinglogic/dfm"
+license-file = "LICENSE"
 edition = "2018"
 
 [dependencies]
@@ -10,10 +14,13 @@ serde_yaml = "*"
 walkdir = "2.2.8"
 text_io = "0.1.7"
 clap = "2.33.0"
-dirs = "2.0.1"
 log = "0.4.6"
 simplelog = "0.6.0"
 
 [dependencies.serde]
 version = "*"
 features = ["derive"]
+
+[profile.release]
+lto = true
+panic = 'abort'
