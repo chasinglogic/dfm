@@ -1,6 +1,7 @@
 [package]
 name = "dfm"
 version = "8.0.0"
+description = "A dotfile management tool for pair programmers and lazy people."
 authors = ["Mathew Robinson <chasinglogic@gmail.com>"]
 documentation = "https://github.com/chasinglogic/dfm/blob/master/README.md"
 homepage = "https://github.com/chasinglogic/dfm"
