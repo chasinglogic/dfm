@@ -10,8 +10,8 @@ license-file = "LICENSE"
 edition = "2018"
 
 [dependencies]
-regex = "*"
-serde_yaml = "*"
+regex = "1.2.1"
+serde_yaml = "0.8.9"
 walkdir = "2.2.8"
 text_io = "0.1.7"
 clap = "2.33.0"
@@ -19,7 +19,7 @@ log = "0.4.6"
 simplelog = "0.6.0"
 
 [dependencies.serde]
-version = "*"
+version = "1.0.98"
 features = ["derive"]
 
 [profile.release]
