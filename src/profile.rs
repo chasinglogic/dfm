@@ -83,6 +83,18 @@ pub struct Profile {
 }
 
 impl Profile {
+    fn update_config(mut self, cfg: ProfileConfig) -> Profile {
+        if cfg.target_dir != "" {
+            self.target_dir = PathBuf::from(cfg.target_dir);
+        }
+
+        self.pull_only = cfg.pull_only;
+        self.commit_msg = cfg.commit_msg;
+        self.prompt_for_commit_message = cfg.prompt_for_commit_message;
+        self.link_when = cfg.link;
+        self
+    }
+
     fn from(profile_dir: &Path, config: ProfileConfig) -> Result<Profile, Error> {
         let target_dir = if config.target_dir != "" {
             PathBuf::from(config.target_dir)
@@ -107,7 +119,8 @@ impl Profile {
                 PathBuf::from(&location)
             };
 
-            modules.push(Profile::from(&path, cfg)?);
+            let profile = Profile::load(&path)?.update_config(cfg);
+            modules.push(profile);
         }
 
         Ok(Profile {
@@ -231,6 +244,10 @@ impl Profile {
             return Ok(());
         }
 
+        debug!(
+            "running pre link hooks for profile: {}",
+            self.repo.path.display()
+        );
         self.run_hooks("pre", "link")?;
         let target_dir = Path::new(&self.target_dir);
         for module in self.modules.iter().filter(|p| p.link_when == "pre") {
@@ -263,6 +280,10 @@ impl Profile {
             module.link(overwrite)?;
         }
 
+        debug!(
+            "running post link hooks for profile: {}",
+            self.repo.path.display()
+        );
         self.run_hooks("post", "link")?;
         Ok(())
     }
