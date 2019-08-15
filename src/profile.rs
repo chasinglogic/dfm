@@ -114,7 +114,9 @@ impl Profile {
 
             let path = if location == "" {
                 let name = util::default_profile_name(&cfg.repo);
-                util::profile_dir(&name, &util::cfg_dir(None))
+                let mut sd = util::profile_storage_dir(&util::cfg_dir(None));
+                sd.push(name);
+                sd
             } else {
                 PathBuf::from(&location)
             };
