@@ -73,27 +73,21 @@ pub fn profile_storage_dir(cfd: &Path) -> PathBuf {
 pub fn profile_dir(name: &str, cfd: &Path) -> PathBuf {
     let mut storage = profile_storage_dir(cfd);
     storage.push(name);
-    storage
-}
-
-pub fn load_profile(name: &str, cfd: &Path) -> Profile {
     if name == "" {
         println!("No current profile and no profile provided.");
         println!("Try running dfm link <profile name> to set an active profile.");
         process::exit(1);
     }
 
-    let dir = profile_dir(name, cfd);
-    if !dir.exists() {
-        println!("Profile directory does not exist {}", dir.display());
-        println!("Cannot load from non-existent directory");
-        process::exit(1);
-    }
+    storage
+}
 
-    match Profile::load(&dir) {
+pub fn load_profile(profile_dir: &Path) -> Profile {
+    ensure_exists(profile_dir);
+    match Profile::load(&profile_dir) {
         Ok(p) => p,
         Err(e) => {
-            println!("Unable to load profile {}: {}", name, e);
+            println!("Unable to load profile {}: {}", profile_dir.display(), e);
             process::exit(1);
         }
     }
