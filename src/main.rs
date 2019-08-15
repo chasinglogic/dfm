@@ -177,6 +177,7 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
     match matches.subcommand() {
         ("list", Some(_)) => list(&cfd),
         ("init", Some(args)) => init(&cfd, args),
+        ("clone", Some(args)) => clone(&cfd, args),
         (s, Some(args)) => {
             let profile_dir = util::profile_dir(
                 args.value_of("profile")
@@ -186,7 +187,6 @@ Examples on getting started with dfm are avialable at https://github.com/chasing
 
             match s {
                 "add" => add(&profile_dir, &state, args),
-                "clone" => clone(&profile_dir, args),
                 "git" => git(&profile_dir, args),
                 "link" => link(&profile_dir, &mut state, args),
                 "run-hook" => run_hook(&profile_dir, args),
@@ -280,10 +280,11 @@ fn init(profile_dir: &Path, args: &clap::ArgMatches) {
     }
 }
 
-fn clone(profile_dir: &Path, args: &clap::ArgMatches) {
+fn clone(cfd: &Path, args: &clap::ArgMatches) {
     let repo = args.value_of("url").unwrap();
     let name = args.value_of("name").unwrap();
-    let new_profile_dir = util::profile_dir(name, &profile_dir);
+    let mut new_profile_dir = util::profile_storage_dir(&cfd);
+    new_profile_dir.push(name);
     let mut child = process::Command::new("git");
     child.stdin(process::Stdio::inherit());
     child.stdout(process::Stdio::inherit());
