@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use std::process;
 
 use log::debug;
 
@@ -121,6 +122,18 @@ impl Profile {
                 PathBuf::from(&location)
             };
 
+            if !path.exists() {
+                let mut child = process::Command::new("git");
+                child.stdin(process::Stdio::inherit());
+                child.stdout(process::Stdio::inherit());
+                child.stderr(process::Stdio::inherit());
+                child.args(&["clone", &cfg.repo, &path.to_string_lossy()]);
+                let mut proc = child.spawn().expect("Unable to run git clone");
+                if proc.wait().is_err() {
+                    process::exit(1)
+                };
+            }
+
             let profile = Profile::load(&path)?.update_config(cfg);
             modules.push(profile);
         }
@@ -206,7 +219,6 @@ impl Profile {
 
         println!("{}:", self.repo.path.display());
         let input: String;
-        // TODO: show a diff when prompting
         let msg: &str = if self.repo.is_dirty() && self.prompt_for_commit_message {
             self.git(&["diff"])?;
             print!("Commit msg: ");
