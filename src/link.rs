@@ -1,4 +1,4 @@
-use std::fs::{remove_file, symlink_metadata};
+use std::fs::{create_dir_all, remove_file, symlink_metadata};
 use std::io;
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
@@ -33,6 +33,10 @@ impl Info {
     }
 
     pub fn link(&self) -> Result<(), io::Error> {
+        if let Some(path) = self.dst.parent() {
+            create_dir_all(path)?;
+        }
+
         match symlink_metadata(&self.dst) {
             Ok(metadata) => {
                 if metadata.file_type().is_file() && !self.overwrite {
