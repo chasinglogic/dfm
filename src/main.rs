@@ -318,11 +318,7 @@ fn link(profile_dir: &Path, state: &mut state::State, args: &clap::ArgMatches) {
     let profile = util::load_profile(&profile_dir);
 
     if let Err(e) = profile.link(args.is_present("overwrite")) {
-        println!(
-            "Error linking profile {}: {}",
-            profile.repo.path.display(),
-            e
-        );
+        println!("Error linking profile {}", e);
         process::exit(1);
     }
 
