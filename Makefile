@@ -6,7 +6,7 @@ lint:
 	$(PYTHON) -m pylint --disable=W0621 tests
 
 fmt:
-	$(PYTHON) -m yapf --recursive -i src tests
+	$(PYTHON) -m black src tests
 
 clean:
 	rm -rf build dist
