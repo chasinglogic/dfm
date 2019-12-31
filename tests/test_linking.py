@@ -46,9 +46,6 @@ def test_translation(dotdfm):
     ):
         assert link["src"] == expected["src"]
         assert link["dst"] == expected["dst"]
-        assert link.get("target_is_directory") == expected.get(
-            "target_is_directory", False
-        )
 
 
 def test_linking(dotdfm):
@@ -79,6 +76,5 @@ def test_xdg_config(tmpdir):
         {
             "src": os.path.join(dotfiles, ".config", "nvim", "init.vim"),
             "dst": os.path.join(xdg_dir(), "nvim", "init.vim"),
-            "target_is_directory": False,
         }
     ]
