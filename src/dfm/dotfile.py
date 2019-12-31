@@ -252,6 +252,8 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             if not self.commit_msg and self.config.get(
                     'prompt_for_commit_message'):
                 self.commit_msg = input('Commit message: ')
+            self._git("--no-pager diff")
+
             elif not self.commit_msg:
                 self.commit_msg = 'Files managed by DFM! https://github.com/chasinglogic/dfm'
 
