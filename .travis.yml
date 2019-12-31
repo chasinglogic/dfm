@@ -4,4 +4,6 @@ python:
     - "3.7"
     - "3.8"
 script:
-  - make install-dev test-all
+  - make install-dev
+  - make test
+  - bash ./integration_tests.sh -b $(which dfm)
