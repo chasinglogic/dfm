@@ -37,9 +37,10 @@ class Mapping:
     Allows for dotfiles to be skipped, or redirected to a target directory other than 'HOME'
     """
 
-    def __init__(self, match, target_dir="", skip=False, target_os=None):
+    def __init__(self, match, dest="", target_dir="", skip=False, target_os=None):
         self.match = match
-        self.target_dir = target_dir.replace("~", os.getenv("HOME"))
+        self.target_dir = os.path.expanduser(target_dir)
+        self.dest = os.path.expanduser(dest)
         if target_os is not None:
             self.target_os = target_os
         else:
@@ -303,8 +304,12 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
                     else:
                         return
 
-            # Replace self.target_dir with the mapping target_dir
-            dest = dest.replace(self.target_dir, mapping.target_dir)
+            if mapping.target_dir:
+                # Replace self.target_dir with the mapping target_dir
+                dest = dest.replace(self.target_dir, mapping.target_dir)
+
+            if mapping.dest:
+                dest = os.path.join(self.target_dir, mapping.dest)
 
         self.links.append(
             {"src": src, "dst": dest, "target_is_directory": os.path.isdir(src)}
