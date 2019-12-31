@@ -108,10 +108,6 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
 
         self.files = []
 
-        for root, dirs, files in os.walk(where):
-            dirs[:] = [d for d in dirs if d != ".git"]
-            self.files += [os.path.join(root, f) for f in files]
-
         self.mappings = DEFAULT_MAPPINGS
         self.links = []
         self.hooks = {}
@@ -303,6 +299,12 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             {"src": src, "dst": dest, "target_is_directory": os.path.isdir(src)}
         )
 
+    def _find_files(self):
+        """Load the files in this dotfile repository."""
+        for root, dirs, files in os.walk(self.where):
+            dirs[:] = [d for d in dirs if d != ".git"]
+            self.files += [os.path.join(root, f) for f in files]
+
     def _generate_links(self):
         """
         Generate a list of kwargs for os.link.
@@ -310,6 +312,9 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         All required arguments for os.link will always be provided and
         optional arguments as required.
         """
+        if not self.files:
+            self._find_files()
+
         for dotfile in self.files:
             self._generate_link(dotfile)
 
