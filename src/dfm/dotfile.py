@@ -114,6 +114,7 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
 
         dotdfm = os.path.join(where, ".dfm.yml")
         if not os.path.isfile(dotdfm):
+            self.config = {}
             return
 
         with open(dotdfm) as dfmconfig:
