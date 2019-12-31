@@ -15,10 +15,10 @@ from dfm.cli.utils import inject_profile
 @inject_profile
 def run(args, profile=None):
     """Run the add command with args."""
-    for filename in args['<file>']:
+    for filename in args["<file>"]:
         oldfile = os.path.abspath(filename)
         if not os.path.exists(oldfile):
-            print('{}: file does not exist'.format(oldfile))
+            print("{}: file does not exist".format(oldfile))
             sys.exit(1)
 
         newfile = os.path.relpath(profile.target_dir, oldfile)

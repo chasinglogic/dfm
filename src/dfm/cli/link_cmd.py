@@ -19,12 +19,12 @@ from dfm.cli.utils import current_profile, load_profile, switch_profile
 
 def run(args):
     """Run the link subcommand, setting the current_profile."""
-    dry_run = args['--dry-run']
-    if args['<profile>'] and not dry_run:
-        profile = switch_profile(args['<profile>'])
-    elif args['<profile>']:
-        profile = load_profile(args['<profile>'])
+    dry_run = args["--dry-run"]
+    if args["<profile>"] and not dry_run:
+        profile = switch_profile(args["<profile>"])
+    elif args["<profile>"]:
+        profile = load_profile(args["<profile>"])
     else:
         profile = load_profile(current_profile())
 
-    links = profile.link(overwrite=args['--overwrite'], dry_run=dry_run)
+    links = profile.link(overwrite=args["--overwrite"], dry_run=dry_run)

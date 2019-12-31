@@ -13,6 +13,6 @@ from dfm.cli.utils import inject_profile
 @inject_profile
 def run(args, profile=None):
     """Run profile.sync for the current profile."""
-    if args['--message']:
-        profile.commit_msg = args['--message']
+    if args["--message"]:
+        profile.commit_msg = args["--message"]
     profile.sync()
