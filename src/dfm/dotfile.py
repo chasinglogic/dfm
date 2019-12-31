@@ -138,6 +138,10 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             Mapping.from_dict(mod) for mod in self.config.get("mappings", [])
         ]
 
+    def init(self):
+        """Initialize the git repository."""
+        self._git("init")
+
     def link(self, dry_run=False, overwrite=False):
         """
         Link this profile to self.target_dir
