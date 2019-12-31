@@ -1,0 +1,9 @@
+language: python
+python:
+    - "3.6"
+    - "3.7"
+    - "3.8"
+script:
+  - make install-dev
+  - make test
+  - ./scripts/integration_test.sh -b $(which dfm)
