@@ -251,11 +251,21 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
 
             self._git("add --all")
             self._git('commit -m "{}"'.format(self.commit_msg))
-        self._git("pull --rebase origin master")
-        if dirty:
-            self._git("push origin master")
+
+        if self._has_origin():
+            self._git("pull --rebase origin master")
+            if dirty:
+                self._git("push origin master")
 
         self.run_hook("after_sync")
+
+    def _has_origin(self):
+        """Return a boolean indicating if a remote named origin is available."""
+        try:
+            output = subprocess.check_output(["git", "remote", "-v"], cwd=self.where)
+            return b"origin" in output
+        except OSError:
+            return False
 
     def _generate_link(self, filename):
         """Dotfile-ifies a filename"""
