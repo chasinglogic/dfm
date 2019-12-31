@@ -1,4 +1,4 @@
-yapf 
+black 
 pydocstyle
 isort
 pylint
