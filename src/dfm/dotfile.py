@@ -61,6 +61,7 @@ class Mapping:
 DEFAULT_MAPPINGS = [
     Mapping(r"\/\.git\/", skip=True,),
     Mapping(r"\/.gitignore$", skip=True,),
+    Mapping(r"\/.ggitignore$", dest=".gitignore"),
     Mapping(r"\/LICENSE(\.md)?$", skip=True,),
     Mapping(r"\/\.dfm\.yml$", skip=True,),
     Mapping(r"\/README(\.md)?$", skip=True,),
