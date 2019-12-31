@@ -1,4 +1,5 @@
 PYTHON := python3
+DFM_BIN := $(shell which dfm)
 
 lint:
 	$(PYTHON) -m pydocstyle src
@@ -25,6 +26,7 @@ test:
 
 test-all:
 	PYTHONPATH="$$PYTHONPATH:src" $(PYTHON) -m pytest --disable-pytest-warnings
+	bash ./scripts/integration_tests.sh -b $(DFM_BIN)
 
 publish: clean
 	python setup.py sdist bdist_wheel
