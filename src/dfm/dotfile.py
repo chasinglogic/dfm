@@ -312,9 +312,7 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             if mapping.dest:
                 dest = os.path.join(self.target_dir, mapping.dest)
 
-        self.links.append(
-            {"src": src, "dst": dest, "target_is_directory": os.path.isdir(src)}
-        )
+        self.links.append({"src": src, "dst": dest})
 
     def _find_files(self):
         """Load the files in this dotfile repository."""
