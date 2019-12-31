@@ -6,4 +6,4 @@ python:
 script:
   - make install-dev
   - make test
-  - bash ./integration_tests.sh -b $(which dfm)
+  - bash ./scripts/integration_tests.sh -b $(which dfm)
