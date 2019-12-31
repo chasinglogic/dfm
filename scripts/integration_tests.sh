@@ -20,7 +20,7 @@ function cleanup() {
     rm -rf $CONFIG_DIR
 
     if [[ -n $1 ]]; then
-        echo "Exiting!"
+        echo "EXITING WITH FAILURE"
         exit $1
     fi
 
