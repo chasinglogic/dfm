@@ -37,53 +37,53 @@ from importlib import import_module
 from docopt import docopt
 
 ALIASES = {
-    's': 'sync',
-    'a': 'add',
-    'x': 'clean',
-    'c': 'clone',
-    'g': 'git',
-    'i': 'init',
-    'l': 'link',
-    'ls': 'list',
-    'rm': 'remove',
-    'run-hook': 'run_hook',
-    'rh': 'run_hook',
-    'w': 'where',
+    "s": "sync",
+    "a": "add",
+    "x": "clean",
+    "c": "clone",
+    "g": "git",
+    "i": "init",
+    "l": "link",
+    "ls": "list",
+    "rm": "remove",
+    "run-hook": "run_hook",
+    "rh": "run_hook",
+    "w": "where",
 }
 
 
 def main():
     """CLI entrypoint, handles subcommand parsing"""
-    args = docopt(__doc__, version='dfm version 7.3.0', options_first=True)
-    if not args['<command>']:
+    args = docopt(__doc__, version="dfm version 7.3.0", options_first=True)
+    if not args["<command>"]:
         print(__doc__)
         sys.exit(1)
 
-    if args['--debug']:
+    if args["--debug"]:
         logging.basicConfig(level=logging.DEBUG)
-    elif args['--verbose']:
+    elif args["--verbose"]:
         logging.basicConfig(level=logging.INFO)
 
-    command = args['<command>']
+    command = args["<command>"]
     try:
-        if command == 'help':
-            if args['<args>']:
-                help_cmd = ALIASES.get(args['<args>'][0], args['<args>'][0])
-                command_mod = import_module('dfm.cli.{}_cmd'.format(help_cmd))
+        if command == "help":
+            if args["<args>"]:
+                help_cmd = ALIASES.get(args["<args>"][0], args["<args>"][0])
+                command_mod = import_module("dfm.cli.{}_cmd".format(help_cmd))
                 print(command_mod.__doc__)
             else:
                 print(__doc__)
             sys.exit(0)
 
         command = ALIASES.get(command, command)
-        command_mod = import_module('dfm.cli.{}_cmd'.format(command))
-        argv = [command] + args['<args>']
+        command_mod = import_module("dfm.cli.{}_cmd".format(command))
+        argv = [command] + args["<args>"]
         command_mod.run(docopt(command_mod.__doc__, argv=argv))
         sys.exit(0)
     except ImportError:
-        print('{} is not a known dfm command.'.format(command))
+        print("{} is not a known dfm command.".format(command))
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

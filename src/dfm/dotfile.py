@@ -15,18 +15,19 @@ logger = logging.getLogger(__name__)
 
 CUR_OS = platform.system()
 
+
 def xdg_dir():
     """Return the XDG_CONFIG_HOME or default."""
-    if os.getenv('XDG_CONFIG_HOME'):
-        return os.getenv('XDG_CONFIG_HOME')
-    return os.path.join(os.getenv('HOME'), '.config')
+    if os.getenv("XDG_CONFIG_HOME"):
+        return os.getenv("XDG_CONFIG_HOME")
+    return os.path.join(os.getenv("HOME"), ".config")
 
 
 def dfm_dir():
     """Return the dfm configuration / state directory."""
-    if os.getenv('DFM_CONFIG_DIR'):
-        return os.getenv('DFM_CONFIG_DIR')
-    return os.path.join(xdg_dir(), 'dfm')
+    if os.getenv("DFM_CONFIG_DIR"):
+        return os.getenv("DFM_CONFIG_DIR")
+    return os.path.join(xdg_dir(), "dfm")
 
 
 class Mapping:
@@ -36,9 +37,9 @@ class Mapping:
     Allows for dotfiles to be skipped, or redirected to a target directory other than 'HOME'
     """
 
-    def __init__(self, match, target_dir='', skip=False, target_os=None):
+    def __init__(self, match, target_dir="", skip=False, target_os=None):
         self.match = match
-        self.target_dir = target_dir.replace('~', os.getenv('HOME'))
+        self.target_dir = target_dir.replace("~", os.getenv("HOME"))
         if target_os is not None:
             self.target_os = target_os
         else:
@@ -57,26 +58,11 @@ class Mapping:
 
 
 DEFAULT_MAPPINGS = [
-    Mapping(
-        r'\/\.git\/',
-        skip=True,
-    ),
-    Mapping(
-        r'\/.gitignore$',
-        skip=True,
-    ),
-    Mapping(
-        r'\/LICENSE(\.md)?$',
-        skip=True,
-    ),
-    Mapping(
-        r'\/\.dfm\.yml$',
-        skip=True,
-    ),
-    Mapping(
-        r'\/README(\.md)?$',
-        skip=True,
-    ),
+    Mapping(r"\/\.git\/", skip=True,),
+    Mapping(r"\/.gitignore$", skip=True,),
+    Mapping(r"\/LICENSE(\.md)?$", skip=True,),
+    Mapping(r"\/\.dfm\.yml$", skip=True,),
+    Mapping(r"\/README(\.md)?$", skip=True,),
 ]
 
 
@@ -92,8 +78,8 @@ def unable_to_remove(filename, overwrite=False):
 
     if not overwrite:
         logger.warning(
-            '%s exists and is not a symlink, Cowardly refusing to remove.',
-            filename)
+            "%s exists and is not a symlink, Cowardly refusing to remove.", filename
+        )
         return True
 
     if os.path.isdir(filename):
@@ -113,24 +99,24 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
     or Profile should be used.
     """
 
-    def __init__(self, where, target_dir=os.getenv('HOME')):
+    def __init__(self, where, target_dir=os.getenv("HOME")):
         self.config = None
         self.where = where
         self.target_dir = target_dir
-        self.commit_msg = os.getenv('DFM_GIT_COMMIT_MSG', '')
+        self.commit_msg = os.getenv("DFM_GIT_COMMIT_MSG", "")
         self.name = os.path.basename(where)
 
         self.files = []
 
         for root, dirs, files in os.walk(where):
-            dirs[:] = [d for d in dirs if d != '.git']
+            dirs[:] = [d for d in dirs if d != ".git"]
             self.files += [os.path.join(root, f) for f in files]
 
         self.mappings = DEFAULT_MAPPINGS
         self.links = []
         self.hooks = {}
 
-        dotdfm = os.path.join(where, '.dfm.yml')
+        dotdfm = os.path.join(where, ".dfm.yml")
         if not os.path.isfile(dotdfm):
             return
 
@@ -145,11 +131,11 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         if self.config is None:
             return
 
-        self.target_dir = self.config.get('target_dir', self.target_dir)
-        self.commit_msg = self.config.get('commit_msg', self.commit_msg)
-        self.hooks = self.config.get('hooks', {})
+        self.target_dir = self.config.get("target_dir", self.target_dir)
+        self.commit_msg = self.config.get("commit_msg", self.commit_msg)
+        self.hooks = self.config.get("hooks", {})
         self.mappings = self.mappings + [
-            Mapping.from_dict(mod) for mod in self.config.get('mappings', [])
+            Mapping.from_dict(mod) for mod in self.config.get("mappings", [])
         ]
 
     def link(self, dry_run=False, overwrite=False):
@@ -160,24 +146,24 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         directories this function will attempt to create them.
         """
         if not dry_run:
-            self.run_hook('before_link')
+            self.run_hook("before_link")
 
         if not self.links:
             self._generate_links()
 
         for link in self.links:
-            logger.info('Linking %s to %s', link['src'], link['dst'])
+            logger.info("Linking %s to %s", link["src"], link["dst"])
             if dry_run:
                 continue
 
-            if unable_to_remove(link['dst'], overwrite=overwrite):
+            if unable_to_remove(link["dst"], overwrite=overwrite):
                 continue
 
-            os.makedirs(os.path.dirname(link['dst']), exist_ok=True)
+            os.makedirs(os.path.dirname(link["dst"]), exist_ok=True)
             os.symlink(**link)
 
         if not dry_run:
-            self.run_hook('after_link')
+            self.run_hook("after_link")
 
         return self.links
 
@@ -200,14 +186,15 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
                 cwd = self.where
 
             proc = subprocess.Popen(
-                ['git'] + shlex.split(cmd),
+                ["git"] + shlex.split(cmd),
                 cwd=cwd,
                 stdin=sys.stdin,
                 stdout=sys.stdout,
-                stderr=sys.stderr)
+                stderr=sys.stderr,
+            )
             proc.wait()
         except OSError as os_err:
-            logger.error('problem runing git %s: %s', cmd, os_err)
+            logger.error("problem runing git %s: %s", cmd, os_err)
             sys.exit(1)
 
     def _is_dirty(self):
@@ -220,7 +207,8 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         """
         try:
             return subprocess.check_output(
-                ['git', 'status', '--porcelain'], cwd=self.where)
+                ["git", "status", "--porcelain"], cwd=self.where
+            )
         # Something unexpected happened while running git so let's
         # assume we can't run anymore git commands and skip trying to
         # sync.
@@ -233,48 +221,51 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         for command in commands:
             try:
                 subprocess.call(
-                    ['/bin/sh', '-c', command],
+                    ["/bin/sh", "-c", command],
                     cwd=self.where,
                     stdin=sys.stdin,
                     stdout=sys.stdout,
                     stderr=sys.stderr,
                 )
             except subprocess.CalledProcessError as proc_err:
-                logger.error('command %s exited with non-zero error: %s',
-                             command, proc_err)
+                logger.error(
+                    "command %s exited with non-zero error: %s", command, proc_err
+                )
 
     def sync(self):
         """Sync this profile with git."""
-        self.run_hook('before_sync')
+        print("{}:".format(self.where))
+        self.run_hook("before_sync")
 
         dirty = self._is_dirty()
         if dirty:
-            if not self.commit_msg and self.config.get(
-                    'prompt_for_commit_message'):
-                self.commit_msg = input('Commit message: ')
             self._git("--no-pager diff")
 
+            if not self.commit_msg and self.config.get("prompt_for_commit_message"):
+                self.commit_msg = input("Commit message: ")
             elif not self.commit_msg:
-                self.commit_msg = 'Files managed by DFM! https://github.com/chasinglogic/dfm'
+                self.commit_msg = (
+                    "Files managed by DFM! https://github.com/chasinglogic/dfm"
+                )
 
-            self._git('add --all')
+            self._git("add --all")
             self._git('commit -m "{}"'.format(self.commit_msg))
-        self._git('pull --rebase origin master')
+        self._git("pull --rebase origin master")
         if dirty:
-            self._git('push origin master')
+            self._git("push origin master")
 
-        self.run_hook('after_sync')
+        self.run_hook("after_sync")
 
     def _generate_link(self, filename):
         """Dotfile-ifies a filename"""
         # Get the absolute path to src
         src = os.path.abspath(filename)
-        dest = src.replace(self.where, '')
+        dest = src.replace(self.where, "")
 
         # self.where does not always contain a trailing slash
         # This removes a leading slash from the front of dest if where
         # does not contain the trailing slash.
-        if dest.startswith('/'):
+        if dest.startswith("/"):
             dest = dest[1:]
 
         dest = os.path.join(self.target_dir, dest)
@@ -304,11 +295,9 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             # Replace self.target_dir with the mapping target_dir
             dest = dest.replace(self.target_dir, mapping.target_dir)
 
-        self.links.append({
-            'src': src,
-            'dst': dest,
-            'target_is_directory': os.path.isdir(src)
-        })
+        self.links.append(
+            {"src": src, "dst": dest, "target_is_directory": os.path.isdir(src)}
+        )
 
     def _generate_links(self):
         """
@@ -339,38 +328,37 @@ class Module(DotfileRepo):
     """
 
     def __init__(self, *args, **kwargs):
-        self.repo = kwargs.pop('repo')
-        self.name = kwargs.pop('name', '')
+        self.repo = kwargs.pop("repo")
+        self.name = kwargs.pop("name", "")
         if not self.name:
-            self.name = self.repo.split('/')[-1]
-        self.pull_only = kwargs.pop('pull_only', False)
-        self.link_mode = kwargs.pop('link', 'post')
-        self.location = kwargs.pop('location', '')
-        self.location = self.location.replace('~', os.getenv('HOME'))
+            self.name = self.repo.split("/")[-1]
+        self.pull_only = kwargs.pop("pull_only", False)
+        self.link_mode = kwargs.pop("link", "post")
+        self.location = kwargs.pop("location", "")
+        self.location = self.location.replace("~", os.getenv("HOME"))
         if not self.location:
-            module_dir = os.path.join(dfm_dir(), 'modules')
+            module_dir = os.path.join(dfm_dir(), "modules")
             if not os.path.isdir(module_dir):
                 os.makedirs(module_dir)
             self.location = os.path.join(module_dir, self.name)
 
-        if not os.path.isdir(
-                self.location) and not os.getenv('DFM_DISABLE_MODULES'):
-            self._git('clone {} {}'.format(self.repo, self.location), cwd=None)
+        if not os.path.isdir(self.location) and not os.getenv("DFM_DISABLE_MODULES"):
+            self._git("clone {} {}".format(self.repo, self.location), cwd=None)
 
-        kwargs['where'] = self.location
+        kwargs["where"] = self.location
         super().__init__(*args, **kwargs)
 
     def sync(self):
         """Sync this repo using git, if self.pull_only will only pull updates."""
         if self.pull_only:
-            self._git('pull --rebase origin master')
+            self._git("pull --rebase origin master")
             return
 
         super().sync()
 
     def link(self, dry_run=False, overwrite=False):
         """Wrap super()._generate_links"""
-        if self.link_mode == 'none':
+        if self.link_mode == "none":
             return []
 
         return super().link(dry_run=dry_run, overwrite=overwrite)
@@ -378,7 +366,7 @@ class Module(DotfileRepo):
     @property
     def pre(self):
         """If True this module should be linked before the parent Profile."""
-        return self.link_mode == 'pre'
+        return self.link_mode == "pre"
 
     @property
     def post(self):
@@ -388,7 +376,7 @@ class Module(DotfileRepo):
         This is useful for when you want files from a module to
         overwrite those from it's parent Profile.
         """
-        return self.link_mode == 'post'
+        return self.link_mode == "post"
 
     @classmethod
     def from_dict(cls, config):
@@ -399,10 +387,7 @@ class Module(DotfileRepo):
 class Profile(DotfileRepo):
     """Profile is a DotfileRepo that supports modules."""
 
-    def __init__(self,
-                 where,
-                 always_sync_modules=False,
-                 target_dir=os.getenv('HOME')):
+    def __init__(self, where, always_sync_modules=False, target_dir=os.getenv("HOME")):
 
         super().__init__(where, target_dir=target_dir)
         self.always_sync_modules = always_sync_modules
@@ -411,11 +396,10 @@ class Profile(DotfileRepo):
         if self.config is None:
             return
 
-        self.always_sync_modules = self.config.get('always_sync_modules',
-                                                   self.always_sync_modules)
-        self.modules = [
-            Module.from_dict(mod) for mod in self.config.get('modules', [])
-        ]
+        self.always_sync_modules = self.config.get(
+            "always_sync_modules", self.always_sync_modules
+        )
+        self.modules = [Module.from_dict(mod) for mod in self.config.get("modules", [])]
 
     def sync(self, skip_modules=False):  # pylint: disable=arguments-differ
         """
@@ -423,14 +407,13 @@ class Profile(DotfileRepo):
 
         If skip_modules is True modules will not be synced.
         """
-        print('{}:'.format(self.where))
         super().sync()
 
         if skip_modules:
             return
 
         for module in self.modules:
-            print('\n{}:'.format(module.where))
+            print("\n{}:".format(module.where))
             module.sync()
 
     def _generate_links(self):

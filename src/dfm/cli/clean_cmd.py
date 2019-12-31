@@ -15,13 +15,13 @@ def clean_links(directory):
     for filename in os.listdir(directory):
         ab_path = os.path.join(directory, filename)
         if os.path.islink(ab_path) and not os.path.exists(ab_path):
-            print('Removing dead link:', ab_path)
+            print("Removing dead link:", ab_path)
             os.unlink(ab_path)
 
 
 def run(_args):
     """Run the clean subcommand."""
-    home = os.getenv('HOME')
+    home = os.getenv("HOME")
     xdg = xdg_dir()
     if home:
         clean_links(home)

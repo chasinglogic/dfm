@@ -10,4 +10,4 @@ from dfm.cli.utils import inject_profile
 @inject_profile
 def run(args, profile=None):
     """Run hook with the given name in the .dfm.yml."""
-    profile.run_hook(args['run_hook'])
+    profile.run_hook(args["run_hook"])

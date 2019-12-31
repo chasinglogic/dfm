@@ -28,19 +28,19 @@ def get_name(url):
     This directly corresponds to the the last element in the URL.  For
     example: https://github.com/chasinglogic/dotfiles would be 'dotfiles'
     """
-    return url.split('/')[-1]
+    return url.split("/")[-1]
 
 
 def run(args):
     """Run the clone command."""
-    name = args.get('--name', get_name(args['<url>']))
-    path = os.path.join(dfm_dir(), 'profiles', name)
-    subprocess.call(['git', 'clone', args['<url>'], path])
-    if args['--link']:
+    name = args.get("--name", get_name(args["<url>"]))
+    path = os.path.join(dfm_dir(), "profiles", name)
+    subprocess.call(["git", "clone", args["<url>"], path])
+    if args["--link"]:
         args = {
-            '<profile>': name,
-            '--overwrite': args['--overwrite'],
-            '--dry-run': False,
+            "<profile>": name,
+            "--overwrite": args["--overwrite"],
+            "--dry-run": False,
         }
 
         run_link(args)
