@@ -32,7 +32,7 @@ function cleanup() {
 }
 
 function x() {
-    echo "Running: $@"
+    log "Running: $@"
     $@
     if [[ $? != 0 ]]; then
         FAILED_CODE=$?
@@ -152,7 +152,7 @@ function dfm_init_and_add_test() {
     cleanup
 }
 
-DFM_BIN=""
+DFM_BIN="dfm"
 export PROFILE_REPOSITORY="https://github.com/chasinglogic/dfm_dotfile_test.git"
 export PROFILE_NAME="integration"
 export HOME_DIR=$(mktemp -d)
