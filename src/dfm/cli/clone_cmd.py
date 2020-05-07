@@ -19,29 +19,7 @@ import os
 import subprocess
 
 from dfm.cli.link_cmd import run as run_link
-from dfm.dotfile import dfm_dir
-
-
-def get_name(url):
-    """
-    Generate a profile name based on the git url.
-
-    This directly corresponds to the second to last element in the URL.  For
-    example: https://github.com/chasinglogic/dotfiles would be 'chasinglogic'
-
-    In the case of an ssh url or other url will correspond to the
-    first path element. For example:
-    git@github.com:chasinglogic/dotfiles would be 'chasinglogic'
-    """
-    try:
-        if url.find("@") > 1:
-            return url.split(":")[-1].split("/")[0]
-        else:
-            return url.split("/")[-2]
-    # Any kind of exception i.e. IndexError or failure to split we
-    # just return nothing.
-    except Exception:
-        return ""
+from dfm.profile import dfm_dir, get_name
 
 
 def run(args):
