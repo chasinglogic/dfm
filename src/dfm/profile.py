@@ -1,16 +1,29 @@
 from os import getenv, makedirs
 from os.path import expanduser, join, isdir
-from urllib.parse import urlparse
 
 from dfm.dotfile import DotfileRepo, dfm_dir
 
 
-def is_http_url(url):
+def get_name(url):
+    """
+    Generate a profile name based on the git url.
+
+    This directly corresponds to the second to last element in the URL.  For
+    example: https://github.com/chasinglogic/dotfiles would be 'chasinglogic'
+
+    In the case of an ssh url or other url will correspond to the
+    first path element. For example:
+    git@github.com:chasinglogic/dotfiles would be 'chasinglogic'
+    """
     try:
-        result = urlparse(url)
-        return bool(all([result.scheme, result.netloc]))
-    except ValueError:
-        return False
+        if url.find("@") > 1:
+            return url.split(":")[-1].split("/")[0]
+        else:
+            return url.split("/")[-2]
+    # Any kind of exception i.e. IndexError or failure to split we
+    # just return nothing.
+    except Exception:
+        return ""
 
 
 class Profile(DotfileRepo):
@@ -46,27 +59,12 @@ class Profile(DotfileRepo):
 
         self.always_sync_modules = always_sync_modules
         self.pull_only = pull_only
-        self.link = link
+        self.link_mode = link
         self.repo = repo if repo else repository
+        self.modules = []
         self.name = name
         if not self.name:
-            split = self.repo.split("/")
-            if is_http_url(self.repo):
-                if len(split) >= 2:
-                    self.name = split[-2]
-                elif split:
-                    self.name = split[-1]
-                else:
-                    self.name = "unknown"
-            else:
-                # For a ssh git url git@github.com:username/reponame
-                # our current split looks like:
-                #
-                #   [ git@github.com:username, reponame ]
-                #
-                # So to get the username split split[0] on : and get
-                # the last element of that split
-                self.name = split[0].split(":")[-1]
+            self.name = get_name(self.repo)
 
         self.location = expanduser(location)
         if not self.location:
