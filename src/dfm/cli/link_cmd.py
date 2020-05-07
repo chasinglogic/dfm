@@ -12,9 +12,7 @@ Options:
                      ARE UNSURE AS IT WILL RESULT IN DATA LOSS.
 """
 
-import logging
-
-from dfm.cli.utils import current_profile, load_profile, switch_profile
+from dfm.cli.utils import load_profile, switch_profile
 
 
 def run(args):
@@ -25,6 +23,6 @@ def run(args):
     elif args["<profile>"]:
         profile = load_profile(args["<profile>"])
     else:
-        profile = load_profile(current_profile())
+        profile = load_profile()
 
-    links = profile.link(overwrite=args["--overwrite"], dry_run=dry_run)
+    profile.link(overwrite=args["--overwrite"], dry_run=dry_run)
