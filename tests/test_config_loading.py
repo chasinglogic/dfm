@@ -3,7 +3,7 @@
 import os
 from tempfile import TemporaryDirectory
 
-from dfm.dotfile import Profile
+from dfm.profile import Profile
 
 
 def setup_module():

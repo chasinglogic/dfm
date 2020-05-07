@@ -4,7 +4,8 @@ import os
 from operator import itemgetter
 from tempfile import TemporaryDirectory
 
-from dfm.dotfile import Profile, xdg_dir
+from dfm.profile import Profile
+from dfm.dotfile import xdg_dir
 
 
 def setup_module():
