@@ -340,7 +340,7 @@ features:
 
 ### Modules
 
-Modules in dfm are like sub profiles. They're git repositories that are cloned into a
+Modules in dfm are sub profiles. They're git repositories that are cloned into a
 a special directory: `$XDG_CONFIG_HOME/dfm/modules`. They're shared across
 profiles so if two dotfile profiles have the same module they'll share that
 module.
@@ -353,7 +353,7 @@ modules:
 ```
 
 This would clone my dotfiles repository as a module into
-`$XDG_CONFIG_HOME/dfm/modules/dotfiles`. If I wanted to use a unique name or
+`$XDG_CONFIG_HOME/dfm/modules/chasinglogic`. If I wanted to use a unique name or
 some other folder name so it wouldn't be shared you can specify an additional
 option `name`:
 
@@ -395,6 +395,10 @@ modules:
 Here we specify a few extra keys. There purpose should be self explanatory but
 if you're curious [below](#available-keys) is a detailed explanation of all keys
 that each module configuration supports.
+
+Modules work just like any other dfm profile so if a module you're
+pulling in has a `.dfm.yml` in it that will be loaded and executed
+accordingly. Including pulling down any modules it defines.
 
 #### Available keys
 
