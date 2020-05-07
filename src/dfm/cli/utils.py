@@ -37,13 +37,15 @@ def current_profile():
     return profile_dir(profile_name)
 
 
-def load_profile(name=current_profile()):
+def load_profile(name=None):
     """
     Load a profile by name.
 
     Joins the dfm state directory with 'profiles' and name to
     determine where the profile is.
     """
+    if name is None:
+        name = current_profile()
     path = profile_dir(name)
     return Profile(path)
 
