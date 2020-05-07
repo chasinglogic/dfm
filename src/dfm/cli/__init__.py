@@ -64,6 +64,8 @@ def main():
     elif args["--verbose"]:
         logging.basicConfig(level=logging.INFO)
 
+    logger = logging.getLogger(__name__)
+
     command = args["<command>"]
     try:
         if command == "help":
@@ -80,8 +82,10 @@ def main():
         argv = [command] + args["<args>"]
         command_mod.run(docopt(command_mod.__doc__, argv=argv))
         sys.exit(0)
-    except ImportError:
+    except ImportError as e:
         print("{} is not a known dfm command.".format(command))
+        if args["--debug"]:
+            logger.debug("Exception: %s", e)
         sys.exit(1)
 
 
