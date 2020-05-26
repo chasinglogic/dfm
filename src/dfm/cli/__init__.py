@@ -54,7 +54,7 @@ ALIASES = {
 
 def main():
     """CLI entrypoint, handles subcommand parsing"""
-    args = docopt(__doc__, version="dfm version 8.0.1", options_first=True)
+    args = docopt(__doc__, version="dfm version 8.1.0", options_first=True)
     if not args["<command>"]:
         print(__doc__)
         sys.exit(1)

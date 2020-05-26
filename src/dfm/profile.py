@@ -76,7 +76,12 @@ class Profile(DotfileRepo):
             self.location = join(module_dir, self.name)
 
         if not isdir(self.location) and not getenv("DFM_DISABLE_MODULES"):
-            self._git("clone --single-branch --branch {} {} {}".format(self.branch, self.repo, self.location), cwd=None)
+            self._git(
+                "clone --single-branch --branch {} {} {}".format(
+                    self.branch, self.repo, self.location
+                ),
+                cwd=None,
+            )
 
         super().__init__(
             self.location, target_dir=target_dir, commit_msg=commit_msg,
