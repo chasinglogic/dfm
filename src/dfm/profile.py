@@ -53,6 +53,7 @@ class Profile(DotfileRepo):
         name="",
         pull_only=False,
         link="post",
+        branch="master",
         target_dir=getenv("HOME", ""),
         commit_msg=getenv("DFM_GIT_COMMIT_MSG", ""),
     ):
@@ -62,6 +63,7 @@ class Profile(DotfileRepo):
         self.link_mode = link
         self.repo = repo if repo else repository
         self.modules = []
+        self.branch = branch
         self.name = name
         if not self.name:
             self.name = get_name(self.repo)
@@ -74,7 +76,7 @@ class Profile(DotfileRepo):
             self.location = join(module_dir, self.name)
 
         if not isdir(self.location) and not getenv("DFM_DISABLE_MODULES"):
-            self._git("clone {} {}".format(self.repo, self.location), cwd=None)
+            self._git("clone --single-branch --branch {} {} {}".format(self.branch, self.repo, self.location), cwd=None)
 
         super().__init__(
             self.location, target_dir=target_dir, commit_msg=commit_msg,
@@ -109,7 +111,7 @@ class Profile(DotfileRepo):
         """
         print("\n{}:".format(self.where))
         if self.pull_only:
-            self._git("pull --rebase origin master")
+            self._git("pull --rebase origin {}".format(self.branch))
         else:
             super().sync()
 
