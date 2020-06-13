@@ -125,7 +125,7 @@ how to use them and configure them in [Configuration](#configuration)
 ### Pre and Post command hooks
 
 dfm supports pre and post command hooks. that allows you to specify before and
-after command shell scripts to run. For example, I use a profile module to keep
+after command scripts to run. For example, I use a profile module to keep
 certain ssh keys in an encrypted git repository. Whenever I run the `dfm sync` command
 I have hooks which fix the permissions of the keys and ssh-add them to my ssh
 agent. You can read about how to write your own hooks in
@@ -574,6 +574,29 @@ All commands are ran with a working directory of your dotfile
 repository and the current process environment is passed down to the
 process so you can use `$HOME` etc environment variables in your
 commands.
+
+By default the comamnds will run with the interpreter `/bin/sh -c`. So the
+expanded comamnd line for the first hook above would be:
+
+```
+/bin/sh -c 'ls -l'
+```
+
+If you want to use a different interpreter you can use instead use this hook
+format:
+
+```
+hooks:
+  after_link:
+    - interpreter: python -c
+      script: |
+        print("hello world from Python")
+```
+
+You may want to do this in cases where you need complex logic (like that which
+should live in a Python script) or for example on Debian based systems which
+use dash instead of bash as the /bin/sh interpreter and so have a very limited
+expansion feature set.
 
 ## Contributing
 
