@@ -7,7 +7,7 @@ with open("README.md") as f:
 
 setup(
     name="dfm",
-    version="8.1.0",
+    version="8.2.0",
     url="https://github.com/chasinglogic/dfm",
     license="GPL-3.0",
     author="Mathew Robinson",
@@ -21,7 +21,7 @@ setup(
     zip_safe=False,
     platforms="any",
     install_requires=["docopt", "pyyaml>=3.13"],
-    entry_points={"console_scripts": ["dfm = dfm.cli:main",],},
+    entry_points={"console_scripts": ["dfm = dfm.cli:main"]},
     classifiers=[
         # As from https://pypi.org/classifiers/
         "Development Status :: 4 - Beta",
