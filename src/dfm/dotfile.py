@@ -190,9 +190,20 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         """Run the hook with name."""
         commands = self.hooks.get(name, [])
         for command in commands:
+            if isinstance(command, dict):
+                interpreter = shlex.split(command.get("interpreter", "/bin/sh -c"))
+                script = command.get("script", "")
+            else:
+                interpreter = ["/bin/sh", "-c"]
+                script = command
+
+            if not script:
+                print("Found an empty script for hook: {}, skipping".format(name))
+                continue
+
             try:
                 subprocess.call(
-                    ["/bin/sh", "-c", command],
+                    interpreter + [script],
                     cwd=self.where,
                     stdin=sys.stdin,
                     stdout=sys.stdout,
