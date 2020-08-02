@@ -87,6 +87,8 @@ def main():
         if args["--debug"]:
             logger.debug("Exception: %s", e)
         sys.exit(1)
+    except KeyboardInterrupt:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
