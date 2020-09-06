@@ -14,7 +14,7 @@ def setup_module():
 
 def test_list_files(dotfile_dir):
     """Test that a profile properly lists it's directory."""
-    dotfiles, directory = dotfile_dir
+    dotfiles, directory = dotfile_dir()
     profile = Profile(directory)
     profile._find_files()
     expected_files = sorted(dotfiles)
