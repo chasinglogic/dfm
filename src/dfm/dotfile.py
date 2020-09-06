@@ -266,27 +266,10 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
 
             # If the mapping did match and is a skip mapping then end
             # function without adding a link to self.links
-            if mapping.skip:
+            if mapping.should_skip():
                 return
 
-            # If the mapping has a target OS then check if we're on that OS
-            if mapping.target_os:
-                # If we're not on the OS the mapping is for then skip it.
-                if (
-                    isinstance(mapping.target_os, list)
-                    and CUR_OS not in mapping.target_os
-                ):
-                    continue
-
-                if isinstance(mapping.target_os, str) and CUR_OS != mapping.target_os:
-                    continue
-
-            if mapping.target_dir:
-                # Replace self.target_dir with the mapping target_dir
-                dest = dest.replace(self.target_dir, mapping.target_dir)
-
-            if mapping.dest:
-                dest = os.path.join(self.target_dir, mapping.dest)
+            dest = mapping.replace(dest, self.target_dir)
 
         self.links.append({"src": src, "dst": dest})
 
