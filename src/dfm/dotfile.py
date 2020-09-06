@@ -269,17 +269,17 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             if mapping.skip:
                 return
 
+            # If the mapping has a target OS then check if we're on that OS
             if mapping.target_os:
-                if isinstance(mapping.target_os, list):
-                    if CUR_OS in mapping.target_os:
-                        continue
-                    else:
-                        return
-                elif isinstance(mapping.target_os, str):
-                    if CUR_OS == mapping.target_os:
-                        continue
-                    else:
-                        return
+                # If we're not on the OS the mapping is for then skip it.
+                if (
+                    isinstance(mapping.target_os, list)
+                    and CUR_OS not in mapping.target_os
+                ):
+                    continue
+
+                if isinstance(mapping.target_os, str) and CUR_OS != mapping.target_os:
+                    continue
 
             if mapping.target_dir:
                 # Replace self.target_dir with the mapping target_dir
