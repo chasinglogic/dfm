@@ -84,7 +84,9 @@ class Profile(DotfileRepo):
             )
 
         super().__init__(
-            self.location, target_dir=target_dir, commit_msg=commit_msg,
+            self.location,
+            target_dir=target_dir,
+            commit_msg=commit_msg,
         )
 
         if self.config is None:

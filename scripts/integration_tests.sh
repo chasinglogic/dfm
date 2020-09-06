@@ -1,7 +1,10 @@
 #!/bin/bash
 
 function log() {
-    echo "[$(date)]" $@
+    if [[ $2 == "DEBUG" ]] && [[ "$DEBUG_TESTS" == "" ]]; then
+        return
+    fi
+    echo "[$(date)]" $1
 }
 
 function list_dir() {
@@ -32,13 +35,21 @@ function cleanup() {
 }
 
 function x() {
-    log "Running: $@"
-    $@
+    cmd=$@
+    log "Running: $cmd" "DEBUG"
+    stdoutfile=$(mktemp)
+    stderrfile=$(mktemp)
+    $@ 1>$stdoutfile 2>$stderrfile
     if [[ $? != 0 ]]; then
         FAILED_CODE=$?
         log "Failed to run $@"
+        cat $stdoutfile
+        cat $stderrfile
+        rm -f $stdoutfile $stderrfile
         cleanup $FAILED_CODE
     fi
+
+    rm -f $stdoutfile $stderrfile
 }
 
 ##############
@@ -51,7 +62,7 @@ function dfm_clone_test() {
     shift;
     local PROFILE_REPOSITORY=$1
 
-    log "Running clone tests..."
+    log "Running clone tests..." "DEBUG"
 
     x $DFM_BIN --version
     x $DFM_BIN clone --name $PROFILE_NAME $PROFILE_REPOSITORY
@@ -83,7 +94,7 @@ function dfm_clone_and_link_test() {
     shift;
     local PROFILE_REPOSITORY=$1
 
-    log "Running clone tests..."
+    log "Running clone tests..." "DEBUG"
 
     x $DFM_BIN clone --link --name $PROFILE_NAME $PROFILE_REPOSITORY
 
@@ -93,7 +104,7 @@ function dfm_clone_and_link_test() {
         exit 1
     fi
 
-    log "[PASS] Integration profile cloned"
+    log "[PASS] (--link tests) Integration profile cloned"
 
     if [ ! -L $HOME/.dotfile ]; then
         log "Failed to link integration profile! \$HOME contents:"
@@ -101,7 +112,7 @@ function dfm_clone_and_link_test() {
         exit 1
     fi
 
-    log "[PASS] Integration profile linked"
+    log "[PASS] (--link tests) Integration profile linked"
 
     cleanup
 }
@@ -112,7 +123,7 @@ function dfm_clone_and_link_test() {
 function dfm_init_and_add_test() {
     local DFM=$1;
 
-    log "Running init tests..."
+    log "Running init tests..." "DEBUG"
 
     x $DFM init integration-test
     x $DFM link integration-test

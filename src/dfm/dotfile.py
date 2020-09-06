@@ -151,9 +151,7 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         often you will not want to set this.
         """
         try:
-            if cwd or cwd is None:
-                cwd = cwd
-            else:
+            if not cwd:
                 cwd = self.where
 
             proc = subprocess.Popen(
@@ -268,27 +266,10 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
 
             # If the mapping did match and is a skip mapping then end
             # function without adding a link to self.links
-            if mapping.skip:
+            if mapping.should_skip():
                 return
 
-            if mapping.target_os:
-                if isinstance(mapping.target_os, list):
-                    if CUR_OS in mapping.target_os:
-                        continue
-                    else:
-                        return
-                elif isinstance(mapping.target_os, str):
-                    if CUR_OS == mapping.target_os:
-                        continue
-                    else:
-                        return
-
-            if mapping.target_dir:
-                # Replace self.target_dir with the mapping target_dir
-                dest = dest.replace(self.target_dir, mapping.target_dir)
-
-            if mapping.dest:
-                dest = os.path.join(self.target_dir, mapping.dest)
+            dest = mapping.replace(dest, self.target_dir)
 
         self.links.append({"src": src, "dst": dest})
 

@@ -1,6 +1,7 @@
 """Test linking"""
 
 import os
+import platform
 from operator import itemgetter
 from tempfile import TemporaryDirectory
 
@@ -15,7 +16,37 @@ def setup_module():
 
 def test_translation(dotdfm):
     """Test that the generated links properly translate names."""
-    _, directory = dotdfm()
+    _, directory = dotdfm(
+        """
+---
+mappings:
+    - match: .skip_on_os
+      target_os:
+         - {this_os}
+      skip: true
+    - match: .map_to_os_name
+      dest: .{this_os}
+      target_os: {this_os}
+    - match: .skip_on_another_os
+      skip: True
+      target_os: {another_os}
+""".format(
+            this_os=platform.system(),
+            another_os="Windows" if platform.system() != "Windows" else "Linux",
+        ),
+        dotfiles=[
+            ".vimrc",
+            ".bashrc",
+            ".emacs",
+            ".gitignore",
+            ".ggitignore",
+            ".emacs.d/init.el",
+            ".git/HEAD",
+            ".skip_on_os",
+            ".map_to_os_name",
+            ".skip_on_another_os",
+        ],
+    )
     profile = Profile(str(directory))
     links = profile.link(dry_run=True)
     expected_links = [
@@ -36,15 +67,26 @@ def test_translation(dotdfm):
             "dst": os.path.join(os.getenv("HOME"), ".gitignore"),
         },
         {
-            "src": os.path.join(directory, ".emacs.d", "dotfile"),
-            "dst": os.path.join(os.getenv("HOME"), ".emacs.d", "dotfile"),
+            "src": os.path.join(directory, ".emacs.d", "init.el"),
+            "dst": os.path.join(os.getenv("HOME"), ".emacs.d", "init.el"),
+        },
+        {
+            "src": os.path.join(directory, ".map_to_os_name"),
+            "dst": os.path.join(
+                os.getenv("HOME"), ".{name}".format(name=platform.system())
+            ),
+        },
+        {
+            "src": os.path.join(directory, ".skip_on_another_os"),
+            "dst": os.path.join(os.getenv("HOME"), ".skip_on_another_os"),
         },
     ]
 
-    for (link, expected) in zip(
-        sorted(links, key=itemgetter("src")),
-        sorted(expected_links, key=itemgetter("src")),
-    ):
+    sorted_links = sorted(links, key=itemgetter("src"))
+    sorted_expected_links = sorted(expected_links, key=itemgetter("src"))
+    assert len(sorted_links) == len(sorted_expected_links)
+
+    for (link, expected) in zip(sorted_links, sorted_expected_links):
         assert link["src"] == expected["src"]
         assert link["dst"] == expected["dst"]
 
