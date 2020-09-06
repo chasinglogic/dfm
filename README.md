@@ -540,6 +540,10 @@ mappings:
     target_os:
         - "Linux"
         - "Darwin"
+  - match: some_specific_translation_for_mac
+    dest: ~/.mac_os_dotfile
+    target_os:
+        - "Darwin"
 ```
 
 Here dfm uses the match as a regular expression to match the file
@@ -556,6 +560,7 @@ Mappings support the following configuration options:
 
 - [match](#match)
 - [skip](#skip)
+- [dest](#dest)
 - [target\_dir](#target\_dir)
 - [target\_os](#target\_os)
 
@@ -572,6 +577,13 @@ method so are by default fuzzy matching.
 ##### skip
 
 If provided the file/s will not be linked.
+
+##### dest
+
+The new full path to the file. This can be used to completely change a file's
+name or put it in a wholly new location. This is more explicity than
+`target_dir` and covers cases that `target_dir` is not suited for (for example
+if a file is a dotfile on one OS but not on another.)
 
 ##### target\_dir
 
