@@ -7,7 +7,7 @@ with open("README.md") as f:
 
 setup(
     name="dfm",
-    version="8.2.1",
+    version="8.2.2",
     url="https://github.com/chasinglogic/dfm",
     license="GPL-3.0",
     author="Mathew Robinson",
