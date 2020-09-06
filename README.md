@@ -14,6 +14,7 @@ A dotfile manager for lazy people and pair programmers.
   - [Respects `$XDG_CONFIG_HOME`](#respects-xdg_config_home)
   - [Skips relevant files](#skips-relevant-files)
   - [Configurable mappings](#custom-mappings)
+  - [Encrypted Dotfiles](#encrypted-dotfiles)
 - [Installation](#installation)
 - [Updating](#updating)
 - [Usage](#usage)
@@ -181,6 +182,55 @@ Mappings. You can write your own mappings to either skip, skip based
 on platform or translate files to different locations than dfm would
 normally place them. You can read how to configure your own mappings
 in [Configuration](#configuration)
+
+### Encrypted Dotfiles
+
+Using hooks and mappings you can integrate GPG with DFM to have an encrypted
+dotfiles repository.
+
+If you add the following `.dfm.yml` to your repository per the
+[Configuration](#configuration) documentation:
+
+```yaml
+---
+mappings:
+  - match: '.*.gpg'
+    skip: true
+
+hooks:
+  before_sync:
+    - interpreter: /bin/bash -c
+      script: |
+        echo "encrypting files..."
+        for file in $(find . -not -name '*.gpg' -not -name '.dfm.yml' -not -name '.gitignore' -not -path './.git/*'); do
+          echo "Encrypting $file to ${file/.gpg/}"
+          gpg --batch --yes --encrypt ${file/.gpg/}
+        done
+  after_sync:
+    - interpreter: /bin/bash -c
+      script: |
+        for file in $(git ls-files | grep -v .dfm.yml | grep -v .gitignore); do
+          gpg --batch --yes --decrypt -o ${file/.gpg/} $file 
+        done
+```
+
+And the following `.gitignore` file:
+
+```
+*
+!*/
+!.gitignore
+!.dfm.yml
+!*.gpg
+```
+
+Then when running `dfm sync` DFM will run the gpg command to encrypt all your
+files, then git will ignore all non-GPG encrypted files (due to the
+`.gitignore`), and after syncing DFM will decrypt all the GPG encrypted files.
+
+This all happens before linking, when you run `dfm link` DFM will ignore all gpg
+encrypted files due to the `mapping` configuration. It will then only link the
+unencrypted versions into your home directory.
 
 ## Installation
 
@@ -490,6 +540,10 @@ mappings:
     target_os:
         - "Linux"
         - "Darwin"
+  - match: some_specific_translation_for_mac
+    dest: ~/.mac_os_dotfile
+    target_os:
+        - "Darwin"
 ```
 
 Here dfm uses the match as a regular expression to match the file
@@ -506,6 +560,7 @@ Mappings support the following configuration options:
 
 - [match](#match)
 - [skip](#skip)
+- [dest](#dest)
 - [target\_dir](#target\_dir)
 - [target\_os](#target\_os)
 
@@ -522,6 +577,13 @@ method so are by default fuzzy matching.
 ##### skip
 
 If provided the file/s will not be linked.
+
+##### dest
+
+The new full path to the file. This can be used to completely change a file's
+name or put it in a wholly new location. This is more explicity than
+`target_dir` and covers cases that `target_dir` is not suited for (for example
+if a file is a dotfile on one OS but not on another.)
 
 ##### target\_dir
 
