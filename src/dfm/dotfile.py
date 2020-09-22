@@ -151,7 +151,7 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         often you will not want to set this.
         """
         try:
-            if not cwd:
+            if cwd is False:
                 cwd = self.where
 
             proc = subprocess.Popen(
