@@ -1,5 +1,5 @@
 from os import getenv, makedirs
-from os.path import expanduser, join, isdir
+from os.path import expanduser, join, isdir, dirname
 
 from dfm.dotfile import DotfileRepo, dfm_dir
 
@@ -75,19 +75,19 @@ class Profile(DotfileRepo):
                 makedirs(module_dir)
             self.location = join(module_dir, self.name)
 
-        if not isdir(self.location) and not getenv("DFM_DISABLE_MODULES"):
-            self._git(
-                "clone --single-branch --branch {} {} {}".format(
-                    self.branch, self.repo, self.location
-                ),
-                cwd=None,
-            )
-
         super().__init__(
             self.location,
             target_dir=target_dir,
             commit_msg=commit_msg,
         )
+
+        if not isdir(self.location) and not getenv("DFM_DISABLE_MODULES"):
+            self._git(
+                "clone --single-branch --branch {} {} {}".format(
+                    self.branch, self.repo, self.location
+                ),
+                cwd=dirname(self.where),
+            )
 
         if self.config is None:
             return
