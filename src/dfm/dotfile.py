@@ -44,7 +44,8 @@ def unable_to_remove(filename, overwrite=False):
 
     if not overwrite:
         logger.warning(
-            "%s exists and is not a symlink, Cowardly refusing to remove.", filename
+            "%s exists and is not a symlink, Cowardly refusing to remove.",
+            filename,
         )
         return True
 
@@ -177,7 +178,8 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         """
         try:
             return subprocess.check_output(
-                ["git", "status", "--porcelain"], cwd=self.where
+                ["git", "status", "--porcelain"],
+                cwd=self.where,
             )
         # Something unexpected happened while running git so let's
         # assume we can't run anymore git commands and skip trying to
@@ -210,7 +212,9 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
                 )
             except subprocess.CalledProcessError as proc_err:
                 logger.error(
-                    "command %s exited with non-zero error: %s", command, proc_err
+                    "command %s exited with non-zero error: %s",
+                    command,
+                    proc_err,
                 )
 
     def sync(self):
