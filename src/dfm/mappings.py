@@ -1,6 +1,6 @@
-import re
-import platform
 import os
+import platform
+import re
 from os.path import expanduser
 
 CUR_OS = platform.system()

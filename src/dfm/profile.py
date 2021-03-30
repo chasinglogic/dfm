@@ -1,5 +1,5 @@
 from os import getenv, makedirs
-from os.path import expanduser, join, isdir, dirname
+from os.path import dirname, expanduser, isdir, join
 
 from dfm.dotfile import DotfileRepo, dfm_dir
 

@@ -2,15 +2,16 @@
 
 import logging
 import os
+import platform
+import re
 import shlex
 import subprocess
 import sys
-import platform
 from shutil import rmtree
 
 import yaml
 
-from dfm.mappings import Mapping, DEFAULT_MAPPINGS
+from dfm.mappings import DEFAULT_MAPPINGS, Mapping
 
 logger = logging.getLogger(__name__)
 

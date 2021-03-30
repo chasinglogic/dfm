@@ -8,8 +8,9 @@ Options:
 Sync the current profile and modules.
 """
 
-from sys import exit
 from os.path import exists
+from sys import exit
+
 from dfm.cli.utils import load_profile, profile_dir
 from dfm.profile import Profile
 
