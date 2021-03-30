@@ -159,11 +159,11 @@ function dfm_init_and_add_test() {
     fi
 
     log "[PASS] Added dotfile is in git repository"
-        
+
     cleanup
 }
 
-DFM_BIN="dfm"
+DFM_BIN="${DFM_BIN:-dfm}"
 export PROFILE_REPOSITORY="https://github.com/chasinglogic/dfm_dotfile_test.git"
 export PROFILE_NAME="integration"
 export HOME_DIR=$(mktemp -d)
@@ -181,6 +181,7 @@ export HOME=$HOME_DIR
 
 generate_git_config
 
+log "Using dfm binary: $DFM_BIN"
 x $DFM_BIN --version
 dfm_clone_test $DFM_BIN $PROFILE_NAME $PROFILE_REPOSITORY
 dfm_clone_and_link_test $DFM_BIN $PROFILE_NAME $PROFILE_REPOSITORY
