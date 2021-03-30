@@ -14,9 +14,9 @@ Options:
 Clones the repository at <url> to a new profile with <name>
 """
 
-import sys
 import os
 import subprocess
+import sys
 
 from dfm.cli.link_cmd import run as run_link
 from dfm.profile import dfm_dir, get_name
