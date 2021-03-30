@@ -1,6 +1,7 @@
 """Common test fixtures"""
 
 import os
+import subprocess
 
 import pytest
 
@@ -16,7 +17,6 @@ def dotfile_dir(tmpdir):
         ".gitignore",
         ".ggitignore",
         ".emacs.d/init.el",
-        ".git/HEAD",
     ]
 
     def touch(dotfile):
@@ -37,6 +37,24 @@ def dotfile_dir(tmpdir):
 
             touch(os.path.join(df_dir, file))
 
+        subprocess.run(
+            ["git", "init"],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "add", "-A"],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "init"],
+            cwd=tmpdir,
+            check=True,
+            capture_output=True,
+        )
         return (
             [os.path.join(tmpdir, df) for df in dotfiles if not df.startswith(".git/")],
             tmpdir,
@@ -51,7 +69,6 @@ def dotdfm(dotfile_dir):
 
     def create_dotdfm(content="", dotfiles=None):
         dotfiles, directory = dotfile_dir(dotfiles=dotfiles)
-
         with open(os.path.join(directory, ".dfm.yml"), "w") as cfg:
             cfg.write(content)
 

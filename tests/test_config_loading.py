@@ -17,8 +17,7 @@ def test_list_files(dotfile_dir):
     dotfiles, directory = dotfile_dir()
     profile = Profile(directory)
     profile._find_files()
-    expected_files = sorted(dotfiles)
-    assert sorted(profile.files) == expected_files
+    assert sorted(profile.files) == sorted(dotfiles)
     assert not profile.always_sync_modules
 
 
