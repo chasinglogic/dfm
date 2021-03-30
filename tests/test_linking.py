@@ -5,8 +5,8 @@ import platform
 from operator import itemgetter
 from tempfile import TemporaryDirectory
 
-from dfm.profile import Profile
 from dfm.dotfile import xdg_dir
+from dfm.profile import Profile
 
 
 def setup_module():
@@ -41,7 +41,6 @@ mappings:
             ".gitignore",
             ".ggitignore",
             ".emacs.d/init.el",
-            ".git/HEAD",
             ".skip_on_os",
             ".map_to_os_name",
             ".skip_on_another_os",
@@ -109,15 +108,13 @@ def test_linking(dotdfm):
         assert dest == created
 
 
-def test_xdg_config(tmpdir):
-    dotfiles = tmpdir.mkdir("dotfiles")
-    initvim = dotfiles.mkdir(".config").mkdir("nvim").join("init.vim")
-    open(initvim, "w").close()
-    profile = Profile(str(dotfiles))
+def test_xdg_config(dotfile_dir):
+    _, d_dir = dotfile_dir([".config/nvim/init.vim"])
+    profile = Profile(d_dir)
     links = profile.link(dry_run=True)
     assert links == [
         {
-            "src": os.path.join(dotfiles, ".config", "nvim", "init.vim"),
+            "src": os.path.join(d_dir, ".config", "nvim", "init.vim"),
             "dst": os.path.join(xdg_dir(), "nvim", "init.vim"),
         }
     ]
