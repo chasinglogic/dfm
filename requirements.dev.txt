@@ -1,4 +1,4 @@
-black 
+black
 pydocstyle
 isort
 pylint
@@ -7,3 +7,5 @@ pytest
 pytest-benchmark
 sphinx
 sphinx-autobuild
+wheel
+twine
