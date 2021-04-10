@@ -99,7 +99,7 @@ class LinkManager:
         return (src, dest)
 
     def generate_link(self, filename):
-        """Generates link args for filename."""
+        """Generate link args for filename."""
         src, dest = self.translate_name(filename)
 
         for mapping in self.mappings:
@@ -115,8 +115,8 @@ class LinkManager:
             if mapping.link_as_dir:
                 src, dest = self.translate_name(mapping.src_path(self.where))
                 return {
-                    'src': src,
-                    'dst': dest,
+                    "src": src,
+                    "dst": dest,
                 }
 
             dest = mapping.replace(dest, self.target_dir)
