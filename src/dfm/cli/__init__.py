@@ -36,6 +36,8 @@ from importlib import import_module
 
 from docopt import docopt
 
+from dfm import __version__
+
 ALIASES = {
     "s": "sync",
     "a": "add",
@@ -54,7 +56,11 @@ ALIASES = {
 
 def main():
     """CLI entrypoint, handles subcommand parsing"""
-    args = docopt(__doc__, version="dfm version 8.3.0", options_first=True)
+    args = docopt(
+        __doc__,
+        version="dfm version {}".format(__version__),
+        options_first=True,
+    )
     if not args["<command>"]:
         print(__doc__)
         sys.exit(1)
