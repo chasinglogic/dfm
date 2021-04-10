@@ -6,8 +6,8 @@ from operator import itemgetter
 from tempfile import TemporaryDirectory
 
 from dfm.config import xdg_dir
-from dfm.profile import Profile
 from dfm.links import LinkManager
+from dfm.profile import Profile
 
 
 def setup_module():
