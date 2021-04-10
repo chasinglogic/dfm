@@ -16,10 +16,19 @@ class Mapping:
     directory other than '$HOME'.
     """
 
-    def __init__(self, match, dest="", target_dir="", skip=False, target_os=None):
+    def __init__(
+        self,
+        match,
+        link_as_dir=False,
+        dest="",
+        target_dir="",
+        skip=False,
+        target_os=None,
+    ):
         self.match = match
         self.target_dir = expanduser(target_dir)
         self.dest = expanduser(dest)
+        self.link_as_dir = link_as_dir
         if target_os is not None:
             self.target_os = target_os
         else:
@@ -82,6 +91,26 @@ class Mapping:
     def matches(self, path):
         """Determine if this mapping matches path."""
         return self.rgx.search(path) is not None
+
+    def src_path(self, where):
+        """Return the src path for a link_as_dir mapping."""
+        if not self.link_as_dir:
+            raise Exception(
+                "Tried to get src path for a non dir mapping!",
+            )
+
+        if where in self.match:
+            return self.match
+
+        path = os.path.join(where, self.match)
+        if not os.path.isdir(path):
+            raise Exception(
+                "Could not resolve {} to a directory in the profile!".format(
+                    self.match,
+                ),
+            )
+
+        return path
 
     def __repr__(self):
         if self.dest:

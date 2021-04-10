@@ -83,8 +83,8 @@ class LinkManager:
             os.makedirs(os.path.dirname(link["dst"]), exist_ok=True)
             os.symlink(**link)
 
-    def generate_link(self, filename):
-        """Dotfile-ifies a filename"""
+    def translate_name(self, filename):
+        """Dotfile-ifies a filename."""
         # Get the absolute path to src
         src = os.path.abspath(filename)
         dest = src.replace(self.where, "")
@@ -96,6 +96,11 @@ class LinkManager:
             dest = dest[1:]
 
         dest = os.path.join(self.target_dir, dest)
+        return (src, dest)
+
+    def generate_link(self, filename):
+        """Generates link args for filename."""
+        src, dest = self.translate_name(filename)
 
         for mapping in self.mappings:
             # If the mapping doesn't match skip to the next one
@@ -106,6 +111,13 @@ class LinkManager:
             # function without adding a link to links
             if mapping.should_skip():
                 return None
+
+            if mapping.link_as_dir:
+                src, dest = self.translate_name(mapping.src_path(self.where))
+                return {
+                    'src': src,
+                    'dst': dest,
+                }
 
             dest = mapping.replace(dest, self.target_dir)
 
@@ -138,10 +150,16 @@ class LinkManager:
         All required arguments for os.link will always be provided and
         optional arguments as required.
         """
-        return filter(
-            lambda x: x is not None,
-            map(
-                self.generate_link,
-                self.find_files(),
-            ),
+        return map(
+            dict,
+            # When using link_as_dir it's possible to have duplicate link
+            # directives, this filters those out using a set comprehension.
+            {
+                tuple(sorted(link.items()))
+                for link in map(
+                    self.generate_link,
+                    self.find_files(),
+                )
+                if link is not None
+            },
         )
