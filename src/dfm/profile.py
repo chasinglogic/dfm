@@ -270,6 +270,7 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         profile = cls.default(where)
         profile.df_repo.init()
         return profile
+
     @classmethod
     def from_dict(cls, config):
         """Return a Module from the config dictionary"""

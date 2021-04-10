@@ -8,6 +8,7 @@ lint:
 
 fmt:
 	$(PYTHON) -m black src tests
+	$(PYTHON) -m isort src tests
 
 clean:
 	rm -rf build dist
