@@ -88,10 +88,9 @@ def main():
         argv = [command] + args["<args>"]
         command_mod.run(docopt(command_mod.__doc__, argv=argv))
         sys.exit(0)
-    except ImportError as e:
+    except ImportError as exc:
         print("{} is not a known dfm command.".format(command))
-        if args["--debug"]:
-            logger.debug("Exception: %s", e)
+        logger.debug("Exception: %s", exc)
         sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(1)
