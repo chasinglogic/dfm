@@ -530,6 +530,8 @@ Here is a simple example:
 
 ```yaml
 mappings:
+  - match: .config/some-dir
+    link_as_dir: true
   - match: my_global_etc_files
     target_dir: /etc/
   - match: something_want_to_skip_but_sync
@@ -553,6 +555,50 @@ anything where `skip` is true it simply skips linking. For anything
 with `target_dir` that value will override `$HOME` when linking. For
 anything with a `target_os` value the file will only be linked if dfm
 is being run on the given os.
+
+##### Link as Dir Mappings
+
+Above you can see a mapping using the `link_as_dir` option. When this is set to `true`
+for a mapping the `match:` value will be used as a directory relative to the root of the
+dotfile repo and will be linked as a directory. Normally DFM only links files, this can
+cause issues with some types of configuration where you regularly generate files like
+snippet tools. Consider the following dotfiles in a dotfile repository:
+
+```
+$REPO/.config/nvim
+├── UltiSnips
+│   ├── gitcommit.snippets
+│   └── python.snippets
+```
+
+That would produce the following links in `$HOME/.config/nvim`:
+
+```
+$HOME/.config/nvim
+├── UltiSnips
+│   ├── gitcommit.snippets -> $HOME/.config/dfm/profiles/chasinglogic/.config/nvim/UltiSnips/gitcommit.snippets
+│   └── python.snippets -> $HOME/.config/dfm/profiles/chasinglogic/.config/nvim/UltiSnips/python.snippets
+```
+
+Every time you used `:UltiSnipsEdit` to create a new snippet file type you'd have to
+then remember to manually move that into your dotfile repository and re-run `dfm link`.
+To solve this problem you can use the following mapping in your `.dfm.yml` you can
+instead link `UltiSnips` the directory instead of it's files:
+
+```
+mappings:
+  - match: .config/nvim/UltiSnips
+    link_as_dir: true
+```
+
+Now DFM links the `$HOME/.config/nvim/UltiSnips` directory to the
+`$REPO/.config/nvim/UltiSnips`:
+
+```
+$HOME/.config/nvim
+├── UltiSnips -> $HOME/.config/dfm/profiles/chasinglogic/.config/nvim/UltiSnips
+```
+
 
 #### Available configuration
 
