@@ -21,8 +21,8 @@ def run(args, profile=None):
             print("{}: file does not exist".format(oldfile))
             sys.exit(1)
 
-        newfile = os.path.relpath(oldfile, profile.target_dir)
-        newfile = os.path.join(profile.where, newfile)
+        newfile = os.path.relpath(oldfile, profile.link_manager.target_dir)
+        newfile = os.path.join(profile.link_manager.where, newfile)
         if os.path.isfile(oldfile):
             shutil.copy2(oldfile, newfile)
             os.remove(oldfile)
