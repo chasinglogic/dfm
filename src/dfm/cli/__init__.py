@@ -66,9 +66,15 @@ def main():
         sys.exit(1)
 
     if args["--debug"]:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(
+            stream=sys.stdout,
+            level=logging.DEBUG,
+        )
     elif args["--verbose"]:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(
+            stream=sys.stdout,
+            level=logging.INFO,
+        )
 
     logger = logging.getLogger(__name__)
 
