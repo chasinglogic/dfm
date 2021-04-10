@@ -7,7 +7,7 @@ you've removed dotfiles from your profile.
 
 import os
 
-from dfm.dotfile import xdg_dir
+from dfm.config import xdg_dir
 
 
 def clean_links(directory):

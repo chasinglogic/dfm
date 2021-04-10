@@ -4,6 +4,7 @@ Usage: dfm sync [options]
 Options:
     -m, --message <msg>   Use the given <msg> as the commit message.
     -n, --name <name>     Sync only the given profile or module by name.
+    -d, --dry-run         Print git commands instead of executing them.
 
 Sync the current profile and modules.
 """
@@ -40,11 +41,11 @@ def run(args):
                 print("no module or profile matched name: {}".format(args["--name"]))
                 exit(1)
         else:
-            profile = Profile(possible_dir)
+            profile = Profile.load(possible_dir)
     else:
         profile = load_profile()
 
-    if args["--message"]:
-        profile.commit_msg = args["--message"]
-
-    profile.sync()
+    profile.sync(
+        dry_run=args["--dry-run"],
+        commit_msg=args["--message"],
+    )

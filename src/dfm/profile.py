@@ -1,7 +1,17 @@
-from os import getenv, makedirs
-from os.path import dirname, expanduser, isdir, join
+"""Dotfile profile and module management."""
 
-from dfm.dotfile import DotfileRepo, dfm_dir
+import logging
+import os
+from subprocess import call
+
+import yaml
+
+from dfm.config import dfm_dir
+from dfm.hooks import Hooks
+from dfm.links import LinkManager
+from dfm.repo import DotfileRepo
+
+logger = logging.getLogger(__name__)
 
 
 def get_name(url):
@@ -16,37 +26,44 @@ def get_name(url):
     git@github.com:chasinglogic/dotfiles would be 'chasinglogic'
     """
     try:
-        if url.find("@") > 1:
+        if not url:
+            return ""
+
+        if "@" in url:
             return url.split(":")[-1].split("/")[0]
-        else:
-            return url.split("/")[-2]
+
+        return url.split("/")[-2]
     # Any kind of exception i.e. IndexError or failure to split we
     # just return nothing.
-    except Exception:
+    except IndexError:
         return ""
 
 
-class Profile(DotfileRepo):
+class Profile:  # pylint: disable=too-many-instance-attributes
     """
-    Profile is a DotfileRepo that supports modules, and has additional
-    options around syncing and linking.
+    Profile is a dotfile profile.
 
-    Profile provides a new option for syncing called 'pull_only' which
-    will not push to the remote repo.
+    It is the aggregation of a single dotfile repo and all of it's modules.
 
     A Module (which is a Profile instance) has a known location on the
     filesystem, either auto-generated or manually specified, and if
     not found will attempt to clone the repository provided as the
     argument 'repo' into that location.
 
-    Profile also feeds the pre or post property up to it's parent
-    profile to determine when it should be linked in relation to that
-    profile.
+    Modules provide a new option for syncing called 'pull_only' which
+    will not push to the remote repo. This is useful for third-party dotfiles like
+    oh-my-zsh.
+
+    A Module also feeds the pre or post property up to it's parent
+    Profile to determine when it should be linked in relation to that
+    Profile.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
-        location="",
+        df_repo,
+        link_manager,
+        hooks,
         always_sync_modules=False,
         repo="",
         repository="",
@@ -54,61 +71,22 @@ class Profile(DotfileRepo):
         pull_only=False,
         link="post",
         branch="master",
-        target_dir=getenv("HOME", ""),
-        commit_msg=getenv("DFM_GIT_COMMIT_MSG", ""),
+        modules=None,
     ):
-
+        self.df_repo = df_repo
+        self.link_manager = link_manager
+        self.hooks = hooks
         self.always_sync_modules = always_sync_modules
         self.pull_only = pull_only
         self.link_mode = link
         self.repo = repo if repo else repository
-        self.modules = []
+        if not self.repo:
+            self.repo = self.df_repo.get_remote()
+        self.modules = modules if modules is not None else []
         self.branch = branch
-        self.name = name
-        if not self.name:
-            self.name = get_name(self.repo)
+        self.name = name or get_name(self.repo)
 
-        self.location = expanduser(location)
-        if not self.location:
-            module_dir = join(dfm_dir(), "modules")
-            if not isdir(module_dir):
-                makedirs(module_dir)
-            self.location = join(module_dir, self.name)
-
-        super().__init__(
-            self.location,
-            target_dir=target_dir,
-            commit_msg=commit_msg,
-        )
-
-        if not isdir(self.location) and not getenv("DFM_DISABLE_MODULES"):
-            self._git(
-                "clone --single-branch --branch {} {} {}".format(
-                    self.branch, self.repo, self.location
-                ),
-                cwd=dirname(self.where),
-            )
-
-        if self.config is None:
-            return
-
-        modules = self.config.pop("modules", [])
-        self.modules = [Profile.from_dict(mod) for mod in modules]
-        self.__dict__.update(self.config)
-
-    def _generate_links(self):
-        """Add module support to DotfileRepo's _generate_links."""
-        for module in self.modules:
-            if module.pre:
-                self.links += module.link(dry_run=True)
-
-        super()._generate_links()
-
-        for module in self.modules:
-            if module.post:
-                self.links += module.link(dry_run=True)
-
-    def sync(self, skip_modules=False):  # pylint: disable=arguments-differ
+    def sync(self, commit_msg="", dry_run=False, skip_modules=False):
         """
         Sync this profile and all modules using git.
 
@@ -116,32 +94,62 @@ class Profile(DotfileRepo):
 
         If skip_modules is True modules will not be synced.
         """
-        print("\n{}:".format(self.where))
         if self.pull_only:
-            self._git("pull --rebase origin {}".format(self.branch))
+            self.df_repo.git(
+                "pull --rebase origin {}".format(self.branch),
+                dry_run=dry_run,
+            )
         else:
-            super().sync()
+            self.df_repo.sync(
+                dry_run=dry_run,
+                commit_msg=commit_msg,
+            )
 
         if skip_modules:
             return
 
         for module in self.modules:
-            module.sync()
+            module.sync(dry_run=dry_run)
 
     def link(self, dry_run=False, overwrite=False):
-        """Wrap super()._generate_links"""
-        if self.link_mode == "none":
-            return []
+        """Link the dotfiles link for this profile and its modules."""
+        for module in self.pre_link_modules:
+            module.link(dry_run=dry_run, overwrite=overwrite)
 
-        return super().link(dry_run=dry_run, overwrite=overwrite)
+        if self.should_link:
+            self.hooks.run_hook("pre_link")
+            self.link_manager.link(dry_run, overwrite=overwrite)
+            self.hooks.run_hook("post_link")
+
+        for module in self.post_link_modules:
+            module.link(dry_run=dry_run, overwrite=overwrite)
 
     @property
-    def pre(self):
+    def pre_link_modules(self):
+        """Return an iterator for all pre link modules."""
+        for module in self.modules:
+            if module.link_pre:
+                yield module
+
+    @property
+    def post_link_modules(self):
+        """Return an iterator for all post link modules."""
+        for module in self.modules:
+            if module.link_post:
+                yield module
+
+    @property
+    def link_pre(self):
         """If True this module should be linked before the parent Profile."""
         return self.link_mode == "pre"
 
     @property
-    def post(self):
+    def should_link(self):
+        """If True this profile should be linked."""
+        return self.link_mode != "none"
+
+    @property
+    def link_post(self):
         """
         If True this module should be linked after the parent Profile.
 
@@ -151,9 +159,104 @@ class Profile(DotfileRepo):
         return self.link_mode == "post"
 
     @classmethod
+    def default(cls, where, extras=None):
+        """
+        Return a default Profile for where.
+
+        This is used when a config is not present or empty.
+        """
+        if extras is None:
+            extras = {}
+        df_repo = DotfileRepo.from_config(where, extras)
+        link_manager = LinkManager.from_config(where, extras)
+        hooks = Hooks.from_config(where, extras)
+        return cls(df_repo, link_manager, hooks, **extras)
+
+    @classmethod
+    def load(cls, where, extras=None):
+        """
+        Load a profile from where.
+
+        This loads the .dfm.yml file and configures the Profile and any modules
+        accordingly.
+        """
+        dotdfm = os.path.join(where, ".dfm.yml")
+        if not os.path.isfile(dotdfm):
+            return cls.default(where, extras=extras)
+
+        with open(dotdfm) as dfmconfig:
+            # This means it's a newer version of pyyaml
+            if hasattr(yaml, "FullLoader"):
+                config = yaml.load(dfmconfig, Loader=yaml.FullLoader)
+            else:
+                config = yaml.load(dfmconfig)
+
+        # This indicates an empty config file
+        if config is None:
+            return cls.default(where, extras=extras)
+
+        if extras:
+            config.update(extras)
+
+        modules = [cls.load_module(mod) for mod in config.pop("modules", [])]
+        df_repo = DotfileRepo.from_config(where, config)
+        link_manager = LinkManager.from_config(where, config)
+        hooks = Hooks.from_config(where, config)
+        profile = cls(
+            df_repo=df_repo,
+            link_manager=link_manager,
+            hooks=hooks,
+            modules=modules,
+            **config,
+        )
+        logger.debug(
+            "Loaded %s: %s",
+            "profile" if not extras else "module",
+            profile.name,
+        )
+        return profile
+
+    @classmethod
+    def load_module(cls, config):
+        """
+        Load a module as a Profile.
+
+        This handles the necessary extra setup and config manipulation require to
+        properly initialise a module.
+        """
+        if "repo" not in config:
+            config["repo"] = config.pop("repository")
+        name = config.get("name", get_name(config["repo"]))
+        location = os.path.expanduser(config.pop("location", ""))
+        if not location:
+            module_dir = os.path.join(dfm_dir(), "modules")
+            if not os.path.isdir(module_dir):
+                os.makedirs(module_dir)
+            location = os.path.join(module_dir, name)
+
+        if not os.path.isdir(location) and not os.getenv("DFM_DISABLE_MODULES"):
+            call(
+                [
+                    "git",
+                    "clone",
+                    "--single-branch",
+                    "--branch",
+                    config.get("branch", "master"),
+                    config["repo"],
+                    location,
+                ],
+            )
+
+        return cls.load(location, extras=config)
+
+    @classmethod
+    def new(cls, where):
+        """Create and initialise a new Profile at where."""
+        profile = cls.default(where)
+        profile.df_repo.init()
+        return profile
+
+    @classmethod
     def from_dict(cls, config):
         """Return a Module from the config dictionary"""
         return cls(**config)
-
-    def exists(self):
-        return isdir(self.where)

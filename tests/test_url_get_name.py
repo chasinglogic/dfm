@@ -1,7 +1,7 @@
 """Test automatic name detection for URLs."""
 
 
-from dfm.cli.clone_cmd import get_name
+from dfm.profile import get_name
 
 
 def test_get_name():

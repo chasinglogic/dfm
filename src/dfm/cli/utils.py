@@ -13,6 +13,7 @@ def state_file_p():
 
 
 def profile_dir(name):
+    """Return the path for Profile with name."""
     return os.path.join(dfm_dir(), "profiles", name)
 
 
@@ -44,10 +45,12 @@ def load_profile(name=None):
     Joins the dfm state directory with 'profiles' and name to
     determine where the profile is.
     """
-    if name is None:
-        name = current_profile()
-    path = profile_dir(name)
-    return Profile(path)
+    if name is not None:
+        path = profile_dir(name)
+    else:
+        path = current_profile()
+
+    return Profile.load(path)
 
 
 def switch_profile(name):
@@ -73,7 +76,7 @@ def inject_profile(wrapped):
     """Inject the current profile as a keyword argument 'profile'."""
 
     def wrapper(*args, **kwargs):
-        kwargs["profile"] = Profile(current_profile())
+        kwargs["profile"] = Profile.load(current_profile())
         return wrapped(*args, **kwargs)
 
     return wrapper
