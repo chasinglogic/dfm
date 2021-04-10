@@ -4,7 +4,7 @@ DFM_BIN := $(shell which dfm)
 lint:
 	$(PYTHON) -m pydocstyle src
 	$(PYTHON) -m pylint src
-	$(PYTHON) -m pylint --disable=W0621 tests
+	$(PYTHON) -m pylint --disable=C0116,W0621 tests
 
 fmt:
 	$(PYTHON) -m black src tests
