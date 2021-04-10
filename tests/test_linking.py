@@ -5,8 +5,9 @@ import platform
 from operator import itemgetter
 from tempfile import TemporaryDirectory
 
-from dfm.dotfile import xdg_dir
+from dfm.config import xdg_dir
 from dfm.profile import Profile
+from dfm.links import LinkManager
 
 
 def setup_module():
@@ -46,8 +47,8 @@ mappings:
             ".skip_on_another_os",
         ],
     )
-    profile = Profile(str(directory))
-    links = profile.link(dry_run=True)
+    profile = Profile.load(str(directory))
+    links = profile.link_manager.generate_links()
     expected_links = [
         {
             "src": os.path.join(directory, ".vimrc"),
@@ -90,12 +91,20 @@ mappings:
         assert link["dst"] == expected["dst"]
 
 
+def test_list_files(dotfile_dir):
+    """Test that a profile properly lists it's directory."""
+    dotfiles, directory = dotfile_dir()
+    link_manager = LinkManager(str(directory))
+    assert sorted(link_manager.find_files()) == sorted(dotfiles)
+
+
 def test_linking(dotdfm):
     """Test that the profile properly creates the links."""
     _, directory = dotdfm()
     with TemporaryDirectory() as target:
-        profile = Profile(str(directory), target_dir=target)
-        links = profile.link()
+        profile = Profile.load(str(directory), extras={"target_dir": target})
+        links = profile.link_manager.generate_links()
+        profile.link()
         # Use a set comprehension since the target would not contain duplicates
         # since they would be overwritten with the last occuring link.
         dest = sorted(list({os.path.basename(x["dst"]) for x in links}))
@@ -110,11 +119,11 @@ def test_linking(dotdfm):
 
 def test_xdg_config(dotfile_dir):
     _, d_dir = dotfile_dir([".config/nvim/init.vim"])
-    profile = Profile(d_dir)
-    links = profile.link(dry_run=True)
+    profile = Profile.load(str(d_dir))
+    links = list(profile.link_manager.generate_links())
     assert links == [
         {
             "src": os.path.join(d_dir, ".config", "nvim", "init.vim"),
             "dst": os.path.join(xdg_dir(), "nvim", "init.vim"),
-        }
+        },
     ]

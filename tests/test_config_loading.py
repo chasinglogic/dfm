@@ -12,23 +12,14 @@ def setup_module():
     os.environ["DFM_DISABLE_MODULES"] = "1"
 
 
-def test_list_files(dotfile_dir):
-    """Test that a profile properly lists it's directory."""
-    dotfiles, directory = dotfile_dir()
-    profile = Profile(directory)
-    profile._find_files()
-    assert sorted(profile.files) == sorted(dotfiles)
-    assert not profile.always_sync_modules
-
-
 def test_config_loading(dotdfm):
     """Test that a profile properly loads the config file."""
     _, directory = dotdfm(
         """
 always_sync_modules: true
-"""
+""",
     )
-    profile = Profile(directory)
+    profile = Profile.load(directory)
     assert profile.always_sync_modules
 
 
@@ -41,10 +32,10 @@ mappings:
       skip: true
     - match: vimrc
       dest: .config/nvim/init.vim
-"""
+""",
     )
-    profile = Profile(directory)
-    assert len(profile.mappings) == 8
+    profile = Profile.load(directory)
+    assert len(profile.link_manager.mappings) == 8
 
 
 def test_module_loading(dotdfm):
@@ -55,7 +46,7 @@ modules:
   - repo: https://github.com/robbyrussell/oh-my-zsh
     link: none
     location: ~/.oh-my-zsh
-"""
+""",
     )
-    profile = Profile(directory)
+    profile = Profile.load(directory)
     assert profile.modules

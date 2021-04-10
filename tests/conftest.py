@@ -10,7 +10,7 @@ import pytest
 def dotfile_dir(tmpdir):
     """Return a pre-populated dotfile directory with some files."""
 
-    DEFAULT_DOTFILES = [
+    default_dotfiles = [
         ".vimrc",
         ".bashrc",
         ".emacs",
@@ -24,7 +24,7 @@ def dotfile_dir(tmpdir):
 
     def create_dotfile_dir(dotfiles=None):
         if dotfiles is None:
-            dotfiles = DEFAULT_DOTFILES
+            dotfiles = default_dotfiles
 
         for dotfile in dotfiles:
             elements = os.path.split(dotfile)

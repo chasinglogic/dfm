@@ -1,3 +1,5 @@
+"""Map files to non-normal locations."""
+
 import os
 import platform
 import re
@@ -26,11 +28,13 @@ class Mapping:
         self.rgx = re.compile(match)
 
     def on_target_os(self):
+        """Return a boolean indicating if we're on the target OS for this Mapping."""
         return (
             isinstance(self.target_os, list) and CUR_OS in self.target_os
         ) or self.target_os == CUR_OS
 
     def should_skip(self):
+        """Determine if the file matching this Mapping should be skipped."""
         if not self.skip:
             return False
 
@@ -47,6 +51,7 @@ class Mapping:
         return False
 
     def replace(self, dest, target_dir):
+        """Return the new destination for link based on this Mapping."""
         if self.target_os and not self.on_target_os():
             return dest
 
@@ -64,8 +69,15 @@ class Mapping:
 
     @classmethod
     def from_dict(cls, config):
-        """Return a Mapping from the config dictionary"""
+        """Return a Mapping from the config dictionary."""
         return cls(**config)
+
+    @classmethod
+    def from_config(cls, config):
+        """Load Mappings from config."""
+        mappings = [cls(**mapping) for mapping in config.pop("mappings", [])]
+        mappings.extend(DEFAULT_MAPPINGS)
+        return mappings
 
     def matches(self, path):
         """Determine if this mapping matches path."""
@@ -73,17 +85,17 @@ class Mapping:
 
     def __repr__(self):
         if self.dest:
-            to = self.dest
+            new_dest = self.dest
         elif self.target_dir:
-            to = self.target_dir + os.path.pathsep
+            new_dest = self.target_dir + os.path.pathsep
         elif self.skip:
-            to = "SKIP"
+            new_dest = "SKIP"
         else:
-            to = "UNKNOWN"
+            new_dest = "UNKNOWN"
 
         return "Mapping({from_match} -> {to}, os={os})".format(
             from_match=self.match,
-            to=to,
+            to=new_dest,
             os=self.target_os,
         )
 

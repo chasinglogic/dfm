@@ -8,7 +8,7 @@ import os
 import shutil
 import sys
 
-from dfm.dotfile import dfm_dir
+from dfm.config import dfm_dir
 
 
 def run(args):

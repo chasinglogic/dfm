@@ -6,7 +6,7 @@ Lists currently downloaded and available profiles.
 
 import os
 
-from dfm.dotfile import dfm_dir
+from dfm.config import dfm_dir
 
 
 def run(_args):
@@ -15,7 +15,8 @@ def run(_args):
     if not os.path.isdir(profiles_dir):
         print("There are no profiles on this system yet. Create one with `dfm init`!")
         print(
-            "For more information see the dfm documentation: https://github.com/chasinglogic/dfm"
+            "For more information see the dfm documentation: "
+            "https://github.com/chasinglogic/dfm",
         )
         return
 
