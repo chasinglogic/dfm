@@ -11,7 +11,7 @@ with open("requirements.txt") as f:
 
 setup(
     name="dfm",
-    version="8.3.0",
+    version="8.4.0",
     url="https://github.com/chasinglogic/dfm",
     license="GPL-3.0",
     author="Mathew Robinson",
