@@ -16,11 +16,11 @@ def test_config_loading(dotdfm):
     """Test that a profile properly loads the config file."""
     _, directory = dotdfm(
         """
-always_sync_modules: true
+pull_only: true
 """,
     )
     profile = Profile.load(directory)
-    assert profile.always_sync_modules
+    assert profile.pull_only
 
 
 def test_mapping_loading(dotdfm):

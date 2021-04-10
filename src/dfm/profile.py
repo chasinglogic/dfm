@@ -2,6 +2,7 @@
 
 import logging
 import os
+import warnings
 from subprocess import call
 
 import yaml
@@ -12,6 +13,11 @@ from dfm.links import LinkManager
 from dfm.repo import DotfileRepo
 
 logger = logging.getLogger(__name__)
+
+
+DEPRECATED_CONFIG_OPTIONS = [
+    "always_sync_modules",
+]
 
 
 def get_name(url):
@@ -64,7 +70,6 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         df_repo,
         link_manager,
         hooks,
-        always_sync_modules=False,
         repo="",
         repository="",
         name="",
@@ -76,7 +81,6 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         self.df_repo = df_repo
         self.link_manager = link_manager
         self.hooks = hooks
-        self.always_sync_modules = always_sync_modules
         self.pull_only = pull_only
         self.link_mode = link
         self.repo = repo if repo else repository
@@ -94,6 +98,7 @@ class Profile:  # pylint: disable=too-many-instance-attributes
 
         If skip_modules is True modules will not be synced.
         """
+        self.hooks.run_hook("before_sync", dry_run=dry_run)
         if self.pull_only:
             self.df_repo.git(
                 "pull --rebase origin {}".format(self.branch),
@@ -104,6 +109,7 @@ class Profile:  # pylint: disable=too-many-instance-attributes
                 dry_run=dry_run,
                 commit_msg=commit_msg,
             )
+        self.hooks.run_hook("after_sync", dry_run=dry_run)
 
         if skip_modules:
             return
@@ -117,9 +123,9 @@ class Profile:  # pylint: disable=too-many-instance-attributes
             module.link(dry_run=dry_run, overwrite=overwrite)
 
         if self.should_link:
-            self.hooks.run_hook("pre_link")
+            self.hooks.run_hook("before_link", dry_run=dry_run)
             self.link_manager.link(dry_run, overwrite=overwrite)
-            self.hooks.run_hook("post_link")
+            self.hooks.run_hook("after_link", dry_run=dry_run)
 
         for module in self.post_link_modules:
             module.link(dry_run=dry_run, overwrite=overwrite)
@@ -198,6 +204,15 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         if extras:
             config.update(extras)
 
+        for key in DEPRECATED_CONFIG_OPTIONS:
+            value = config.pop(key, None)
+            if value is not None:
+                warnings.warn(
+                    "The config option {} has been deprecated, ignoring.".format(
+                        key,
+                    ),
+                )
+
         modules = [cls.load_module(mod) for mod in config.pop("modules", [])]
         df_repo = DotfileRepo.from_config(where, config)
         link_manager = LinkManager.from_config(where, config)
@@ -255,7 +270,6 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         profile = cls.default(where)
         profile.df_repo.init()
         return profile
-
     @classmethod
     def from_dict(cls, config):
         """Return a Module from the config dictionary"""

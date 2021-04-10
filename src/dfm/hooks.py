@@ -1,10 +1,9 @@
 """Hook management for Profiles."""
 
-import sys
 import logging
-import subprocess
 import shlex
-
+import subprocess
+import sys
 
 logger = logging.getLogger(__name__)
 
