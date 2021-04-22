@@ -42,9 +42,10 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
 
     def get_remote(self):  # pylint: disable=no-self-use
         """Return the remote url for origin."""
-        return subprocess.check_output(["git", "remote", "get-url", "origin"]).decode(
-            "utf-8"
-        )
+        return subprocess.check_output(
+            ["git", "remote", "get-url", "origin"],
+            cwd=self.where,
+        ).decode("utf-8")
 
     def git(self, cmd, cwd=False, dry_run=False):
         """
