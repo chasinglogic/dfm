@@ -1,2 +1,0 @@
-pyyaml>=3.13
-docopt

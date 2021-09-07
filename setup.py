@@ -2,12 +2,8 @@
 
 from setuptools import find_packages, setup
 
-
 with open("README.md") as f:
     LONG_DESCRIPTION = f.read()
-
-with open("requirements.txt") as f:
-    install_requires = f.read().split("\n")
 
 setup(
     name="dfm",
@@ -24,7 +20,10 @@ setup(
     include_package_data=True,
     zip_safe=False,
     platforms="any",
-    install_requires=install_requires,
+    install_requires=[
+        "docopt",
+        "PyYAML>=3.13",
+    ],
     entry_points={"console_scripts": ["dfm = dfm.cli:main"]},
     classifiers=[
         # As from https://pypi.org/classifiers/

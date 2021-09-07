@@ -1,4 +1,4 @@
-PYTHON := python3
+PYTHON := pipenv run
 DFM_BIN := $(shell which dfm)
 
 lint:
@@ -16,19 +16,18 @@ clean:
 	rm -f **/*.pyc
 
 install:
-	$(PYTHON) setup.py install
+	pipenv install --editable .
 
-install-dev:
-	pip install --editable .
-	pip install -r requirements.dev.txt
+setup: install
+	pipenv install --dev
 
 test:
-	PYTHONPATH="$$PYTHONPATH:src" $(PYTHON) -m pytest -v -s -m 'not slow'
+	PYTHONPATH="$$PYTHONPATH:src" $(PYTHON) pytest -v -s -m 'not slow'
 
 test-all:
-	PYTHONPATH="$$PYTHONPATH:src" $(PYTHON) -m pytest --disable-pytest-warnings
+	PYTHONPATH="$$PYTHONPATH:src" $(PYTHON) pytest --disable-pytest-warnings
 	bash ./scripts/integration_tests.sh -b $(DFM_BIN)
 
 publish: clean
-	python setup.py sdist bdist_wheel
-	twine upload dist/*
+	pipenv run python setup.py sdist bdist_wheel
+	pipenv run twine upload dist/*
