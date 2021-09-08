@@ -1,13 +1,23 @@
 """A task management tool that integrates with 3rd party services."""
 
+import re
+from os import path
+
 from setuptools import find_packages, setup
 
 with open("README.md") as f:
     LONG_DESCRIPTION = f.read()
 
+init_py = path.join(path.dirname(__file__), "src", "dfm", "__init__.py")
+with open(init_py, encoding="utf-8") as f:
+    init_content = f.read()
+    version = re.search(r"__version__ = ['\"]([^'\"]+)['\"]", init_content, re.M).group(
+        1
+    )
+
 setup(
     name="dfm",
-    version="8.4.2",
+    version=version,
     url="https://github.com/chasinglogic/dfm",
     license="GPL-3.0",
     author="Mathew Robinson",
