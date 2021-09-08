@@ -6,7 +6,7 @@ Usage:
     dfm link <profile>
 
 Dotfile management written for pair programmers. Examples on getting
-started with dfm are avialable at https://github.com/chasinglogic/dfm
+started with dfm are available at https://github.com/chasinglogic/dfm
 
 Options:
     -v, --verbose  If provided print more logging info
