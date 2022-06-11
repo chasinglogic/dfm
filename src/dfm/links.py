@@ -99,29 +99,36 @@ class LinkManager:
         return (src, dest)
 
     def generate_link(self, filename):
-        """Generate link args for filename."""
+        """Generate link args for filename.
+        In case of multiple matches,
+        only the last one is actually considered."""
         src, dest = self.translate_name(filename)
 
+        file_should_skip = False
         for mapping in self.mappings:
-            # If the mapping doesn't match skip to the next one
+            # If the mapping doesn't match
+            # then check the next one
             if not mapping.matches(filename):
                 continue
+            # If it does match, it is a higher-priority mapping
+            # and replaces the previous one.
+            file_should_skip = False
 
-            # If the mapping did match and is a skip mapping then end
-            # function without adding a link to links
+            # If the mapping is a skip mapping
+            # then check the next one
+            # and skip this file if there are no others.
             if mapping.should_skip():
-                return None
+                file_should_skip = True
+                continue
 
             if mapping.link_as_dir:
                 src, dest = self.translate_name(mapping.src_path(self.where))
-                return {
-                    "src": src,
-                    "dst": dest,
-                }
-
-            dest = mapping.replace(dest, self.target_dir)
-
-        return {"src": src, "dst": dest}
+            else:
+                dest = mapping.replace(dest, self.target_dir)
+        if file_should_skip:
+            return None
+        else:
+            return {"src": src, "dst": dest}
 
     def find_files(self):
         """Load the files in this dotfile repository."""
