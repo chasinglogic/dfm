@@ -14,7 +14,7 @@ import textwrap
 from yaspin import yaspin
 
 from dfm.cli.utils import inject_profile
-from dfm.config import xdg_dir
+from dfm.config import home_dir, xdg_dir
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def clean_links(directory, profile_dir):
 @inject_profile
 def run(_args, profile):
     """Run the clean subcommand."""
-    home = os.getenv("HOME")
+    home = home_dir()
     xdg = xdg_dir()
     if home:
         clean_links(home, profile.link_manager.where)

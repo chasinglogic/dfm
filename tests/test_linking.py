@@ -5,7 +5,7 @@ import platform
 from operator import itemgetter
 from tempfile import TemporaryDirectory
 
-from dfm.config import xdg_dir
+from dfm.config import home_dir, xdg_dir
 from dfm.links import LinkManager
 from dfm.profile import Profile
 
@@ -52,33 +52,33 @@ mappings:
     expected_links = [
         {
             "src": os.path.join(directory, ".vimrc"),
-            "dst": os.path.join(os.getenv("HOME"), ".vimrc"),
+            "dst": os.path.join(home_dir(), ".vimrc"),
         },
         {
             "src": os.path.join(directory, ".bashrc"),
-            "dst": os.path.join(os.getenv("HOME"), ".bashrc"),
+            "dst": os.path.join(home_dir(), ".bashrc"),
         },
         {
             "src": os.path.join(directory, ".emacs"),
-            "dst": os.path.join(os.getenv("HOME"), ".emacs"),
+            "dst": os.path.join(home_dir(), ".emacs"),
         },
         {
             "src": os.path.join(directory, ".ggitignore"),
-            "dst": os.path.join(os.getenv("HOME"), ".gitignore"),
+            "dst": os.path.join(home_dir(), ".gitignore"),
         },
         {
             "src": os.path.join(directory, ".emacs.d", "init.el"),
-            "dst": os.path.join(os.getenv("HOME"), ".emacs.d", "init.el"),
+            "dst": os.path.join(home_dir(), ".emacs.d", "init.el"),
         },
         {
             "src": os.path.join(directory, ".map_to_os_name"),
             "dst": os.path.join(
-                os.getenv("HOME"), ".{name}".format(name=platform.system())
+                home_dir(), ".{name}".format(name=platform.system())
             ),
         },
         {
             "src": os.path.join(directory, ".skip_on_another_os"),
-            "dst": os.path.join(os.getenv("HOME"), ".skip_on_another_os"),
+            "dst": os.path.join(home_dir(), ".skip_on_another_os"),
         },
     ]
 

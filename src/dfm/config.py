@@ -1,13 +1,19 @@
 """Config and state management tools."""
 
 import os
+from pathlib import Path
+
+def home_dir():
+    """Return the home user directory"""
+    dir = Path.home()
+    return dir
 
 
 def xdg_dir():
     """Return the XDG_CONFIG_HOME or default."""
     if os.getenv("XDG_CONFIG_HOME"):
         return os.getenv("XDG_CONFIG_HOME")
-    return os.path.join(os.getenv("HOME"), ".config")
+    return os.path.join(home_dir(), ".config")
 
 
 def dfm_dir():

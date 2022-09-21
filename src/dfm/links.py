@@ -6,6 +6,7 @@ import subprocess
 from shutil import rmtree
 
 from dfm.mappings import DEFAULT_MAPPINGS, Mapping
+from dfm.config import home_dir
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +47,14 @@ class LinkManager:
     def __init__(
         self,
         where,
-        target_dir=os.getenv("HOME"),
+        target_dir=None,
         mappings=None,
     ):
         self.where = where
-        self.target_dir = target_dir
+        if target_dir is None:
+            self.target_dir = home_dir()
+        else:
+            self.target_dir = target_dir
         if mappings is None:
             self.mappings = DEFAULT_MAPPINGS
         else:
@@ -61,7 +65,7 @@ class LinkManager:
         """Load link manager settings from config."""
         return cls(
             where=where,
-            target_dir=config.pop("target_dir", os.getenv("HOME")),
+            target_dir=config.pop("target_dir", home_dir()),
             mappings=Mapping.from_config(config),
         )
 
@@ -92,7 +96,7 @@ class LinkManager:
         # self.where does not always contain a trailing slash
         # This removes a leading slash from the front of dest if where
         # does not contain the trailing slash.
-        if dest.startswith("/"):
+        if dest.startswith(os.sep):
             dest = dest[1:]
 
         dest = os.path.join(self.target_dir, dest)
