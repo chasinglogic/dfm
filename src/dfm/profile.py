@@ -70,12 +70,9 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         df_repo,
         link_manager,
         hooks,
-        repo="",
-        repository="",
-        name="",
         pull_only=False,
+        name="",
         link="post",
-        branch="master",
         modules=None,
     ):
         self.df_repo = df_repo
@@ -83,12 +80,8 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         self.hooks = hooks
         self.pull_only = pull_only
         self.link_mode = link
-        self.repo = repo if repo else repository
-        if not self.repo:
-            self.repo = self.df_repo.get_remote()
         self.modules = modules if modules is not None else []
-        self.branch = branch
-        self.name = name or get_name(self.repo)
+        self.name = name or get_name(self.df_repo.get_remote_url())
 
     def sync(self, commit_msg="", dry_run=False, skip_modules=False):
         """
@@ -100,10 +93,7 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         """
         self.hooks.run_hook("before_sync", dry_run=dry_run)
         if self.pull_only:
-            self.df_repo.git(
-                "pull --rebase origin {}".format(self.branch),
-                dry_run=dry_run,
-            )
+            self.df_repo.pull(rebase=True, dry_run=dry_run)
         else:
             self.df_repo.sync(
                 dry_run=dry_run,
@@ -176,7 +166,16 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         df_repo = DotfileRepo.from_config(where, extras)
         link_manager = LinkManager.from_config(where, extras)
         hooks = Hooks.from_config(where, extras)
-        return cls(df_repo, link_manager, hooks, **extras)
+        profile =  cls(
+            df_repo,
+            link_manager,
+            hooks,
+            pull_only=extras.get("pull_only"),
+            name=extras.get("name"),
+            link=extras.get("link"),
+            modules=extras.get("modules", None)
+        )
+        return profile
 
     @classmethod
     def load(cls, where, extras=None):
@@ -215,6 +214,9 @@ class Profile:  # pylint: disable=too-many-instance-attributes
 
         modules = [cls.load_module(mod) for mod in config.pop("modules", [])]
         df_repo = DotfileRepo.from_config(where, config)
+        if not df_repo.is_initialised():
+            module.df_repo.initialise()
+
         link_manager = LinkManager.from_config(where, config)
         hooks = Hooks.from_config(where, config)
         profile = cls(
@@ -249,26 +251,20 @@ class Profile:  # pylint: disable=too-many-instance-attributes
                 os.makedirs(module_dir)
             location = os.path.join(module_dir, name)
 
-        if not os.path.isdir(location) and not os.getenv("DFM_DISABLE_MODULES"):
-            call(
-                [
-                    "git",
-                    "clone",
-                    "--single-branch",
-                    "--branch",
-                    config.get("branch", "master"),
-                    config["repo"],
-                    location,
-                ],
-            )
+        module =  cls.load(location, extras=config)
 
-        return cls.load(location, extras=config)
+        if not module.df_repo.is_initialised():
+            module.df_repo.initialise()
+            if not os.getenv("DFM_DISABLE_MODULES"):
+                module.df_repo.fetch()#single_branch=True)
+                module.df_repo.pull()#single_branch=True)
+        return module
 
     @classmethod
     def new(cls, where):
         """Create and initialise a new Profile at where."""
         profile = cls.default(where)
-        profile.df_repo.init()
+        profile.df_repo.initialise()
         return profile
 
     @classmethod

@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 dfm = {editable = true, path = "."}
+GitPython = "*"
 
 [dev-packages]
 black = "*"

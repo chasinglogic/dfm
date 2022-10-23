@@ -33,6 +33,7 @@ setup(
     install_requires=[
         "docopt",
         "PyYAML>=3.13",
+        "GitPython"
     ],
     entry_points={"console_scripts": ["dfm = dfm.cli:main"]},
     classifiers=[
