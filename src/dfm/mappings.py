@@ -3,7 +3,7 @@
 import os
 import platform
 import re
-from os.path import expanduser
+from pathlib import Path
 
 CUR_OS = platform.system()
 
@@ -20,14 +20,18 @@ class Mapping:
         self,
         match,
         link_as_dir=False,
-        dest="",
-        target_dir="",
+        dest=None,
+        target_dir=None,
         skip=False,
         target_os=None,
     ):
         self.match = match
-        self.target_dir = expanduser(target_dir)
-        self.dest = expanduser(dest)
+        self.target_dir = target_dir
+        if self.target_dir is not None:
+            self.target_dir = Path(target_dir).expanduser()
+        self.dest = dest
+        if self.dest is not None:
+            self.dest = Path(dest).expanduser()
         self.link_as_dir = link_as_dir
         if target_os is not None:
             self.target_os = target_os
@@ -61,19 +65,21 @@ class Mapping:
 
     def replace(self, dest, target_dir):
         """Return the new destination for link based on this Mapping."""
+        # should be done elsewhere
+        default_dest = Path(dest).expanduser()
+        old_target_dir = Path(target_dir).expanduser()
         if self.target_os and not self.on_target_os():
-            return dest
-
-        if self.dest:
-            new_dest = expanduser(self.dest)
-            if new_dest[0] == os.path.pathsep:
-                return new_dest
-
-            return os.path.join(target_dir, new_dest)
-
-        if self.target_dir:
-            return dest.replace(target_dir, self.target_dir)
-
+            pass
+        elif self.dest:
+            dest = self.dest
+            if not dest.is_absolute():
+                dest = new_target_dir.joinpath(dest)
+        elif self.target_dir:
+            dest = default_dest
+            # change the target dir if found in old dest
+            if dest.is_relative_to(old_target_dir):
+                rel_dest = dest.relative_to(old_target_dir)
+                dest = self.target_dir.joinpath(rel_dest)
         return dest
 
     @classmethod
