@@ -6,7 +6,7 @@ import shlex
 import subprocess
 import sys
 import git
-from git.exc import InvalidGitRepositoryError,NoSuchPathError
+from git.exc import InvalidGitRepositoryError, NoSuchPathError, GitCommandError, BadName
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +38,14 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
 
         try:
             self._git_repo = git.Repo(self.local_path)
-            self._set_remote()
-            self._set_branch()
+            self._try_set_remote()
+            self._try_set_branch()
         except (InvalidGitRepositoryError,NoSuchPathError):
             # repo could not initialised (path does not exist, for instance)
             #, will have to call initialise()
             self._git_repo = None
 
-    def _set_remote(self):
+    def _try_set_remote(self):
         self._remote_name = self._get_remote_name(remote_url=self._remote_url)
         # create the remote if we have a url but no name
         if self._remote_url is not None and self._remote_name is None:
@@ -54,22 +54,28 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         if self._remote_url is not None and self.get_remote() is None:
             remote = self._git_repo.create_remote(self._remote_name, self._remote_url)
             assert remote.exists()
+        return self.get_remote()
 
-    def _set_branch(self):
+    def _try_set_branch(self):
         self._branch_name = self._get_branch_name(remote_name=self._remote_name, branch_name=self._init_branch_name)
         assert self._branch_name is not None
         remote = self.get_remote()
         branch = self.get_branch()
         if branch is None:
+            try:
+                if remote is not None:
+                    remote_branch = remote.refs[self._branch_name]
+                    branch = self._git_repo.create_head(self._branch_name, remote_branch)
+                else:
+                    branch = self._git_repo.create_head(self._branch_name)
+            except (GitCommandError, BadName):
+                # TODO: BadName may be a bug??
+                branch = None
+        if branch is not None:
             if remote is not None:
                 remote_branch = remote.refs[self._branch_name]
-                branch = self._git_repo.create_head(self._branch_name, remote_branch)
-            else:
-                branch = self._git_repo.create_head(self._branch_name)
-        if remote is not None:
-            remote_branch = remote.refs[self._branch_name]
-            branch.set_tracking_branch(remote_branch)
-        assert self.get_branch() is not None
+                branch.set_tracking_branch(remote_branch)
+        return self.get_branch()
 
 
 
@@ -81,12 +87,16 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             Creates git repo
         """
         self._git_repo = git.Repo.init(self.local_path)
-        self._set_remote()
-        self.get_remote().fetch()
-        self._set_branch()
-        self.get_branch().checkout()
+        remote = self._try_set_remote()
+        if remote is not None:
+            remote.fetch()
+        branch = self._try_set_branch()
+        if branch is not None:
+            branch.checkout()
 
     def get_remote(self):
+        if not self.is_initialised():
+            return None
         has_remote = False
         try:
             remote = self._git_repo.remote(self._remote_name)
@@ -105,7 +115,9 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             return self._remote_url
 
     def get_branch(self):
-        branch= None
+        if not self.is_initialised():
+            return None
+        branch = None
         if self._branch_name is not None:
             try:
                 branch = self._git_repo.heads[self._branch_name]
@@ -202,16 +214,12 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
     def sync(self, commit_msg="", dry_run=False):
         """Sync this profile with git."""
         logger.info("Syncing: %s", self.local_path)
-        remote = self.get_remote()
-        if remote is None:
-            try:
-                head = self._git_repo.active_branch
-            except TypeError:
-                # TODO: HEAD is detached, handle how?
-                # Probably not like this.
-                self.get_branch().checkout()
-        else:
+        remote = self._try_set_remote()
+        if remote is not None:
             self.fetch()
+        branch = self._try_set_branch()
+        if branch is not None:
+            branch.checkout()
         if self._git_repo.is_dirty(untracked_files=True):
             # repo_index.diff(
             commit_msg = self.query_commit_message(commit_msg, dry_run=dry_run)
@@ -219,7 +227,9 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             if not dry_run:
                 repo_index.add('./')
                 commit = repo_index.commit(commit_msg)
-                # logger.info(repo_commit.diff())
+                # we try again to create a branch, now that we have a commit
+                branch = self._try_set_branch()
+                assert branch is not None
         if remote is not None:
             self.pull(rebase=True, dry_run=dry_run)
             self.push(dry_run=dry_run)
