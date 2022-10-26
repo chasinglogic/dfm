@@ -51,7 +51,8 @@ class Mapping:
         if not self.skip:
             return False
 
-        # We aren't an OS-specific mapping and are a skip mapping so return should skip.
+        # We aren't an OS-specific mapping and are a skip mapping
+        # so return should skip.
         if not self.target_os:
             return True
 
@@ -59,8 +60,8 @@ class Mapping:
         if self.on_target_os():
             return True
 
-        # We are a skip mapping but we aren't on the target OS return False so the file
-        # is not skipped.
+        # We are a skip mapping but we aren't on the target OS
+        # return False so the file is not skipped.
         return False
 
     def replace(self, dest, target_dir):
@@ -73,13 +74,17 @@ class Mapping:
         elif self.dest:
             dest = self.dest
             if not dest.is_absolute():
-                dest = new_target_dir.joinpath(dest)
+                dest = self.target_dir.joinpath(dest)
         elif self.target_dir:
-            dest = default_dest
             # change the target dir if found in old dest
-            if dest.is_relative_to(old_target_dir):
-                rel_dest = dest.relative_to(old_target_dir)
+            # TODO: use PurePath.is_relative_to to check when (3.9) is old enough
+            # if default_dest.is_relative_to(old_target_dir):
+            try:
+                rel_dest = default_dest.relative_to(old_target_dir)
                 dest = self.target_dir.joinpath(rel_dest)
+            except ValueError:
+                # default_dest is not relative to old_target_dir
+                dest = default_dest
         return dest
 
     @classmethod
