@@ -90,6 +90,10 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         self.branch = branch
         self.name = name or get_name(self.repo)
 
+    @property
+    def where(self):
+        return self.link_manager.where
+
     def sync(self, commit_msg="", dry_run=False, skip_modules=False):
         """
         Sync this profile and all modules using git.

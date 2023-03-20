@@ -9,4 +9,4 @@ from dfm.cli.utils import current_profile
 
 def run(_args):
     """Print current_profile path."""
-    print(current_profile())
+    print(current_profile().where)
