@@ -35,7 +35,7 @@ def current_profile():
         print("no profile active, run dfm link to make one active")
         sys.exit(1)
 
-    return profile_dir(profile_name)
+    return Profile.load(profile_dir(profile_name))
 
 
 def load_profile(name=None):
@@ -45,11 +45,10 @@ def load_profile(name=None):
     Joins the dfm state directory with 'profiles' and name to
     determine where the profile is.
     """
-    if name is not None:
-        path = profile_dir(name)
-    else:
-        path = current_profile()
+    if name is None:
+        return current_profile()
 
+    path = profile_dir(name)
     return Profile.load(path)
 
 
@@ -76,7 +75,7 @@ def inject_profile(wrapped):
     """Inject the current profile as a keyword argument 'profile'."""
 
     def wrapper(*args, **kwargs):
-        kwargs["profile"] = Profile.load(current_profile())
+        kwargs["profile"] = current_profile()
         return wrapped(*args, **kwargs)
 
     return wrapper
