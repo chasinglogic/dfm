@@ -26,6 +26,7 @@ Commands:
     remove (rm)    Remove a profile
     run-hook (rh)  Run dfm hooks without using normal commands
     where (w)      Prints the location of the current dotfile profile
+    clean          Find all dead symlinks created by dfm and remove them
 
 See 'dfm help <command>' for more information on a specific command.
 """

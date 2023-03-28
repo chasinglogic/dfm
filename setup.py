@@ -32,6 +32,7 @@ setup(
     platforms="any",
     install_requires=[
         "docopt",
+        "yaspin",
         "PyYAML>=3.13",
     ],
     entry_points={"console_scripts": ["dfm = dfm.cli:main"]},
