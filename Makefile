@@ -1,4 +1,4 @@
-PYTHON := pipenv run
+PYTHON := python
 DFM_BIN := $(shell which dfm)
 
 lint:

@@ -1,0 +1,6 @@
+pylint
+pydocstyle
+pytest
+pytest-benchmark
+twine
+black
