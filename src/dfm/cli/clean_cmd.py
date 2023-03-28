@@ -27,9 +27,7 @@ def clean_links(directory, profile_dir):
     max_width -= 4
     with yaspin() as spinner:
         for dirpath, _, files in os.walk(directory):
-            msg = "Scanning for dead links in {}".format(
-                ANSI_ESCAPE.sub("", dirpath),
-            )
+            msg = f"Scanning for dead links in {ANSI_ESCAPE.sub('', dirpath)}"
             spinner.text = textwrap.shorten(msg, max_width)
             for file in files:
                 ab_path = os.path.join(dirpath, file)

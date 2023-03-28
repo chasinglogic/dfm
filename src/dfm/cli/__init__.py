@@ -58,7 +58,7 @@ def main():
     """CLI entrypoint, handles subcommand parsing"""
     args = docopt(
         __doc__,
-        version="dfm version {}".format(__version__),
+        version=f"dfm version {__version__}",
         options_first=True,
     )
     if not args["<command>"]:
@@ -83,19 +83,19 @@ def main():
         if command == "help":
             if args["<args>"]:
                 help_cmd = ALIASES.get(args["<args>"][0], args["<args>"][0])
-                command_mod = import_module("dfm.cli.{}_cmd".format(help_cmd))
+                command_mod = import_module(f"dfm.cli.{help_cmd}_cmd")
                 print(command_mod.__doc__)
             else:
                 print(__doc__)
             sys.exit(0)
 
         command = ALIASES.get(command, command)
-        command_mod = import_module("dfm.cli.{}_cmd".format(command))
+        command_mod = import_module(f"dfm.cli.{command}_cmd")
         argv = [command] + args["<args>"]
         command_mod.run(docopt(command_mod.__doc__, argv=argv))
         sys.exit(0)
     except ImportError as exc:
-        print("{} is not a known dfm command.".format(command))
+        print(f"{command} is not a known dfm command.")
         logger.debug("Exception: %s", exc)
         sys.exit(1)
     except KeyboardInterrupt:

@@ -38,7 +38,7 @@ def run(args):
             curprofile = load_profile()
             profile = find_module(args["--name"], curprofile)
             if profile is None:
-                print("no module or profile matched name: {}".format(args["--name"]))
+                print(f"no module or profile matched name: {args['--name']}")
                 exit(1)
         else:
             profile = Profile.load(possible_dir)

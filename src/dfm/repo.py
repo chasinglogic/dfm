@@ -127,7 +127,7 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
 
             self.git("add --all", dry_run=dry_run)
             self.git(
-                'commit -m "{}"'.format(self.commit_msg),
+                f'commit -m "{self.commit_msg}"',
                 dry_run=dry_run,
             )
 

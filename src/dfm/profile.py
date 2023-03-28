@@ -105,7 +105,7 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         self.hooks.run_hook("before_sync", dry_run=dry_run)
         if self.pull_only:
             self.df_repo.git(
-                "pull --rebase origin {}".format(self.branch),
+                f"pull --rebase origin {self.branch}",
                 dry_run=dry_run,
             )
         else:
@@ -212,9 +212,7 @@ class Profile:  # pylint: disable=too-many-instance-attributes
             value = config.pop(key, None)
             if value is not None:
                 warnings.warn(
-                    "The config option {} has been deprecated, ignoring.".format(
-                        key,
-                    ),
+                    "The config option {key} has been deprecated, ignoring."
                 )
 
         modules = [cls.load_module(mod) for mod in config.pop("modules", [])]

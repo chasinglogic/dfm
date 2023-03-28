@@ -18,7 +18,7 @@ def run(args):
         print("no profile with that name exists")
         sys.exit(1)
 
-    ans = input("Remove {}? [Y/n]:".format(profile_p))
+    ans = input(f"Remove {profile_p}? [Y/n]:")
     if ans.lower().startswith("n"):
         return
 

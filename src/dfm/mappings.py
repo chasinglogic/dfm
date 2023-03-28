@@ -105,9 +105,7 @@ class Mapping:
         path = os.path.join(where, self.match)
         if not os.path.isdir(path):
             raise Exception(
-                "Could not resolve {} to a directory in the profile!".format(
-                    self.match,
-                ),
+                f"Could not resolve {self.match} to a directory in the profile!",
             )
 
         return path
@@ -122,11 +120,7 @@ class Mapping:
         else:
             new_dest = "UNKNOWN"
 
-        return "Mapping({from_match} -> {to}, os={os})".format(
-            from_match=self.match,
-            to=new_dest,
-            os=self.target_os,
-        )
+        return f"Mapping({self.match} -> {new_dest}, os={self.target_os})"
 
 
 DEFAULT_MAPPINGS = [

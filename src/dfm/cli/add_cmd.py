@@ -18,7 +18,7 @@ def run(args, profile):
     for filename in args["<file>"]:
         oldfile = os.path.abspath(filename)
         if not os.path.exists(oldfile):
-            print("error: {}: file does not exist".format(oldfile), file=sys.stderr)
+            print(f"error: {oldfile}: file does not exist", file=sys.stderr)
             sys.exit(1)
 
         newfile = os.path.relpath(oldfile, profile.link_manager.target_dir)
