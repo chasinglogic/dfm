@@ -25,7 +25,7 @@ def current_profile():
     current_profile is not set.
     """
     try:
-        with open(state_file_p()) as state_file:
+        with open(state_file_p(), encoding="utf-8") as state_file:
             state = json.load(state_file)
     except FileNotFoundError:
         state = {}
@@ -59,7 +59,7 @@ def switch_profile(name):
     Returns the profile object as returned by load_profile.
     """
     path = state_file_p()
-    with open(path, "w+") as state_file:
+    with open(path, "w+", encoding="utf-8") as state_file:
         content = state_file.read()
         if content:
             state = json.loads(content)

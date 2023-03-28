@@ -194,7 +194,7 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         if not os.path.isfile(dotdfm):
             return cls.default(where, extras=extras)
 
-        with open(dotdfm) as dfmconfig:
+        with open(dotdfm, encoding="utf-8") as dfmconfig:
             # This means it's a newer version of pyyaml
             if hasattr(yaml, "FullLoader"):
                 config = yaml.load(dfmconfig, Loader=yaml.FullLoader)
@@ -211,9 +211,7 @@ class Profile:  # pylint: disable=too-many-instance-attributes
         for key in DEPRECATED_CONFIG_OPTIONS:
             value = config.pop(key, None)
             if value is not None:
-                warnings.warn(
-                    "The config option {key} has been deprecated, ignoring."
-                )
+                warnings.warn("The config option {key} has been deprecated, ignoring.")
 
         modules = [cls.load_module(mod) for mod in config.pop("modules", [])]
         df_repo = DotfileRepo.from_config(where, config)
