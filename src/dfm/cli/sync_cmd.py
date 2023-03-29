@@ -9,8 +9,8 @@ Options:
 Sync the current profile and modules.
 """
 
+import sys
 from os.path import exists
-from sys import exit
 
 from dfm.cli.utils import load_profile, profile_dir
 from dfm.profile import Profile
@@ -39,7 +39,7 @@ def run(args):
             profile = find_module(args["--name"], curprofile)
             if profile is None:
                 print(f"no module or profile matched name: {args['--name']}")
-                exit(1)
+                sys.exit(1)
         else:
             profile = Profile.load(possible_dir)
     else:
