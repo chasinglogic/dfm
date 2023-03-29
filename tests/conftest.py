@@ -20,7 +20,7 @@ def dotfile_dir(tmpdir):
     ]
 
     def touch(dotfile):
-        open(dotfile, "w").close()
+        open(dotfile, "w", encoding="utf-8").close()
 
     def create_dotfile_dir(dotfiles=None):
         if dotfiles is None:
@@ -69,7 +69,7 @@ def dotdfm(dotfile_dir):
 
     def create_dotdfm(content="", dotfiles=None):
         dotfiles, directory = dotfile_dir(dotfiles=dotfiles)
-        with open(os.path.join(directory, ".dfm.yml"), "w") as cfg:
+        with open(os.path.join(directory, ".dfm.yml"), "w", encoding="utf-8") as cfg:
             cfg.write(content)
 
         return dotfiles, directory

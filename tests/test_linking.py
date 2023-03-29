@@ -73,7 +73,8 @@ mappings:
         {
             "src": os.path.join(directory, ".map_to_os_name"),
             "dst": os.path.join(
-                os.getenv("HOME"), ".{name}".format(name=platform.system())
+                os.getenv("HOME"),
+                f".{platform.system()}",
             ),
         },
         {
@@ -86,7 +87,7 @@ mappings:
     sorted_expected_links = sorted(expected_links, key=itemgetter("src"))
     assert len(sorted_links) == len(sorted_expected_links)
 
-    for (link, expected) in zip(sorted_links, sorted_expected_links):
+    for link, expected in zip(sorted_links, sorted_expected_links):
         assert link["src"] == expected["src"]
         assert link["dst"] == expected["dst"]
 
