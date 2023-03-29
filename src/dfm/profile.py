@@ -92,6 +92,7 @@ class Profile:  # pylint: disable=too-many-instance-attributes
 
     @property
     def where(self):
+        """Return the full path to this Profile on the filesystem."""
         return self.link_manager.where
 
     def sync(self, commit_msg="", dry_run=False, skip_modules=False):
