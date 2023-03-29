@@ -40,7 +40,7 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
         """Initialize the git repository."""
         self.git("init")
 
-    def get_remote(self):  # pylint: disable=no-self-use
+    def get_remote(self):
         """Return the remote url for origin."""
         try:
             return subprocess.check_output(
