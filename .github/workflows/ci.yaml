@@ -26,7 +26,7 @@ jobs:
         run: |
           pydocstyle src
           pylint src
-          pylint --disable=C0116,W0621 tests
+          pylint --disable=C0116,W0621,R1732 tests
           black --check src
       - name: Run python tests
         run: pytest -v -s
