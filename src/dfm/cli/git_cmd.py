@@ -12,11 +12,11 @@ from dfm.cli.utils import current_profile
 
 def run(args):
     """Run the git subcommand with args."""
-    proc = subprocess.Popen(
+    with subprocess.Popen(
         ["git"] + args["<args>"],
         cwd=current_profile(),
         stdin=sys.stdin,
         stdout=sys.stdout,
         stderr=sys.stderr,
-    )
-    proc.wait()
+    ) as proc:
+        proc.wait()

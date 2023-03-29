@@ -73,14 +73,14 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
                 logger.info('Running: "%s" in %s', " ".join(args), cwd)
                 return
 
-            proc = subprocess.Popen(
+            with subprocess.Popen(
                 args,
                 cwd=cwd,
                 stdin=sys.stdin,
                 stdout=sys.stdout,
                 stderr=sys.stderr,
-            )
-            proc.wait()
+            ) as proc:
+                proc.wait()
         except OSError as os_err:
             logger.error("problem runing git %s: %s", cmd, os_err)
             sys.exit(1)
