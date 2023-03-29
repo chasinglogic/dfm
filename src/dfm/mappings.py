@@ -5,6 +5,8 @@ import platform
 import re
 from os.path import expanduser
 
+from dfm.exceptions import MappingException
+
 CUR_OS = platform.system()
 
 
@@ -95,7 +97,7 @@ class Mapping:
     def src_path(self, where):
         """Return the src path for a link_as_dir mapping."""
         if not self.link_as_dir:
-            raise Exception(
+            raise MappingException(
                 "Tried to get src path for a non dir mapping!",
             )
 
@@ -104,7 +106,7 @@ class Mapping:
 
         path = os.path.join(where, self.match)
         if not os.path.isdir(path):
-            raise Exception(
+            raise MappingException(
                 f"Could not resolve {self.match} to a directory in the profile!",
             )
 

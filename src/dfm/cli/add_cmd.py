@@ -34,6 +34,5 @@ def run(args, profile):
             shutil.copytree(oldfile, newfile)
             shutil.rmtree(oldfile)
 
-    print("I should not be syncing.")
-    # profile.sync(skip_modules=True)
+    profile.sync(skip_modules=True)
     profile.link()

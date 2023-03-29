@@ -38,6 +38,7 @@ from importlib import import_module
 from docopt import docopt
 
 from dfm import __version__
+from dfm.exceptions import DFMException
 
 ALIASES = {
     "s": "sync",
@@ -100,6 +101,9 @@ def main():
         logger.debug("Exception: %s", exc)
         sys.exit(1)
     except KeyboardInterrupt:
+        sys.exit(1)
+    except DFMException as exc:
+        print(f"ERROR: {str(exc)}")
         sys.exit(1)
 
 
