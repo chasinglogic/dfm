@@ -200,7 +200,10 @@ class Profile:  # pylint: disable=too-many-instance-attributes
             if hasattr(yaml, "FullLoader"):
                 config = yaml.load(dfmconfig, Loader=yaml.FullLoader)
             else:
-                config = yaml.load(dfmconfig)
+                # Pylint complains because I have newer PyYaml installed and it
+                # correctly determines that we aren't passing a loader but this
+                # is backwards-compatibility code.
+                config = yaml.load(dfmconfig)  # pylint: disable=no-value-for-parameter
 
         # This indicates an empty config file
         if config is None:
