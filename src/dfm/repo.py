@@ -67,7 +67,10 @@ class DotfileRepo:  # pylint: disable=too-many-instance-attributes
             if cwd is False:
                 cwd = self.where
 
-            args = ["git"] + shlex.split(cmd)
+            if isinstance(cmd, str):
+                args = ["git"] + shlex.split(cmd)
+            else:
+                args = ["git"] + cmd
 
             if dry_run:
                 logger.info('Running: "%s" in %s', " ".join(args), cwd)
