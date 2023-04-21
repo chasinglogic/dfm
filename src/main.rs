@@ -11,6 +11,7 @@ use std::{
 
 use clap::{command, crate_version, Parser, Subcommand};
 use profiles::profile::Profile;
+use walkdir::WalkDir;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -31,6 +32,8 @@ enum Commands {
     Where,
     #[command(visible_alias = "st")]
     Status,
+    #[command(visible_alias = "ls")]
+    List,
     #[command(visible_alias = "l")]
     Link {
         // New profile to switch to and link
@@ -126,6 +129,11 @@ fn main() {
             None => println!("Current profile not loaded!"),
         },
         Commands::Where => println!("{}", force_available(current_profile).config.location),
+        Commands::List => {
+            for entry in WalkDir::new(profiles_dir()).min_depth(1).max_depth(1) {
+                println!("{}", entry.unwrap().file_name().to_string_lossy());
+            }
+        }
         Commands::Link { profile_name } => {
             let new_profile = if profile_name != "" {
                 load_profile(&profile_name)
