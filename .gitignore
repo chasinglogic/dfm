@@ -11,3 +11,8 @@ build/*
 env/*
 *mypy_cache*
 .pytest_cache/*
+
+
+# Added by cargo
+
+/target
