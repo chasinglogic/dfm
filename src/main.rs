@@ -3,7 +3,7 @@ mod profiles;
 use std::{
     env,
     ffi::OsString,
-    fs::File,
+    fs::{self, File},
     io::{self, BufReader},
     path::{Path, PathBuf},
     process,
@@ -45,10 +45,14 @@ enum Commands {
         #[arg(default_value_t)]
         profile_name: String,
     },
+    #[command(visible_alias = "i")]
+    Init {
+        #[arg(required = true)]
+        profile_name: String,
+    },
     // TODO:
-    // Remove
     // RunHook
-    // Init
+    // Remove
     // Clone
     // Add
     // Sync
@@ -78,7 +82,12 @@ impl State {
     }
 
     fn save(&self, filepath: &Path) -> Result<(), io::Error> {
-        // TODO: Create intermediate directories if required.
+        if let Some(parent) = filepath.parent() {
+            if !parent.exists() {
+                fs::create_dir_all(parent).expect("Unable to create dfm directory!");
+            }
+        }
+
         let file_handle = File::create(filepath)?;
         Ok(serde_json::to_writer(file_handle, self)?)
     }
@@ -159,6 +168,21 @@ fn main() {
             };
             new_profile.link().expect("Error linking profile!");
             state.current_profile = new_profile.name();
+        }
+        Commands::Init { profile_name } => {
+            let mut path = profiles_dir();
+            path.push(profile_name);
+            if path.exists() {
+                eprintln!(
+                    "Unable to create profile as {} already exists!",
+                    path.to_string_lossy()
+                );
+                process::exit(1);
+            }
+
+            fs::create_dir_all(&path).expect("Unable to create profile directory!");
+            let new_profile = Profile::load(&path);
+            new_profile.init().expect("Error initialising profile!");
         }
         Commands::Status => force_available(current_profile)
             .status()

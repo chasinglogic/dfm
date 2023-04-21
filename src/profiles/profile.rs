@@ -2,7 +2,7 @@ use std::{
     env,
     ffi::OsStr,
     fs::{self, File},
-    io::{self, BufReader},
+    io::{self, BufReader, Write},
     os,
     path::{Path, PathBuf},
     process::{Command, ExitStatus},
@@ -14,7 +14,7 @@ use walkdir::{DirEntry, WalkDir};
 
 use super::hooks::Hooks;
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 enum LinkMode {
     Pre,
@@ -32,7 +32,7 @@ fn default_off() -> bool {
     false
 }
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct DFMConfig {
     #[serde(default)]
     pub location: String,
@@ -162,7 +162,10 @@ impl Profile {
             return Profile::from_config(config);
         }
 
-        Profile::default()
+        let mut profile = Profile::default();
+        profile.config.location = path.to_string_lossy().to_string();
+        profile.location = path;
+        profile
     }
 
     pub fn from_config(config: DFMConfig) -> Profile {
@@ -258,5 +261,23 @@ impl Profile {
 
     pub fn status(&self) -> GitResult {
         self.git(["status"])
+    }
+
+    pub fn init(&self) -> Result<(), io::Error> {
+        self.git(["init"])?;
+
+        let mut dotdfm = self.location.clone();
+        dotdfm.push(".dfm.yml");
+        let fh = &mut File::create(&dotdfm)?;
+        // TODO: Embed a hardcoded default config with documentation comments
+        // and good formatting in the binary and use it here.
+        let content = serde_yaml::to_string(&self.config)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
+        fh.write_all(content.as_bytes())?;
+
+        self.git(["add", ".dfm.yml"])?;
+        self.git(["commit", "-m", "initial commit"])?;
+
+        Ok(())
     }
 }
