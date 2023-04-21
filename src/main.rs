@@ -26,6 +26,8 @@ enum Commands {
     Test,
     #[command()]
     Where,
+    #[command()]
+    Status,
     #[command(external_subcommand)]
     External(Vec<OsString>),
 }
@@ -108,6 +110,13 @@ fn main() {
         Commands::Where => match current_profile {
             None => eprintln!("No profile is currently selected!"),
             Some(profile) => println!("{}", profile.config.location),
+        },
+        Commands::Status => match current_profile {
+            None => eprintln!("No profile is currently selected!"),
+            Some(profile) => {
+                profile.status().expect("Unexpected error running git!");
+                ()
+            }
         },
         Commands::External(args) => {
             let plugin_name = format!("dfm-{}", args[0].to_str().unwrap_or_default());

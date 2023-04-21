@@ -1,7 +1,9 @@
 use std::{
+    ffi::OsStr,
     fs::File,
-    io::BufReader,
+    io::{self, BufReader},
     path::{Path, PathBuf},
+    process::{Command, ExitStatus},
     str::FromStr,
 };
 
@@ -30,17 +32,17 @@ fn default_off() -> bool {
 
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct DFMConfig {
+    #[serde(default)]
+    pub location: String,
+
     #[serde(default = "default_off")]
     prompt_for_commit_message: bool,
     #[serde(default = "default_off")]
     pull_only: bool,
     #[serde(default)]
     link: LinkMode,
-    #[serde(default)]
-    pub location: String,
     #[serde(default = "Hooks::new")]
     hooks: Hooks,
-
     #[serde(default = "Vec::new")]
     modules: Vec<DFMConfig>,
 }
@@ -95,6 +97,7 @@ impl DFMConfig {
 #[derive(Debug)]
 pub struct Profile {
     pub config: DFMConfig,
+
     location: PathBuf,
     modules: Vec<Profile>,
 }
@@ -108,6 +111,8 @@ impl Default for Profile {
         }
     }
 }
+
+type GitResult = Result<ExitStatus, io::Error>;
 
 impl Profile {
     pub fn load(directory: &Path) -> Profile {
@@ -144,5 +149,21 @@ impl Profile {
 
     fn from_config_ref(config: &DFMConfig) -> Profile {
         Profile::from_config(config.clone())
+    }
+
+    fn git<I, S>(&self, args: I) -> GitResult
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<OsStr>,
+    {
+        Command::new("git")
+            .args(args)
+            .current_dir(&self.location)
+            .spawn()?
+            .wait()
+    }
+
+    pub fn status(&self) -> GitResult {
+        self.git(["status"])
     }
 }
