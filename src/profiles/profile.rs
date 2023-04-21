@@ -244,7 +244,7 @@ impl Profile {
         Ok(())
     }
 
-    fn git<I, S>(&self, args: I) -> GitResult
+    pub fn git<I, S>(&self, args: I) -> GitResult
     where
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
