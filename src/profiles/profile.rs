@@ -1,28 +1,30 @@
 use std::{
+    env,
     ffi::OsStr,
-    fs::File,
+    fs::{self, File},
     io::{self, BufReader},
+    os,
     path::{Path, PathBuf},
     process::{Command, ExitStatus},
     str::FromStr,
 };
 
 use serde;
+use walkdir::{DirEntry, WalkDir};
 
 use super::hooks::Hooks;
 
-#[derive(Debug, Clone, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum LinkMode {
-    Default,
-    None,
     Pre,
     Post,
+    None,
 }
 
 impl Default for LinkMode {
     fn default() -> Self {
-        LinkMode::Default
+        LinkMode::Post
     }
 }
 
@@ -114,6 +116,38 @@ impl Default for Profile {
 
 type GitResult = Result<ExitStatus, io::Error>;
 
+fn is_dotfile(entry: &DirEntry) -> bool {
+    let filename = entry.file_name().to_str().unwrap_or("");
+    // .git files and .dfm.yml are not dotfiles so should be ignored.
+    let sys_files = filename == ".dfm.yml" || filename == ".git" || filename == "README.md";
+    let is_file = entry.path().is_file();
+    !sys_files && is_file
+}
+
+// Should return an error
+fn remove_if_able(path: &Path, force_remove: bool) -> Option<io::Error> {
+    if path.exists() && !path.is_symlink() && !force_remove {
+        return Some(io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "file exists and is not a symlink, cowardly refusing to remove.",
+        ));
+    }
+
+    if path.is_dir() {
+        return Some(io::Error::new(
+            io::ErrorKind::AlreadyExists,
+            "directory exists and is not a symlink, cowardly refusing to remove.",
+        ));
+    }
+
+    if !path.exists() {
+        return None;
+    }
+
+    println!("Removing {:?}", path);
+    fs::remove_file(path).err()
+}
+
 impl Profile {
     pub fn load(directory: &Path) -> Profile {
         let path = if directory.starts_with("~") {
@@ -149,6 +183,65 @@ impl Profile {
 
     fn from_config_ref(config: &DFMConfig) -> Profile {
         Profile::from_config(config.clone())
+    }
+
+    pub fn name(&self) -> String {
+        match self.location.file_name() {
+            None => "".to_string(),
+            Some(basename) => basename.to_string_lossy().to_string(),
+        }
+    }
+
+    // TODO: hooks
+    pub fn link(&self) -> Result<(), io::Error> {
+        for profile in self
+            .modules
+            .iter()
+            .filter(|p| p.config.link == LinkMode::Pre)
+        {
+            profile.link()?;
+        }
+
+        let walker = WalkDir::new(&self.location)
+            .min_depth(1)
+            .into_iter()
+            .filter_entry(is_dotfile);
+
+        let home = PathBuf::from(env::var("HOME").unwrap_or("".to_string()));
+        for possible_entry in walker {
+            let entry = match possible_entry {
+                Ok(d) => d,
+                Err(_) => continue,
+            };
+            let file = entry.path();
+            let relative_path = file.strip_prefix(&self.location).unwrap();
+            let target_path = home.join(relative_path);
+            println!(
+                "Link {} -> {}",
+                target_path.to_string_lossy(),
+                file.to_string_lossy()
+            );
+
+            if let Some(err) = remove_if_able(&target_path, false) {
+                if err.kind() == io::ErrorKind::AlreadyExists {
+                    continue;
+                }
+
+                return Err(err);
+            }
+
+            os::unix::fs::symlink(file, target_path)?;
+        }
+
+        for profile in self
+            .modules
+            .iter()
+            .filter(|p| p.config.link == LinkMode::Post)
+        {
+            profile.link()?;
+        }
+
+        Ok(())
     }
 
     fn git<I, S>(&self, args: I) -> GitResult
