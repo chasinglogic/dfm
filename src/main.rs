@@ -1,33 +1,37 @@
 mod profiles;
 
-use shellexpand;
 use std::{
-    default, env,
+    env,
     ffi::OsString,
     fs::File,
     io::{self, BufReader},
     path::{Path, PathBuf},
+    process,
 };
 
-use self::profiles::profile::Profile;
-use clap::{command, Parser, Subcommand};
+use clap::{command, crate_version, Parser, Subcommand};
+use profiles::profile::Profile;
 
 #[derive(Debug, Parser)]
-#[command(name = "dfm")]
-#[command(about = "A dotfile manager for pair programmers and lazy people.", long_about = None)]
-struct Cli {
+#[command(
+    name = "dfm",
+    about = "A dotfile manager for pair programmers and lazy people.", 
+    long_about = None,
+    version = crate_version!(),
+)]
+struct CLI {
     #[command(subcommand)]
     command: Commands,
 }
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    #[command()]
     Test,
-    #[command()]
+    #[command(visible_alias = "w")]
     Where,
-    #[command()]
+    #[command(visible_alias = "st")]
     Status,
+    #[command(visible_alias = "l")]
     Link {
         // New profile to switch to and link
         #[arg(default_value_t)]
@@ -73,7 +77,6 @@ fn dfm_dir() -> PathBuf {
 }
 
 fn state_file() -> PathBuf {
-    let home = env::var("HOME").unwrap_or("".to_string());
     let mut state_fp = dfm_dir();
     state_fp.push("state.json");
     state_fp
@@ -91,8 +94,18 @@ fn load_profile(name: &str) -> Profile {
     Profile::load(&path)
 }
 
+fn force_available(profile: Option<Profile>) -> Profile {
+    match profile {
+        None => {
+            eprintln!("No profile is currently loaded!");
+            process::exit(1);
+        }
+        Some(p) => p,
+    }
+}
+
 fn main() {
-    let args = Cli::parse();
+    let args = CLI::parse();
     let state_fp = state_file();
     let mut state = match State::load(&state_fp) {
         Ok(state) => state,
@@ -112,26 +125,20 @@ fn main() {
             Some(profile) => println!("{:#?}", profile.name()),
             None => println!("Current profile not loaded!"),
         },
-        Commands::Where => match current_profile {
-            None => eprintln!("No profile is currently selected!"),
-            Some(profile) => println!("{}", profile.config.location),
-        },
+        Commands::Where => println!("{}", force_available(current_profile).config.location),
         Commands::Link { profile_name } => {
             let new_profile = if profile_name != "" {
                 load_profile(&profile_name)
             } else {
-                current_profile.expect("No profile is currently selected!")
+                force_available(current_profile)
             };
             new_profile.link().expect("Error linking profile!");
             state.current_profile = new_profile.name();
         }
-        Commands::Status => match current_profile {
-            None => eprintln!("No profile is currently selected!"),
-            Some(profile) => {
-                profile.status().expect("Unexpected error running git!");
-                ()
-            }
-        },
+        Commands::Status => force_available(current_profile)
+            .status()
+            .map(|_exit_code| ())
+            .expect("Unexpected error running git!"),
         Commands::External(args) => {
             let plugin_name = format!("dfm-{}", args[0].to_str().unwrap_or_default());
             println!("Calling out to {:?} with {:?}", plugin_name, &args[1..]);
