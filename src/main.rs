@@ -32,6 +32,11 @@ enum Commands {
     Where,
     #[command(visible_alias = "st")]
     Status,
+    #[command(visible_alias = "g")]
+    Git {
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
     #[command(visible_alias = "ls")]
     List,
     #[command(visible_alias = "l")]
@@ -134,6 +139,10 @@ fn main() {
                 println!("{}", entry.unwrap().file_name().to_string_lossy());
             }
         }
+        Commands::Git { args } => force_available(current_profile)
+            .git(args)
+            .map(|_| ())
+            .expect("Unable to run git on the current profile!"),
         Commands::Link { profile_name } => {
             let new_profile = if profile_name != "" {
                 load_profile(&profile_name)
@@ -145,7 +154,7 @@ fn main() {
         }
         Commands::Status => force_available(current_profile)
             .status()
-            .map(|_exit_code| ())
+            .map(|_| ())
             .expect("Unexpected error running git!"),
         Commands::External(args) => {
             let plugin_name = format!("dfm-{}", args[0].to_str().unwrap_or_default());
