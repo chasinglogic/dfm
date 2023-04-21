@@ -28,6 +28,11 @@ enum Commands {
     Where,
     #[command()]
     Status,
+    Link {
+        // New profile to switch to and link
+        #[arg(default_value_t)]
+        profile_name: String,
+    },
     #[command(external_subcommand)]
     External(Vec<OsString>),
 }
@@ -104,13 +109,22 @@ fn main() {
 
     match args.command {
         Commands::Test => match current_profile {
-            Some(profile) => println!("{:#?}", profile),
+            Some(profile) => println!("{:#?}", profile.name()),
             None => println!("Current profile not loaded!"),
         },
         Commands::Where => match current_profile {
             None => eprintln!("No profile is currently selected!"),
             Some(profile) => println!("{}", profile.config.location),
         },
+        Commands::Link { profile_name } => {
+            let new_profile = if profile_name != "" {
+                load_profile(&profile_name)
+            } else {
+                current_profile.expect("No profile is currently selected!")
+            };
+            new_profile.link().expect("Error linking profile!");
+            state.current_profile = new_profile.name();
+        }
         Commands::Status => match current_profile {
             None => eprintln!("No profile is currently selected!"),
             Some(profile) => {
