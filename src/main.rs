@@ -45,6 +45,14 @@ enum Commands {
         #[arg(default_value_t)]
         profile_name: String,
     },
+    // TODO:
+    // Remove
+    // RunHook
+    // Init
+    // Clone
+    // Add
+    // Sync
+    // Clean
     #[command(external_subcommand)]
     External(Vec<OsString>),
 }
