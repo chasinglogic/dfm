@@ -6,7 +6,7 @@ use super::hooks::Hooks;
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
-enum LinkMode {
+pub enum LinkMode {
     Pre,
     Post,
     None,
