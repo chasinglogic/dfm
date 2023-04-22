@@ -44,6 +44,8 @@ enum Commands {
         // New profile to switch to and link
         #[arg(default_value_t)]
         profile_name: String,
+        #[arg(default_value_t, short, long)]
+        overwrite: bool,
     },
     #[command(visible_alias = "i")]
     Init {
@@ -60,10 +62,14 @@ enum Commands {
         #[arg(required = true)]
         hook_name: String,
     },
+    #[command(visible_alias = "s")]
+    Sync {
+        #[arg(default_value_t, short, long)]
+        message: String,
+    },
     // TODO:
     // Clone
     // Add
-    // Sync
     // Clean
     #[command(external_subcommand)]
     External(Vec<OsString>),
@@ -155,7 +161,7 @@ fn main() {
 
     match args.command {
         Commands::Test => match current_profile {
-            Some(profile) => println!("{:#?}", profile.name()),
+            Some(profile) => println!("{:#?}", profile.branch_name()),
             None => println!("Current profile not loaded!"),
         },
         Commands::Where => println!(
@@ -176,14 +182,23 @@ fn main() {
         Commands::RunHook { hook_name } => force_available(current_profile)
             .run_hook(&hook_name)
             .expect("Unable to run hook!"),
-        Commands::Link { profile_name } => {
+        Commands::Link {
+            profile_name,
+            overwrite,
+        } => {
             let new_profile = if profile_name != "" {
                 load_profile(&profile_name)
             } else {
                 force_available(current_profile)
             };
-            new_profile.link().expect("Error linking profile!");
+            new_profile.link(overwrite).expect("Error linking profile!");
             state.current_profile = new_profile.name();
+        }
+        Commands::Sync { message } => {
+            let profile = force_available(current_profile);
+            profile
+                .sync_with_message(&message)
+                .expect("Unable to sync all profiles!");
         }
         Commands::Init { profile_name } => {
             let mut path = profiles_dir();
