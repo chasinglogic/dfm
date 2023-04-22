@@ -1,2 +1,5 @@
-pub mod hooks;
-pub mod profile;
+mod config;
+mod hooks;
+mod profile;
+
+pub use profile::Profile;
