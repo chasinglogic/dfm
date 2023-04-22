@@ -10,7 +10,7 @@ use std::{
 };
 
 use clap::{command, crate_version, Parser, Subcommand};
-use profiles::profile::Profile;
+use profiles::Profile;
 use walkdir::WalkDir;
 
 #[derive(Debug, Parser)]
@@ -158,7 +158,12 @@ fn main() {
             Some(profile) => println!("{:#?}", profile.name()),
             None => println!("Current profile not loaded!"),
         },
-        Commands::Where => println!("{}", force_available(current_profile).config.location),
+        Commands::Where => println!(
+            "{}",
+            force_available(current_profile)
+                .get_location()
+                .to_string_lossy()
+        ),
         Commands::List => {
             for entry in WalkDir::new(profiles_dir()).min_depth(1).max_depth(1) {
                 println!("{}", entry.unwrap().file_name().to_string_lossy());
