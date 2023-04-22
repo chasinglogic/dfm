@@ -50,9 +50,17 @@ enum Commands {
         #[arg(required = true)]
         profile_name: String,
     },
+    #[command(visible_alias = "rm")]
+    Remove {
+        #[arg(required = true)]
+        profile_name: String,
+    },
+    #[command(visible_alias = "rh")]
+    RunHook {
+        #[arg(required = true)]
+        hook_name: String,
+    },
     // TODO:
-    // RunHook
-    // Remove
     // Clone
     // Add
     // Sync
@@ -160,6 +168,9 @@ fn main() {
             .git(args)
             .map(|_| ())
             .expect("Unable to run git on the current profile!"),
+        Commands::RunHook { hook_name } => force_available(current_profile)
+            .run_hook(&hook_name)
+            .expect("Unable to run hook!"),
         Commands::Link { profile_name } => {
             let new_profile = if profile_name != "" {
                 load_profile(&profile_name)
@@ -171,7 +182,7 @@ fn main() {
         }
         Commands::Init { profile_name } => {
             let mut path = profiles_dir();
-            path.push(profile_name);
+            path.push(&profile_name);
             if path.exists() {
                 eprintln!(
                     "Unable to create profile as {} already exists!",
@@ -183,6 +194,22 @@ fn main() {
             fs::create_dir_all(&path).expect("Unable to create profile directory!");
             let new_profile = Profile::load(&path);
             new_profile.init().expect("Error initialising profile!");
+        }
+        Commands::Remove { profile_name } => {
+            let mut path = profiles_dir();
+            path.push(&profile_name);
+            if !path.exists() {
+                eprintln!("No profile with exists at path: {}", path.to_string_lossy());
+                process::exit(1);
+            }
+
+            if !path.is_dir() {
+                eprintln!("Profile exists but is not a directory!");
+                process::exit(1);
+            }
+
+            fs::remove_dir_all(&path).expect("Unable to remove profile directory!");
+            println!("Profile {} successfully removed.", profile_name);
         }
         Commands::Status => force_available(current_profile)
             .status()
