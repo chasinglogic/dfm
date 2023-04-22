@@ -9,8 +9,9 @@ use std::{
     str::FromStr,
 };
 
-use super::config::DFMConfig;
+use super::config::{DFMConfig, LinkMode};
 
+use text_io::read;
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug)]
@@ -61,7 +62,6 @@ fn remove_if_able(path: &Path, force_remove: bool) -> Option<io::Error> {
         return None;
     }
 
-    println!("Removing {:?}", path);
     fs::remove_file(path).err()
 }
 
@@ -112,13 +112,92 @@ impl Profile {
         }
     }
 
-    pub fn link(&self) -> Result<(), io::Error> {
+    pub fn is_dirty(&self) -> bool {
+        let mut proc = Command::new("git");
+        proc.args(["status", "--porcelain"]);
+        proc.current_dir(&self.location);
+
+        match proc.output() {
+            Ok(output) => output.stdout != "".as_bytes(),
+            Err(_) => false,
+        }
+    }
+
+    pub fn has_origin(&self) -> bool {
+        let mut proc = Command::new("git");
+        proc.args(["remote", "-v"]);
+        proc.current_dir(&self.location);
+
+        match proc.output() {
+            Ok(output) => {
+                let remotes = String::from_utf8(output.stdout).unwrap_or("".to_string());
+                remotes.contains("origin")
+            }
+            Err(_) => false,
+        }
+    }
+
+    pub fn branch_name(&self) -> String {
+        let mut proc = Command::new("git");
+        proc.args(["rev-parse", "--abbrev-ref", "HEAD"]);
+        proc.current_dir(&self.location);
+
+        match proc.output() {
+            Ok(output) => {
+                let branch = String::from_utf8(output.stdout).unwrap_or("".to_string());
+                branch.trim().to_string()
+            }
+            Err(_) => "main".to_string(),
+        }
+    }
+
+    pub fn sync(&self) -> Result<(), io::Error> {
+        self.sync_with_message("")
+    }
+
+    pub fn sync_with_message(&self, commit_msg: &str) -> Result<(), io::Error> {
+        let is_dirty = self.is_dirty();
+        let has_origin = self.has_origin();
+        let branch_name = self.branch_name();
+
+        if is_dirty {
+            let msg = if self.config.prompt_for_commit_message && commit_msg.is_empty() {
+                self.git(["diff"])?;
+                read!("Commit message: {}\n")
+            } else if !commit_msg.is_empty() {
+                commit_msg.to_string()
+            } else {
+                "Dotfiles managed by DFM! https://github.com/chasinglogic/dfm".to_string()
+            };
+
+            self.run_hook("before_sync")?;
+            self.git(["add", "--all"])?;
+            self.git(["commit", "-m", &msg])?;
+        }
+
+        if has_origin {
+            self.git(["pull", "--rebase", "origin", &branch_name])?;
+        }
+
+        if is_dirty && has_origin {
+            self.git(["push", "origin", &branch_name])?;
+            self.run_hook("after_sync")?;
+        }
+
+        for profile in &self.modules {
+            profile.sync()?;
+        }
+
+        Ok(())
+    }
+
+    pub fn link(&self, overwrite_existing_files: bool) -> Result<(), io::Error> {
         for profile in self
             .modules
             .iter()
             .filter(|p| p.config.link == LinkMode::Pre)
         {
-            profile.link()?;
+            profile.link(overwrite_existing_files)?;
         }
 
         self.run_hook("before_link")?;
@@ -143,8 +222,9 @@ impl Profile {
                 file.to_string_lossy()
             );
 
-            if let Some(err) = remove_if_able(&target_path, false) {
+            if let Some(err) = remove_if_able(&target_path, overwrite_existing_files) {
                 if err.kind() == io::ErrorKind::AlreadyExists {
+                    eprintln!("{}", err);
                     continue;
                 }
 
@@ -161,7 +241,7 @@ impl Profile {
             .iter()
             .filter(|p| p.config.link == LinkMode::Post)
         {
-            profile.link()?;
+            profile.link(overwrite_existing_files)?;
         }
 
         Ok(())
