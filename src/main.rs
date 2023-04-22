@@ -6,7 +6,7 @@ use std::{
     fs::{self, File},
     io::{self, BufReader},
     path::{Path, PathBuf},
-    process,
+    process::{self, Command},
 };
 
 use clap::{command, crate_version, Parser, Subcommand};
@@ -67,8 +67,18 @@ enum Commands {
         #[arg(default_value_t, short, long)]
         message: String,
     },
+    #[command()]
+    Clone {
+        #[arg(required = true)]
+        url: String,
+        #[arg(default_value_t, short, long)]
+        name: String,
+        #[arg(default_value_t, short, long)]
+        link: bool,
+        #[arg(default_value_t, short, long)]
+        overwrite: bool,
+    },
     // TODO:
-    // Clone
     // Add
     // Clean
     #[command(external_subcommand)]
@@ -214,6 +224,43 @@ fn main() {
             fs::create_dir_all(&path).expect("Unable to create profile directory!");
             let new_profile = Profile::load(&path);
             new_profile.init().expect("Error initialising profile!");
+        }
+        Commands::Clone {
+            url,
+            name,
+            link,
+            overwrite,
+        } => {
+            let mut work_dir = profiles_dir();
+            let mut args = vec!["clone", &url];
+            let profile_name = if &name != "" {
+                name
+            } else {
+                url.clone()
+                    .split("/")
+                    .last()
+                    .expect("Unable to parse url!")
+                    .to_string()
+            };
+
+            args.push(&profile_name);
+
+            Command::new("git")
+                .args(args)
+                .current_dir(&work_dir)
+                .spawn()
+                .expect("Error starting git!")
+                .wait()
+                .expect("Error cloning repository!");
+
+            work_dir.push(&profile_name);
+
+            let profile = Profile::load(&work_dir);
+            state.current_profile = profile.name();
+
+            if link {
+                profile.link(overwrite).expect("Error linking profile!");
+            }
         }
         Commands::Remove { profile_name } => {
             let mut path = profiles_dir();
