@@ -133,6 +133,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "shellexpand",
+ "shlex",
  "walkdir",
 ]
 
@@ -382,6 +383,12 @@ checksum = "da03fa3b94cc19e3ebfc88c4229c49d8f08cdbd1228870a45f0ffdf84988e14b"
 dependencies = [
  "dirs",
 ]
+
+[[package]]
+name = "shlex"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43b2853a4d09f215c24cc5489c992ce46052d359b5109343cbafbf26bc62f8a3"
 
 [[package]]
 name = "strsim"

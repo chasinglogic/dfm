@@ -36,6 +36,8 @@ fn default_off() -> bool {
 pub struct DFMConfig {
     #[serde(default)]
     pub location: String,
+    #[serde(default = "Hooks::new")]
+    pub hooks: Hooks,
 
     #[serde(default = "default_off")]
     prompt_for_commit_message: bool,
@@ -43,8 +45,6 @@ pub struct DFMConfig {
     pull_only: bool,
     #[serde(default)]
     link: LinkMode,
-    #[serde(default = "Hooks::new")]
-    hooks: Hooks,
     #[serde(default = "Vec::new")]
     modules: Vec<DFMConfig>,
 }
@@ -119,9 +119,9 @@ type GitResult = Result<ExitStatus, io::Error>;
 fn is_dotfile(entry: &DirEntry) -> bool {
     let filename = entry.file_name().to_str().unwrap_or("");
     // .git files and .dfm.yml are not dotfiles so should be ignored.
-    let sys_files = filename == ".dfm.yml" || filename == ".git" || filename == "README.md";
+    let is_sys_file = filename == ".dfm.yml" || filename == ".git" || filename == "README.md";
     let is_file = entry.path().is_file();
-    !sys_files && is_file
+    !is_sys_file && is_file
 }
 
 // Should return an error
@@ -195,7 +195,6 @@ impl Profile {
         }
     }
 
-    // TODO: hooks
     pub fn link(&self) -> Result<(), io::Error> {
         for profile in self
             .modules
@@ -204,6 +203,8 @@ impl Profile {
         {
             profile.link()?;
         }
+
+        self.run_hook("before_link")?;
 
         let walker = WalkDir::new(&self.location)
             .min_depth(1)
@@ -235,6 +236,8 @@ impl Profile {
 
             os::unix::fs::symlink(file, target_path)?;
         }
+
+        self.run_hook("after_link")?;
 
         for profile in self
             .modules
@@ -279,5 +282,9 @@ impl Profile {
         self.git(["commit", "-m", "initial commit"])?;
 
         Ok(())
+    }
+
+    pub fn run_hook(&self, hook_name: &str) -> Result<(), io::Error> {
+        self.config.hooks.run_hook(hook_name, &self.location)
     }
 }
