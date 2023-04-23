@@ -17,7 +17,8 @@ use walkdir::WalkDir;
 #[command(
     name = "dfm",
     about = "A dotfile manager for pair programmers and lazy people.", 
-    long_about = None,
+    long_about = "Dotfile management written for pair programmers. 
+Examples on getting started with dfm are available at https://github.com/chasinglogic/dfm",
     version = crate_version!(),
 )]
 struct CLI {
@@ -27,62 +28,111 @@ struct CLI {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    Test,
-    #[command(visible_alias = "w")]
+    #[command(
+        visible_alias = "w",
+        about = "Prints the location of the current dotfile profile"
+    )]
     Where,
-    #[command(visible_alias = "st")]
+    #[command(
+        visible_alias = "st",
+        about = "Print the git status of the current dotfile profile"
+    )]
     Status,
-    #[command(visible_alias = "g")]
+    #[command(
+        visible_alias = "g",
+        about = "Run the given git command on the current profile"
+    )]
     Git {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
-    #[command(visible_alias = "ls")]
+    #[command(
+        visible_alias = "ls",
+        about = "List available dotfile profiles on this system"
+    )]
     List,
-    #[command(visible_alias = "l")]
+    #[command(
+        visible_alias = "l",
+        about = "Create links for a profile",
+        long_about = "Creates symlinks in HOME for a dotfile Profile and makes it the active profile"
+    )]
     Link {
         // New profile to switch to and link
-        #[arg(default_value_t)]
+        #[arg(
+            default_value_t,
+            help = "The profile name to link, if none given relinks the current profile"
+        )]
         profile_name: String,
-        #[arg(default_value_t, short, long)]
+        #[arg(
+            default_value_t,
+            short,
+            long,
+            help = "If provided dfm will delete files and directories which exist at the target \
+                    link locations. DO NOT USE THIS IF YOU ARE UNSURE AS IT WILL RESULT IN DATA LOSS"
+        )]
         overwrite: bool,
     },
-    #[command(visible_alias = "i")]
+    #[command(visible_alias = "i", about = "Create a new profile")]
     Init {
-        #[arg(required = true)]
+        #[arg(required = true, help = "Name of the profile to create")]
         profile_name: String,
     },
-    #[command(visible_alias = "rm")]
+    #[command(visible_alias = "rm", about = "Remove a profile")]
     Remove {
-        #[arg(required = true)]
+        #[arg(required = true, help = "Name of the profile to remove")]
         profile_name: String,
     },
-    #[command(visible_alias = "rh")]
+    #[command(
+        visible_alias = "rh",
+        about = "Run dfm hooks without using normal commands",
+        long_about = "Runs a hook without the need to invoke the side effects of a dfm command"
+    )]
     RunHook {
         #[arg(required = true)]
         hook_name: String,
     },
-    #[command(visible_alias = "s")]
+    #[command(visible_alias = "s", about = "Sync your dotfiles")]
     Sync {
-        #[arg(default_value_t, short, long)]
+        #[arg(
+            default_value_t,
+            short,
+            long,
+            help = "Use the given message as the commit message"
+        )]
         message: String,
     },
-    #[command()]
+    #[command(about = "Use git clone to download an existing profile")]
     Clone {
         #[arg(required = true)]
         url: String,
-        #[arg(default_value_t, short, long)]
+        #[arg(
+            default_value_t,
+            short,
+            long,
+            help = "Name of the profile to create, defaults to the basename of <url>"
+        )]
         name: String,
-        #[arg(default_value_t, short, long)]
+        #[arg(
+            default_value_t,
+            short,
+            long,
+            help = "If provided the profile will be immediately linked"
+        )]
         link: bool,
-        #[arg(default_value_t, short, long)]
+        #[arg(
+            default_value_t,
+            short,
+            long,
+            help = "If provided dfm will delete files and directories which exist at the target \
+                    link locations. DO NOT USE THIS IF YOU ARE UNSURE AS IT WILL RESULT IN DATA LOSS"
+        )]
         overwrite: bool,
     },
     #[command(about = "Clean dead symlinks. Will ignore symlinks unrelated to DFM.")]
     Clean,
     #[command(
-        about = "Add files to the current dotfile profile.",
-        long_about = "Add files to the current dotfile profile doing \"reverse dotfile-ization\" on them and linking back correctly."
+        about = "Add files to the current dotfile profile",
+        long_about = "Add files to the current dotfile profile"
     )]
     Add {
         #[arg(required = true)]
@@ -181,10 +231,6 @@ fn main() {
     };
 
     match args.command {
-        Commands::Test => match current_profile {
-            Some(profile) => println!("{:#?}", profile.branch_name()),
-            None => println!("Current profile not loaded!"),
-        },
         Commands::Where => println!(
             "{}",
             force_available(current_profile)
