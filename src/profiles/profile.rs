@@ -38,8 +38,7 @@ fn is_dotfile(entry: &DirEntry) -> bool {
     let filename = entry.file_name().to_str().unwrap_or("");
     // .git files and .dfm.yml are not dotfiles so should be ignored.
     let is_sys_file = filename == ".dfm.yml" || filename == ".git" || filename == "README.md";
-    let is_file = entry.path().is_file();
-    !is_sys_file && is_file
+    !is_sys_file
 }
 
 // Should return an error
@@ -214,6 +213,10 @@ impl Profile {
                 Err(_) => continue,
             };
             let file = entry.path();
+            if !file.is_file() {
+                continue;
+            }
+
             let relative_path = file.strip_prefix(&self.location).unwrap();
             let target_path = home.join(relative_path);
             println!(
