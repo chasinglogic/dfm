@@ -78,9 +78,7 @@ enum Commands {
         #[arg(default_value_t, short, long)]
         overwrite: bool,
     },
-    #[command(
-        about = "Clean dead symlinks, note that this will clean dead symlinks not created by DFM."
-    )]
+    #[command(about = "Clean dead symlinks. Will ignore symlinks unrelated to DFM.")]
     Clean,
     #[command(
         about = "Add files to the current dotfile profile.",
@@ -304,6 +302,7 @@ fn main() {
                 !(entry.path().is_dir()
                     && (entry.file_name() == ".git" || entry.file_name() == "node_modules"))
             });
+            let profiles_path = profiles_dir();
 
             for possible_entry in walker {
                 if possible_entry.is_err() {
@@ -316,10 +315,21 @@ fn main() {
                     continue;
                 }
 
+                let target = match path.read_link() {
+                    Ok(p) => p,
+                    Err(_) => continue,
+                };
+
+                // If it's not a DFM related symlink ignore it.
+                if !target.starts_with(&profiles_path) {
+                    continue;
+                }
+
                 let printable_path = path.to_string_lossy();
-                println!("Checking if {} is a dead link...", printable_path);
-                if path.read_link().is_err() {
-                    println!("Link is dead removing.");
+                println!("Checking {}", printable_path);
+                let file_exists = target.exists();
+                if !file_exists {
+                    println!("Link {} is dead removing.", printable_path);
                     fs::remove_file(&path)
                         .expect(format!("Unable to remove file: {}", printable_path).as_ref());
                 }
