@@ -337,6 +337,7 @@ fn main() {
         }
         Commands::Add { files } => {
             let profile = force_available(current_profile);
+            let profile_root = profile.get_location();
 
             for file in files {
                 // Get the absolute path of the file so it has $HOME as the
@@ -356,8 +357,13 @@ fn main() {
                 };
 
                 // Join the relative directory to the profile root
-                let mut target_path = profile.get_location();
+                let mut target_path = profile_root.clone();
                 target_path.push(&relative_path);
+
+                let parent = target_path.parent().unwrap();
+                if parent != profile_root {
+                    fs::create_dir_all(&parent).expect("Unable to create preceding directories!");
+                }
 
                 // Move the file / directory into the profile root
                 fs::rename(path, target_path)
