@@ -82,8 +82,14 @@ enum Commands {
         about = "Clean dead symlinks, note that this will clean dead symlinks not created by DFM."
     )]
     Clean,
-    // TODO:
-    // Add
+    #[command(
+        about = "Add files to the current dotfile profile.",
+        long_about = "Add files to the current dotfile profile doing \"reverse dotfile-ization\" on them and linking back correctly."
+    )]
+    Add {
+        #[arg(required = true)]
+        files: Vec<String>,
+    },
     #[command(external_subcommand)]
     External(Vec<OsString>),
 }
@@ -318,6 +324,38 @@ fn main() {
                         .expect(format!("Unable to remove file: {}", printable_path).as_ref());
                 }
             }
+        }
+        Commands::Add { files } => {
+            let profile = force_available(current_profile);
+
+            for file in files {
+                // Get the absolute path of the file so it has $HOME as the
+                // prefix.
+                let path = Path::new(&file)
+                    .canonicalize()
+                    .expect(format!("Unable to find file: {}", &file).as_ref());
+
+                // Make the path relative to the home directory
+                let home = home_dir();
+                let relative_path = match path.strip_prefix(&home) {
+                    Ok(p) => p,
+                    Err(_) => {
+                        eprintln!("File {} is not in your home directory! If you have a mapping please add it manually.", &file);
+                        process::exit(1);
+                    }
+                };
+
+                // Join the relative directory to the profile root
+                let mut target_path = profile.get_location();
+                target_path.push(&relative_path);
+
+                // Move the file / directory into the profile root
+                fs::rename(path, target_path)
+                    .expect(format!("Unable to move file: {}", &file).as_ref());
+            }
+
+            // Link the profile to create symlinks where files were before.
+            profile.link(false).expect("Unable to link profile!");
         }
         Commands::External(args) => {
             let plugin_name = format!("dfm-{}", args[0].to_str().unwrap_or_default());
