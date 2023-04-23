@@ -78,9 +78,12 @@ enum Commands {
         #[arg(default_value_t, short, long)]
         overwrite: bool,
     },
+    #[command(
+        about = "Clean dead symlinks, note that this will clean dead symlinks not created by DFM."
+    )]
+    Clean,
     // TODO:
     // Add
-    // Clean
     #[command(external_subcommand)]
     External(Vec<OsString>),
 }
@@ -117,9 +120,13 @@ impl State {
     }
 }
 
-fn dfm_dir() -> PathBuf {
+fn home_dir() -> PathBuf {
     let home = env::var("HOME").unwrap_or("".to_string());
-    let mut path = PathBuf::from(home);
+    PathBuf::from(home)
+}
+
+fn dfm_dir() -> PathBuf {
+    let mut path = home_dir();
     path.push(".config");
     path.push("dfm");
     path
@@ -282,6 +289,36 @@ fn main() {
             .status()
             .map(|_| ())
             .expect("Unexpected error running git!"),
+        Commands::Clean => {
+            let home = home_dir();
+            let walker = WalkDir::new(&home).into_iter().filter_entry(|entry| {
+                // Git repos and node_modules have tons of files and are
+                // unlikely to contain dotfiles so this speeds thing up
+                // significantly.
+                !(entry.path().is_dir()
+                    && (entry.file_name() == ".git" || entry.file_name() == "node_modules"))
+            });
+
+            for possible_entry in walker {
+                if possible_entry.is_err() {
+                    continue;
+                }
+
+                let entry = possible_entry.unwrap();
+                let path = entry.path();
+                if !path.is_symlink() {
+                    continue;
+                }
+
+                let printable_path = path.to_string_lossy();
+                println!("Checking if {} is a dead link...", printable_path);
+                if path.read_link().is_err() {
+                    println!("Link is dead removing.");
+                    fs::remove_file(&path)
+                        .expect(format!("Unable to remove file: {}", printable_path).as_ref());
+                }
+            }
+        }
         Commands::External(args) => {
             let plugin_name = format!("dfm-{}", args[0].to_str().unwrap_or_default());
             println!("Calling out to {:?} with {:?}", plugin_name, &args[1..]);
