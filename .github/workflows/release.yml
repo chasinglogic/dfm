@@ -9,7 +9,7 @@ on:
 jobs:
   create-release:
     name: create-release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     env:
       DFM_VERSION: "9.0.0"
     outputs:
@@ -45,11 +45,11 @@ jobs:
         build: [linux, linux-arm, macos]
         include:
         - build: linux
-          os: ubuntu-22.04
+          os: ubuntu-latest
           rust: stable
-          target: x86_64-unknown-linux-musl
+          target: x86_64-unknown-linux-gnu
         - build: linux-arm
-          os: ubuntu-22.04
+          os: ubuntu-latest
           rust: stable
           target: arm-unknown-linux-gnueabihf
         - build: macos
