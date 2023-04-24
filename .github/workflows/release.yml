@@ -53,7 +53,7 @@ jobs:
           rust: stable
           target: arm-unknown-linux-gnueabihf
         - build: macos
-          os: macos-12
+          os: macos-latest
           rust: stable
           target: x86_64-apple-darwin
 
@@ -93,11 +93,11 @@ jobs:
       shell: bash
       run: |
         staging="dfm-${{ needs.create-release.outputs.dfm_version }}-${{ matrix.target }}"
+        mkdir -p "$staging/complete"
 
         cp {README.md,LICENSE} "$staging/"
         cp "target/${{ matrix.target }}/release/dfm" "$staging/"
 
-        mkdir -p "$staging/complete"
         "$staging/dfm" gen-completion bash > "$staging/complete/dfm.bash"
         "$staging/dfm" gen-completion fish > "$staging/complete/dfm.fish"
         "$staging/dfm" gen-completion zsh > "$staging/complete/_dfm"
