@@ -397,7 +397,10 @@ fn main() {
                     .expect(format!("Unable to find file: {}", &file).as_ref());
 
                 // Make the path relative to the home directory
-                let home = home_dir();
+                let home = home_dir()
+                    .canonicalize()
+                    .expect("Unable to canonicalize home!");
+
                 let relative_path = match path.strip_prefix(&home) {
                     Ok(p) => p,
                     Err(_) => {
