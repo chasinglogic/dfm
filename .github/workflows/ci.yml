@@ -1,0 +1,79 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches:
+    - master
+
+jobs:
+  test:
+    name: test
+    env:
+      # Emit backtraces on panics.
+      RUST_BACKTRACE: 1
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build:
+          # Test on stable and beta rust compilers.
+          - stable
+          - beta
+        include:
+          - build: macos
+            os: macos-12
+            rust: stable
+          - build: stable
+            os: ubuntu-latest
+            rust: stable
+          - build: beta
+            os: ubuntu-latest
+            rust: beta
+          - build: nightly-arm
+            os: ubuntu-latest
+            rust: nightly
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
+
+    - name: Build dfm
+      run: cargo build --verbose ${{ env.TARGET_FLAGS }}
+
+    - name: Run cargo tests
+      run: cargo test
+
+    - name: Run integration tests
+      run: ./scripts/integration_tests.sh -b ./target/debug/dfm
+
+    # This is useful for debugging problems when the expected build artifacts
+    # (like shell completions and man pages) aren't generated.
+    - name: Show build.rs stderr
+      shell: bash
+      run: |
+        set +x
+        stderr="$(find "${{ env.TARGET_DIR }}/debug" -name stderr -print0 | xargs -0 ls -t | head -n1)"
+        if [ -s "$stderr" ]; then
+          echo "===== $stderr ===== "
+          cat "$stderr"
+          echo "====="
+        fi
+        set -x
+
+  rustfmt:
+    name: rustfmt
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: stable
+        components: rustfmt
+    - name: Check formatting
+      run: cargo fmt --all --check
