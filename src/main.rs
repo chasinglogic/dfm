@@ -195,6 +195,10 @@ fn state_file() -> PathBuf {
 fn profiles_dir() -> PathBuf {
     let mut path = dfm_dir();
     path.push("profiles");
+    if !path.exists() {
+        fs::create_dir_all(&path).expect("Unable to create profiles directory!");
+    }
+
     path
 }
 
