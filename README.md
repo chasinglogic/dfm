@@ -2,9 +2,6 @@
 
 A dotfile manager for lazy people and pair programmers.
 
-> dfm doesn't require that the dotfiles in your repository start with dots
-> though it handles either case equally well.
-
 ## Table of Contents
 
 - [Features](#features)
