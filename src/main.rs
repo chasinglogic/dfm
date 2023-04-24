@@ -9,7 +9,8 @@ use std::{
     process::{self, Command},
 };
 
-use clap::{command, crate_version, Parser, Subcommand};
+use clap::{command, crate_version, CommandFactory, Parser, Subcommand, ValueEnum};
+use clap_complete::{generate, Shell};
 use profiles::Profile;
 use walkdir::WalkDir;
 
@@ -137,6 +138,11 @@ enum Commands {
     Add {
         #[arg(required = true)]
         files: Vec<String>,
+    },
+    #[command(about = "Generate shell completions and print them to stdout")]
+    GenCompletions {
+        #[arg(required = true, help = "The shell to generate completions for.")]
+        shell: String,
     },
     #[command(external_subcommand)]
     External(Vec<OsString>),
@@ -426,6 +432,22 @@ fn main() {
             // Link the profile to create symlinks where files were before.
             profile.link(false).expect("Unable to link profile!");
         }
+        Commands::GenCompletions { shell } => match Shell::from_str(&shell, true) {
+            Ok(generator) => {
+                eprintln!("Generating completion file for {}...", generator);
+                let cmd = CLI::command();
+                generate(
+                    generator,
+                    &mut cmd.clone(),
+                    cmd.get_name().to_string(),
+                    &mut io::stdout(),
+                );
+            }
+            Err(failed) => {
+                eprintln!("{} is not a known shell.", failed);
+                process::exit(1);
+            }
+        },
         Commands::External(args) => {
             let plugin_name = format!("dfm-{}", args[0].to_str().unwrap_or_default());
             println!("Calling out to {:?} with {:?}", plugin_name, &args[1..]);
