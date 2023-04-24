@@ -92,19 +92,17 @@ jobs:
     - name: Build archive
       shell: bash
       run: |
-        outdir="$(ci/cargo-out-dir "${{ env.TARGET_DIR }}")"
         staging="dfm-${{ needs.create-release.outputs.dfm_version }}-${{ matrix.target }}"
-        mkdir -p "$staging"/{complete,doc}
 
-        cp {README.md,COPYING,UNLICENSE,LICENSE-MIT} "$staging/"
-        cp {CHANGELOG.md,FAQ.md,GUIDE.md} "$staging/doc/"
-        cp "$outdir"/{dfm.bash,dfm.fish} "$staging/complete/"
-        cp complete/_dfm "$staging/complete/"
-
-        # The man page is only generated on Unix systems. ¯\_(ツ)_/¯
-        cp "$outdir"/dfm.1 "$staging/doc/"
+        cp {README.md,LICENSE} "$staging/"
         cp "target/${{ matrix.target }}/release/dfm" "$staging/"
-        tar czf "$staging.tar.gz" "$staging"
+
+        mkdir -p "$staging/complete"
+        "$staging/dfm" gen-completion bash > "$staging/complete/dfm.bash"
+        "$staging/dfm" gen-completion fish > "$staging/complete/dfm.fish"
+        "$staging/dfm" gen-completion zsh > "$staging/complete/_dfm"
+
+        tar czvf "$staging.tar.gz" "$staging"
         echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
 
     - name: Upload release archive
