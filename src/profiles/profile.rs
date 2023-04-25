@@ -1,9 +1,9 @@
 use std::{
     env,
-    os,
     ffi::OsStr,
     fs::{self, File},
     io::{self, Write},
+    os,
     path::{Path, PathBuf},
     process::{Command, ExitStatus},
     str::FromStr,
@@ -161,8 +161,9 @@ impl Profile {
 
         if is_dirty {
             let msg = if self.config.prompt_for_commit_message && commit_msg.is_empty() {
-                self.git(["diff"])?;
-                read!("Commit message: {}\n")
+                self.git(["--no-pager", "diff"])?;
+                print!("Commit message: ");
+                read!("{}\n")
             } else if !commit_msg.is_empty() {
                 commit_msg.to_string()
             } else {
