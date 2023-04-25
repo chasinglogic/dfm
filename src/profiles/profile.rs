@@ -1,9 +1,9 @@
 use std::{
     env,
+    os,
     ffi::OsStr,
     fs::{self, File},
     io::{self, Write},
-    os,
     path::{Path, PathBuf},
     process::{Command, ExitStatus},
     str::FromStr,
@@ -232,6 +232,12 @@ impl Profile {
                 }
 
                 return Err(err);
+            }
+
+            if let Some(path) = target_path.parent() {
+                if !path.exists() {
+                    fs::create_dir_all(path)?;
+                }
             }
 
             os::unix::fs::symlink(file, target_path)?;
