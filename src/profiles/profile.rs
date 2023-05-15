@@ -85,11 +85,18 @@ impl Profile {
     }
 
     pub fn from_config(config: DFMConfig) -> Profile {
-        let modules = config
+        let modules: Vec<Profile> = config
             .modules
             .iter()
             .map(|cfg| Profile::from_config_ref(cfg))
             .collect();
+
+        for module in modules.iter() {
+            if !module.get_location().exists() {
+                module.download();
+            }
+        }
+
         let location = PathBuf::from_str(&config.location)
             .expect("Unable to convert config location into a path!");
 
@@ -102,6 +109,19 @@ impl Profile {
 
     fn from_config_ref(config: &DFMConfig) -> Profile {
         Profile::from_config(config.clone())
+    }
+
+    fn download(&self) {
+        Command::new("git")
+            .args([
+                "clone",
+                &self.config.repo,
+                self.get_location().to_str().expect("Unexpected error!"),
+            ])
+            .spawn()
+            .expect("Unable to start git clone!")
+            .wait()
+            .expect(format!("Unable to clone module! {}", self.config.repo).as_str());
     }
 
     pub fn name(&self) -> String {
