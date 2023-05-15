@@ -25,6 +25,8 @@ fn default_off() -> bool {
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct DFMConfig {
     #[serde(default)]
+    pub repo: String,
+    #[serde(default)]
     pub location: String,
     #[serde(default = "Hooks::new")]
     pub hooks: Hooks,
@@ -45,6 +47,7 @@ impl Default for DFMConfig {
             prompt_for_commit_message: false,
             pull_only: false,
             link: LinkMode::default(),
+            repo: "".to_string(),
             location: "".to_string(),
             hooks: Hooks::new(),
             modules: Vec::new(),
