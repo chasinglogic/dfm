@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Run go vet
+      run: go vet ./...
+
+    - name: Install staticcheck
+      run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+    - name: Run staticcheck
+      run: staticcheck ./...
+
+    # Mostly complains about lack of doc comments which I will fix at some point
+    # but not today.
+#     - name: Install golint
+#       run: go install golang.org/x/lint/golint@latest
+
+#     - name: Run golint
+#       run: golint ./...
+
+    # No unit tests yet.
+#     - name: Run tests
+#       run: go test -race -vet=off ./...
