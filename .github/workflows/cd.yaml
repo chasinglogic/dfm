@@ -20,14 +20,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
 
-      - name: Set RELEASE_VERSION
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4
         with:
           distribution: goreleaser
-          version: ${{ env.RELEASE_VERSION }}
+          version: latest
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
