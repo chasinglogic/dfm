@@ -18,10 +18,14 @@ var cleanCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		home := os.Getenv("HOME")
 		if home == "" {
-			return errors.New("$HOME is not set!")
+			return errors.New("$HOME is not set")
 		}
 
 		filepath.WalkDir(home, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
 			isSymlink := d.Type()&os.ModeSymlink == os.ModeSymlink
 			logger.Debug.Printf("checking if %s is a symlink", path)
 			if !isSymlink {

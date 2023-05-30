@@ -23,6 +23,10 @@ func (h Hooks) RunHook(name, dir string, dryRun bool) error {
 
 		if hookStr, ok := hook.(string); ok {
 			command, err = shlex.Split(hookStr)
+			if err != nil {
+				return err
+			}
+
 		} else if hookMap, ok := hook.(map[string]interface{}); ok {
 			interpreter, hasInterpreter := hookMap["interpreter"]
 			script, hasScript := hookMap["script"]
