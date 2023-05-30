@@ -17,7 +17,7 @@ var removeCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		profile := path.Join(profiles.ProfileDir, args[0])
 		if _, err := os.Stat(profile); os.IsNotExist(err) {
-			return errors.New("ERROR: profile does not exist.")
+			return errors.New("profile does not exist")
 		} else if err != nil {
 			return err
 		}

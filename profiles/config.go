@@ -2,7 +2,6 @@ package profiles
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -42,7 +41,7 @@ type ProfileConfig struct {
 
 func (cfg *ProfileConfig) String() string {
 	yml, _ := yaml.Marshal(cfg)
-	return fmt.Sprintf("%s", yml)
+	return string(yml)
 }
 
 func (cfg *ProfileConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -103,7 +102,7 @@ func Load(where string) (Profile, error) {
 	dotdfm := path.Join(where, ".dfm.yml")
 	if _, err := os.Stat(dotdfm); err == nil {
 		logger.Debug.Println("Profile has a .dfm.yml file.")
-		buf, err := ioutil.ReadFile(dotdfm)
+		buf, err := os.ReadFile(dotdfm)
 		if err != nil {
 			return Profile{}, err
 		}

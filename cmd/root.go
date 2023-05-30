@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -55,7 +54,7 @@ var rootCmd = cobra.Command{
 		return encoder.Encode(&state)
 	},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		data, err := ioutil.ReadFile(statefile)
+		data, err := os.ReadFile(statefile)
 		if err != nil && !os.IsNotExist(err) {
 			return err
 		} else if os.IsNotExist(err) {
