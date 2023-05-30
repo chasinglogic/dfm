@@ -49,6 +49,10 @@ func FromConfig(cfg ProfileConfig) Profile {
 
 	for idx, moduleConfig := range cfg.Modules {
 		p.modules[idx] = FromConfig(moduleConfig)
+		err := p.modules[idx].ensureExists()
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return p
@@ -62,4 +66,17 @@ func (p Profile) Where() string {
 	p.RunHook("before_where")
 	defer p.RunHook("after_where")
 	return p.config.Location
+}
+
+func (p Profile) ensureExists() error {
+	_, err := os.Stat(p.config.Location)
+	if !os.IsNotExist(err) {
+		return err
+	}
+
+	git := exec.Command("git", "clone", p.config.GetRepo(), p.config.Location)
+	git.Stdin = os.Stdin
+	git.Stdout = os.Stdout
+	git.Stderr = os.Stderr
+	return git.Run()
 }
