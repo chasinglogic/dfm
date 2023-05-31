@@ -1,6 +1,7 @@
 package profiles
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -22,27 +23,20 @@ func (h Hooks) RunHook(name, dir string, dryRun bool) error {
 		var err error
 
 		if hookStr, ok := hook.(string); ok {
-			command, err = shlex.Split(hookStr)
-			if err != nil {
-				return err
-			}
-
+			command = []string{"sh", "-c", hookStr}
 		} else if hookMap, ok := hook.(map[string]interface{}); ok {
 			interpreter, hasInterpreter := hookMap["interpreter"]
 			script, hasScript := hookMap["script"]
 			if !hasScript || !hasInterpreter {
-				logger.Debug.Printf("%s hook is missing script or interpreter", name)
-				continue
+				return fmt.Errorf("%s hook is missing script or interpreter", name)
 			}
 
 			if _, ok := interpreter.(string); !ok {
-				logger.Debug.Printf("%s hook interpreter is not a string", name)
-				continue
+				return fmt.Errorf("%s hook interpreter is not a string", name)
 			}
 
 			if _, ok := script.(string); !ok {
-				logger.Debug.Printf("%s hook script is not a string", name)
-				continue
+				return fmt.Errorf("%s hook script is not a string", name)
 			}
 
 			interpreterArgs, err := shlex.Split(interpreter.(string))
