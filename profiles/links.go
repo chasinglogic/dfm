@@ -24,15 +24,29 @@ func (p Profile) Link(opts LinkOptions) error {
 
 	for _, module := range p.modules {
 		if module.config.LinkMode == "before" {
-			module.Link(opts)
+			err := module.Link(opts)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	p.symlinkFiles(opts)
+	if p.config.LinkMode != "none" {
+		logger.Debug.Printf("linking profile %s because it's linkmode is %s", p.Name(), p.config.LinkMode)
+		err := p.symlinkFiles(opts)
+		if err != nil {
+			return err
+		}
+	} else {
+		logger.Debug.Printf("not linking profile %s because it's linkmode is none", p.Name())
+	}
 
 	for _, module := range p.modules {
 		if module.config.LinkMode == "after" {
-			module.Link(opts)
+			err := module.Link(opts)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
