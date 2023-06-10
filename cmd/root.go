@@ -22,7 +22,7 @@ var currentProfile profiles.Profile
 
 func loadCurrentProfile() (profiles.Profile, error) {
 	if state.CurrentProfile == "" {
-		return profiles.Profile{}, errProfileNotFound
+		return profiles.Profile{}, nil
 	}
 
 	return loadProfileByName(state.CurrentProfile)
