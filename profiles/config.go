@@ -32,7 +32,7 @@ type ProfileConfig struct {
 	Repository             string          `yaml:"repository"`
 	Branch                 string          `yaml:"branch"`
 	Hooks                  Hooks           `yaml:"hooks"`
-	LinkMode               string          `yaml:"link_mode"`
+	LinkMode               string          `yaml:"link"`
 	Mappings               []Mapping       `yaml:"mappings"`
 	Modules                []ProfileConfig `yaml:"modules"`
 	PullOnly               bool            `yaml:"pull_only"`
