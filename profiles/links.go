@@ -94,12 +94,15 @@ func (p Profile) symlinkFiles(opts LinkOptions) error {
 		return err
 	}
 
-	files := string(output)
+	files := strings.Split(string(output), "\n")
+
+	logger.Debug.Printf("linking files: %v", files)
 
 	linkAsDir := make(map[string]bool)
 
 linker:
-	for _, file := range strings.Split(files, "\n") {
+	for _, file := range files {
+		logger.Debug.Printf("linking file: %s\n", file)
 		if file == "" {
 			continue
 		}
@@ -157,12 +160,20 @@ func (p Profile) doLink(fileOrDir string, opts LinkOptions) error {
 	logger.Debug.Printf("creating new symlink: %s", homefile)
 	if opts.DryRun {
 		fmt.Println(homefile, "->", dotfile)
-	} else {
-		logger.Verbose.Println("LINK:", homefile, "->", dotfile)
-		linkErr := os.Symlink(dotfile, homefile)
-		if linkErr != nil {
-			return linkErr
+		return nil
+	}
+
+	if _, err := os.Stat(path.Dir(homefile)); os.IsNotExist(err) {
+		err := os.MkdirAll(path.Dir(homefile), 0700)
+		if err != nil {
+			return err
 		}
+	}
+
+	logger.Verbose.Println("LINK:", homefile, "->", dotfile)
+	linkErr := os.Symlink(dotfile, homefile)
+	if linkErr != nil {
+		return linkErr
 	}
 
 	return nil
