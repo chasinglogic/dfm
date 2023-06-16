@@ -47,6 +47,7 @@ var cloneCmd = &cobra.Command{
 		git.Stdin = os.Stdin
 		git.Stdout = os.Stdout
 		git.Stderr = os.Stderr
+		git.Start()
 		err := git.Wait()
 		if err != nil {
 			return err
