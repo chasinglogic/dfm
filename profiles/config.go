@@ -132,3 +132,7 @@ func Load(where string) (Profile, error) {
 
 	return FromConfig(p), nil
 }
+
+func (cfg ProfileConfig) GetMappings() []Mapping {
+	return append(cfg.Mappings, DEFAULT_MAPPINGS...)
+}

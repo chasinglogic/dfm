@@ -107,7 +107,7 @@ linker:
 			continue
 		}
 
-		for _, mapping := range p.config.Mappings {
+		for _, mapping := range p.config.GetMappings() {
 			logger.Debug.Printf("checking if file %s matches: %s\n", file, mapping.Match)
 			matches := mapping.Matches(file)
 			logger.Debug.Printf("mapping matches file: %t\n", matches)
