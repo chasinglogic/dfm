@@ -8,6 +8,36 @@ import (
 	"github.com/chasinglogic/dfm/logger"
 )
 
+var doSkip = true
+
+var DEFAULT_MAPPINGS = []Mapping{
+	{
+		Match: "\\/README(\\.md|\\.txt|\\.rst|\\.org)?$",
+		Skip:  &doSkip,
+	},
+	{
+		Match: "\\/\\.git\\/",
+		Skip:  &doSkip,
+	},
+	{
+		Match: "\\/\\.gitignore$",
+		Skip:  &doSkip,
+	},
+	{
+		Match: "\\/LICENSE(\\.md)?$",
+		Skip:  &doSkip,
+	},
+	{
+		Match: "\\/\\.dfm\\.yml$",
+		Skip:  &doSkip,
+	},
+	// TODO: Support destination mappings
+	// {
+	//   Match: "\/\.ggitignore$",
+	//   Destination: ".gitignore",
+	// },
+}
+
 type Mapping struct {
 	Match     string   `yaml:"match"`
 	TargetDir *string  `yaml:"target_dir"`
