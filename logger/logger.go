@@ -19,12 +19,12 @@ func getActiveLevel() LogLevel {
 	switch os.Getenv("DFM_LOG_LEVEL") {
 	case "DEBUG":
 		return LevelDebug
-	case "INFO":
-		return LevelInfo
+	case "WARN":
+		return LevelWarn
 	case "VERBOSE":
 		return LevelVerbose
 	default:
-		return LevelWarn
+		return LevelInfo
 	}
 }
 
