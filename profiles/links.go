@@ -107,9 +107,11 @@ linker:
 			continue
 		}
 
+		dotfile, _ := filepath.Abs(path.Join(p.config.Location, file))
+
 		for _, mapping := range p.config.GetMappings() {
 			logger.Debug.Printf("checking if file %s matches: %s\n", file, mapping.Match)
-			matches := mapping.Matches(file)
+			matches := mapping.Matches(dotfile)
 			logger.Debug.Printf("mapping matches file: %t\n", matches)
 			if !matches {
 				continue
