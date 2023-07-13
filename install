@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+
+go build .
+mv ./dfm "$INSTALL_DIR/dfm"
