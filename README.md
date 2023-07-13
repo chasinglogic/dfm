@@ -251,7 +251,7 @@ platform=$(uname -s)
 arch=$(uname -m)
 download_url=$(curl -s https://api.github.com/repos/chasinglogic/dfm/releases/latest | grep "browser_download_url.*$platform.*$arch" | cut -d : -f 2,3 | sed 's/"//g' | xargs)
 curl -L -o /tmp/dfm.tar.gz "$download_url"
-tar -C /usr/local/bin xzvf /tmp/dfm.tar.gz dfm
+tar -C /usr/local/bin -xzvf /tmp/dfm.tar.gz dfm
 ```
 
 If you receive an error from the `tar` command like:
