@@ -98,9 +98,11 @@ func init() {
 	rootCmd.AddCommand(removeCmd)
 	rootCmd.AddCommand(runHookCmd)
 	rootCmd.AddCommand(whereCmd)
+	rootCmd.AddCommand(updateCmd)
 }
 
-func Execute() {
+func Execute(version string) {
+	rootCmd.Version = version
 	if err := rootCmd.Execute(); err != nil {
 		fail(err)
 	}
