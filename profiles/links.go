@@ -38,7 +38,7 @@ func (p Profile) Link(opts LinkOptions) error {
 			return err
 		}
 	} else {
-		logger.Debug.Printf("not linking profile %s because it's linkmode is none", p.Name())
+		logger.Verbose.Printf("not linking profile %s because it's linkmode is none", p.Name())
 	}
 
 	for _, module := range p.modules {
@@ -118,14 +118,14 @@ linker:
 			}
 
 			if mapping.ShouldSkip() {
-				logger.Debug.Printf("skipping file %s because it matches mapping: %s\n", file, mapping.Match)
+				logger.Verbose.Printf("skipping file %s because it matches mapping: %s\n", file, mapping.Match)
 				continue linker
 			}
 
 			if mapping.ShouldLinkAsDir() {
 				dir := path.Dir(file)
 				if _, ok := linkAsDir[dir]; !ok {
-					logger.Debug.Printf("linking directory %s because it matches mapping: %s\n", dir, mapping.Match)
+					logger.Verbose.Printf("linking directory %s because it matches mapping: %s\n", dir, mapping.Match)
 					err := p.doLink(dir, opts)
 					if err != nil {
 						return err
@@ -172,7 +172,7 @@ func (p Profile) doLink(fileOrDir string, opts LinkOptions) error {
 		}
 	}
 
-	logger.Verbose.Println("LINK:", homefile, "->", dotfile)
+	logger.Verbose.Println(homefile, "->", dotfile)
 	linkErr := os.Symlink(dotfile, homefile)
 	if linkErr != nil {
 		return linkErr
