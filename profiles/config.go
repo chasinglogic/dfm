@@ -28,15 +28,16 @@ type ProfileConfig struct {
 
 	// Repo is here to support either Repo or Repository for backwards
 	// compatibility.
-	Repo                   string          `yaml:"repo,omitempty"`
-	Repository             string          `yaml:"repository"`
-	Branch                 string          `yaml:"branch"`
-	Hooks                  Hooks           `yaml:"hooks"`
-	LinkMode               string          `yaml:"link"`
-	Mappings               []Mapping       `yaml:"mappings"`
-	Modules                []ProfileConfig `yaml:"modules"`
-	PullOnly               bool            `yaml:"pull_only"`
-	PromptForCommitMessage bool            `yaml:"prompt_for_commit_message"`
+	Repo                    string          `yaml:"repo,omitempty"`
+	Repository              string          `yaml:"repository"`
+	Branch                  string          `yaml:"branch"`
+	Hooks                   Hooks           `yaml:"hooks"`
+	LinkMode                string          `yaml:"link"`
+	Mappings                []Mapping       `yaml:"mappings"`
+	Modules                 []ProfileConfig `yaml:"modules"`
+	PullOnly                bool            `yaml:"pull_only"`
+	PromptForCommitMessage  bool            `yaml:"prompt_for_commit_message"`
+	OverrideDefaultMappings bool            `yaml:"override_default_mappings"`
 }
 
 func (cfg *ProfileConfig) String() string {
@@ -45,6 +46,7 @@ func (cfg *ProfileConfig) String() string {
 }
 
 func (cfg *ProfileConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	cfg.OverrideDefaultMappings = false
 	cfg.PullOnly = false
 	cfg.Modules = []ProfileConfig{}
 	cfg.TargetDir = os.Getenv("HOME")
@@ -134,5 +136,9 @@ func Load(where string) (Profile, error) {
 }
 
 func (cfg ProfileConfig) GetMappings() []Mapping {
-	return append(cfg.Mappings, DEFAULT_MAPPINGS...)
+	if cfg.OverrideDefaultMappings {
+		return cfg.Mappings
+	} else {
+		return append(cfg.Mappings, DEFAULT_MAPPINGS...)
+	}
 }
