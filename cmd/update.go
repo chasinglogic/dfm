@@ -59,6 +59,10 @@ var updateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		platform := strings.Title(runtime.GOOS)
 		arch := runtime.GOARCH
+		if arch == "amd64" {
+			arch = "x86_64"
+		}
+
 		url := "https://api.github.com/repos/chasinglogic/dfm/releases/latest"
 
 		req, _ := http.NewRequest("GET", url, nil)
@@ -83,7 +87,7 @@ var updateCmd = &cobra.Command{
 		downloadURL := ""
 		for _, asset := range rel.Assets {
 			isForPlatform := strings.Contains(asset.Name, platform) && strings.Contains(asset.Name, arch)
-			logger.Debug.Printf("checking if %s contains %s and %s: %s", asset.Name, platform, arch, isForPlatform)
+			logger.Debug.Printf("checking if %s contains %s and %s: %t", asset.Name, platform, arch, isForPlatform)
 			if isForPlatform {
 				downloadURL = asset.BrowserDownloadURL
 				break
