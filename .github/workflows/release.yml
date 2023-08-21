@@ -11,7 +11,7 @@ jobs:
     name: create-release
     runs-on: ubuntu-latest
     env:
-      DFM_VERSION: "9.0.0"
+      DFM_VERSION: "10.0.0"
     outputs:
       upload_url: ${{ steps.release.outputs.upload_url }}
       dfm_version: ${{ env.DFM_VERSION }}
