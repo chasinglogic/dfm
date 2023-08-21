@@ -1,11 +1,11 @@
+mod cli;
 mod profiles;
 
 use std::{
     env,
     ffi::OsString,
-    fs::{self, File},
-    io::{self, BufReader},
-    path::{Path, PathBuf},
+    fs, io,
+    path::Path,
     process::{self, Command},
 };
 
@@ -148,94 +148,12 @@ enum Commands {
     External(Vec<OsString>),
 }
 
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
-struct State {
-    current_profile: String,
-}
-
-impl Default for State {
-    fn default() -> Self {
-        State {
-            current_profile: "".to_string(),
-        }
-    }
-}
-
-impl State {
-    fn load(fp: &Path) -> Result<State, io::Error> {
-        let fh = File::open(fp)?;
-        let buffer = BufReader::new(fh);
-        Ok(serde_json::from_reader(buffer)?)
-    }
-
-    fn save(&self, filepath: &Path) -> Result<(), io::Error> {
-        if let Some(parent) = filepath.parent() {
-            if !parent.exists() {
-                fs::create_dir_all(parent).expect("Unable to create dfm directory!");
-            }
-        }
-
-        let file_handle = File::create(filepath)?;
-        Ok(serde_json::to_writer(file_handle, self)?)
-    }
-}
-
-fn home_dir() -> PathBuf {
-    let home = env::var("HOME").unwrap_or("".to_string());
-    PathBuf::from(home)
-}
-
-fn dfm_dir() -> PathBuf {
-    let mut path = home_dir();
-    path.push(".config");
-    path.push("dfm");
-    path
-}
-
-fn state_file() -> PathBuf {
-    let mut state_fp = dfm_dir();
-    state_fp.push("state.json");
-    state_fp
-}
-
-fn profiles_dir() -> PathBuf {
-    let mut path = dfm_dir();
-    path.push("profiles");
-    if !path.exists() {
-        fs::create_dir_all(&path).expect("Unable to create profiles directory!");
-    }
-
-    path
-}
-
-fn load_profile(name: &str) -> Profile {
-    let mut path = profiles_dir();
-    path.push(name);
-    Profile::load(&path)
-}
-
-fn force_available(profile: Option<Profile>) -> Profile {
-    match profile {
-        None => {
-            eprintln!("No profile is currently loaded!");
-            process::exit(1);
-        }
-        Some(p) => p,
-    }
-}
-
 fn main() {
     let args = CLI::parse();
-    let state_fp = state_file();
-    let mut state = match State::load(&state_fp) {
-        Ok(state) => state,
-        Err(err) => match err.kind() {
-            io::ErrorKind::NotFound => State::default(),
-            _ => panic!("{}", err),
-        },
-    };
+    let mut state = cli::state::load_or_default();
+
     let current_profile: Option<Profile> = if state.current_profile != "" {
-        Some(load_profile(&state.current_profile))
+        Some(cli::state::load_profile(&state.current_profile))
     } else {
         None
     };
