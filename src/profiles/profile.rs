@@ -185,8 +185,9 @@ impl Profile {
         let is_dirty = self.is_dirty();
         let has_origin = self.has_origin();
         let branch_name = self.branch_name();
+        let pull_only = self.config.pull_only;
 
-        if is_dirty {
+        if is_dirty && !pull_only {
             let msg = if self.config.prompt_for_commit_message && commit_msg.is_empty() {
                 self.git(["--no-pager", "diff"])?;
                 print!("Commit message: ");
@@ -206,7 +207,7 @@ impl Profile {
             self.git(["pull", "--rebase", "origin", &branch_name])?;
         }
 
-        if is_dirty && has_origin {
+        if is_dirty && has_origin && !pull_only {
             self.git(["push", "origin", &branch_name])?;
             self.run_hook("after_sync")?;
         }
