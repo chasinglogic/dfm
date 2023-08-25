@@ -76,15 +76,29 @@ impl DFMConfig {
         }
 
         for module in &mut config.modules {
-            module.expand();
+            module.expand_module();
         }
 
         config
     }
 
-    fn expand(&mut self) {
+    fn expand_module(&mut self) {
         if self.location.starts_with("~") {
             self.location = shellexpand::tilde(&self.location).to_string();
+        }
+
+        if self.location == "" {
+            let name = self
+                .repo
+                .split("/")
+                .last()
+                .expect("A module must define a repository!")
+                .replace(".git", "");
+
+            let mut module_dir = crate::cli::state::modules_dir();
+            module_dir.push(name);
+
+            self.location = module_dir.to_string_lossy().to_string();
         }
     }
 }

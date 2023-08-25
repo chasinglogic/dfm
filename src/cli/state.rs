@@ -1,8 +1,8 @@
 use std::env;
 use std::fs::{self, File};
 use std::io::{self, BufReader};
-use std::process;
 use std::path::{Path, PathBuf};
+use std::process;
 
 use crate::profiles::Profile;
 
@@ -65,6 +65,16 @@ pub fn profiles_dir() -> PathBuf {
     path.push("profiles");
     if !path.exists() {
         fs::create_dir_all(&path).expect("Unable to create profiles directory!");
+    }
+
+    path
+}
+
+pub fn modules_dir() -> PathBuf {
+    let mut path = dfm_dir();
+    path.push("modules");
+    if !path.exists() {
+        fs::create_dir_all(&path).expect("Unable to create modules directory!");
     }
 
     path
