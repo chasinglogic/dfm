@@ -1,4 +1,6 @@
 mod cli;
+#[macro_use]
+mod macros;
 mod profiles;
 
 use crate::cli::state::{force_available, profiles_dir};

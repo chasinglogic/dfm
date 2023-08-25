@@ -10,6 +10,7 @@ use std::{
 };
 
 use super::config::{DFMConfig, LinkMode};
+use crate::debug;
 
 use text_io::read;
 use walkdir::{DirEntry, WalkDir};
@@ -175,6 +176,12 @@ impl Profile {
     }
 
     pub fn sync_with_message(&self, commit_msg: &str) -> Result<(), io::Error> {
+        debug!(
+            "Syncing: {} at {}",
+            self.name(),
+            self.get_location().to_string_lossy(),
+        );
+
         let is_dirty = self.is_dirty();
         let has_origin = self.has_origin();
         let branch_name = self.branch_name();
