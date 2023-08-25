@@ -24,7 +24,7 @@ fn default_off() -> bool {
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct DFMConfig {
-    #[serde(default)]
+    #[serde(default, alias = "repository")]
     pub repo: String,
     #[serde(default)]
     pub location: String,
