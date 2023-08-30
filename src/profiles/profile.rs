@@ -89,7 +89,7 @@ impl Profile {
         let modules: Vec<Profile> = config
             .modules
             .iter()
-            .map(|cfg| Profile::from_config_ref(cfg))
+            .map(Profile::from_config_ref)
             .collect();
 
         for module in modules.iter() {
@@ -102,9 +102,9 @@ impl Profile {
             .expect("Unable to convert config location into a path!");
 
         Profile {
-            config: config,
-            location: location,
-            modules: modules,
+            config,
+            location,
+            modules,
         }
     }
 
@@ -122,7 +122,7 @@ impl Profile {
             .spawn()
             .expect("Unable to start git clone!")
             .wait()
-            .expect(format!("Unable to clone module! {}", self.config.repo).as_str());
+            .unwrap_or_else(|_| panic!("Unable to clone module! {}", self.config.repo));
     }
 
     pub fn name(&self) -> String {
