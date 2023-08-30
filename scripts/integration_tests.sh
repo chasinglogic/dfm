@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 function log() {
     if [[ $2 == "DEBUG" ]] && [[ "$DEBUG_TESTS" == "" ]]; then
@@ -28,21 +28,21 @@ function cleanup() {
     fi
 
     export HOME_DIR=$(mktemp -d)
-    export DFM_CONFIG_DIR=$(mktemp -d)
+    export DFM_CONFIG_DIR="$HOME_DIR/.config/dfm"
     export HOME=$HOME_DIR
 
     generate_git_config
 }
 
 function x() {
-    cmd=$@
+    cmd="$@"
     log "Running: $cmd" "DEBUG"
     stdoutfile=$(mktemp)
     stderrfile=$(mktemp)
-    $@ 1>$stdoutfile 2>$stderrfile
+    $cmd 1>$stdoutfile 2>$stderrfile
     if [[ $? != 0 ]]; then
         FAILED_CODE=$?
-        log "Failed to run $@"
+        log "Failed to run '$cmd'"
         cat $stdoutfile
         cat $stderrfile
         rm -f $stdoutfile $stderrfile
@@ -64,7 +64,6 @@ function dfm_clone_test() {
 
     log "Running clone tests..." "DEBUG"
 
-    x $DFM_BIN --version
     x $DFM_BIN clone --name $PROFILE_NAME $PROFILE_REPOSITORY
     x $DFM_BIN link $PROFILE_NAME
 
@@ -167,7 +166,7 @@ DFM_BIN="${DFM_BIN:-dfm}"
 export PROFILE_REPOSITORY="https://github.com/chasinglogic/dfm_dotfile_test.git"
 export PROFILE_NAME="integration"
 export HOME_DIR=$(mktemp -d)
-export DFM_CONFIG_DIR=$(mktemp -d)
+export DFM_CONFIG_DIR="$HOME_DIR/.config/dfm"
 
 while getopts ":b:" opt; do
     case $opt in
@@ -181,8 +180,7 @@ export HOME=$HOME_DIR
 
 generate_git_config
 
-log "Using dfm binary: $DFM_BIN"
-x $DFM_BIN --version
+log "Using dfm binary: $DFM_BIN $($DFM_BIN --version)"
 dfm_clone_test $DFM_BIN $PROFILE_NAME $PROFILE_REPOSITORY
 dfm_clone_and_link_test $DFM_BIN $PROFILE_NAME $PROFILE_REPOSITORY
 dfm_init_and_add_test $DFM_BIN
