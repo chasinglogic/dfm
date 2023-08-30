@@ -241,37 +241,29 @@ The latest release is available
 Download the archive that is appropriate for your platform and extract the
 binary into your `$PATH`. A common valid path location is `/usr/local/bin`.
 
-You can run these commands to automate this install:
+You can run these commands to automate this install (on most platforms, it does not always work):
 
 ```
 platform=$(uname -s)
 arch=$(uname -m)
-download_url=$(curl -s https://api.github.com/repos/chasinglogic/dfm/releases/latest | grep "browser_download_url.*$platform.*$arch" | cut -d : -f 2,3 | sed 's/"//g' | xargs)
+# If you're running on an M1 Macbook run this:
+# arch="x86_64"
+download_url=$(curl -s https://api.github.com/repos/chasinglogic/dfm/releases/latest | grep "browser_download_url.*$arch.*${platform,,}" | cut -d : -f 2,3 | sed 's/"//g' | xargs)
 curl -L -o /tmp/dfm.tar.gz "$download_url"
-tar -C /usr/local/bin -xzvf /tmp/dfm.tar.gz dfm
+tar -C /tmp -xzvf /tmp/dfm.tar.gz
+mv $(find /$(readlink /tmp) -perm +111 -type f -name dfm 2>/dev/null) /usr/local/bin/
 ```
-
-If you receive an error from the `tar` command like:
-
-```
-x dfm: Can't create 'dfm'
-tar: Error exit delayed from previous errors.
-```
-
-Then you need to run it with `sudo` or change the install directory by modifying
-the `-C` flag.
-
 ### Install from Source
 
-You will need a [go](https://go.dev/doc/install) compiler to build dfm from
+You will need a [rust](https://rustup.rs) compiler to build dfm from
 source.
 
-Clone the repository and run `./install`:
+Clone the repository and run `./scripts/local_install.sh`:
 
 ```bash
 git clone https://github.com/chasinglogic/dfm
 cd dfm
-./install
+./scripts/local_install.sh
 ```
 
 > It's possible that for your system you will need to run the install
