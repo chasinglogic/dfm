@@ -7,7 +7,6 @@ use crate::cli::state::{force_available, profiles_dir};
 
 use std::{
     env,
-    ffi::OsString,
     fs, io,
     path::Path,
     process::{self, Command},
@@ -148,8 +147,6 @@ enum Commands {
         #[arg(required = true, help = "The shell to generate completions for.")]
         shell: String,
     },
-    #[command(external_subcommand)]
-    External(Vec<OsString>),
 }
 
 fn main() {
@@ -369,10 +366,6 @@ fn main() {
                 process::exit(1);
             }
         },
-        Commands::External(args) => {
-            let plugin_name = format!("dfm-{}", args[0].to_str().unwrap_or_default());
-            println!("Calling out to {:?} with {:?}", plugin_name, &args[1..]);
-        }
     }
 
     state.default_save().expect("Unable to save state!");
