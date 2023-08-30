@@ -54,7 +54,7 @@ jobs:
         with:
           toolchain: stable
           components: clippy
-      - name: Check formatting
+      - name: Lint
         run: cargo clippy --no-deps --all-targets
 
   rustfmt:
