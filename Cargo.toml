@@ -2,7 +2,7 @@
 name = "dfm"
 description = "A dotfile manager for lazy people and pair programmers."
 license = "Apache-2.0"
-version = "10.0.2"
+version = "10.0.3"
 homepage = "https://github.com/chasinglogic/dfm"
 documentation = "https://github.com/chasinglogic/dfm"
 repository = "https://github.com/chasinglogic/dfm"
