@@ -43,6 +43,20 @@ jobs:
       - name: Run integration tests
         run: ./scripts/integration_tests.sh -b ./target/debug/dfm
 
+  clippy:
+    name: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: clippy
+      - name: Check formatting
+        run: cargo clippy --no-deps --all-targets
+
   rustfmt:
     name: rustfmt
     runs-on: ubuntu-latest
