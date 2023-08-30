@@ -1,10 +1,6 @@
 name: ci
 
-on:
-  pull_request:
-  push:
-    branches:
-    - master
+on: [push, pull_request]
 
 jobs:
   test:
@@ -30,33 +26,33 @@ jobs:
             os: ubuntu-latest
             rust: beta
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ matrix.rust }}
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
 
-    - name: Build dfm
-      run: cargo build --verbose ${{ env.TARGET_FLAGS }}
+      - name: Build dfm
+        run: cargo build --verbose ${{ env.TARGET_FLAGS }}
 
-    - name: Run cargo tests
-      run: cargo test
+      - name: Run cargo tests
+        run: cargo test
 
-    - name: Run integration tests
-      run: ./scripts/integration_tests.sh -b ./target/debug/dfm
+      - name: Run integration tests
+        run: ./scripts/integration_tests.sh -b ./target/debug/dfm
 
   rustfmt:
     name: rustfmt
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: stable
-        components: rustfmt
-    - name: Check formatting
-      run: cargo fmt --all --check
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt
+      - name: Check formatting
+        run: cargo fmt --all --check
