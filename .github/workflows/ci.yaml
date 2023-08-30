@@ -1,41 +1,62 @@
-name: CI
+name: ci
 
 on:
+  pull_request:
   push:
+    branches:
+    - master
 
 jobs:
-  ci:
-    runs-on: ubuntu-latest
-
+  test:
+    name: test
+    env:
+      # Emit backtraces on panics.
+      RUST_BACKTRACE: 1
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build:
+          # Test on stable and beta rust compilers.
+          - stable
+          - beta
+        include:
+          - build: macos
+            os: macos-latest
+            rust: stable
+          - build: stable
+            os: ubuntu-latest
+            rust: stable
+          - build: beta
+            os: ubuntu-latest
+            rust: beta
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
 
-    - name: Verify dependencies
-      run: go mod verify
+    - name: Build dfm
+      run: cargo build --verbose ${{ env.TARGET_FLAGS }}
 
-    - name: Build
-      run: go build -v ./...
+    - name: Run cargo tests
+      run: cargo test
 
-    - name: Run go vet
-      run: go vet ./...
+    - name: Run integration tests
+      run: ./scripts/integration_tests.sh -b ./target/debug/dfm
 
-    - name: Install staticcheck
-      run: go install honnef.co/go/tools/cmd/staticcheck@latest
-
-    - name: Run staticcheck
-      run: staticcheck ./...
-
-    # Mostly complains about lack of doc comments which I will fix at some point
-    # but not today.
-#     - name: Install golint
-#       run: go install golang.org/x/lint/golint@latest
-
-#     - name: Run golint
-#       run: golint ./...
-
-    # No unit tests yet.
-#     - name: Run tests
-#       run: go test -race -vet=off ./...
+  rustfmt:
+    name: rustfmt
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: stable
+        components: rustfmt
+    - name: Check formatting
+      run: cargo fmt --all --check
