@@ -1,21 +1,14 @@
 use std::{fs::File, io::BufReader, path::Path};
 
-use serde;
-
 use super::hooks::Hooks;
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum LinkMode {
     Pre,
+    #[default]
     Post,
     None,
-}
-
-impl Default for LinkMode {
-    fn default() -> Self {
-        LinkMode::Post
-    }
 }
 
 fn default_off() -> bool {
@@ -57,16 +50,15 @@ impl Default for DFMConfig {
 
 impl DFMConfig {
     pub fn load(file: &Path) -> DFMConfig {
-        let fh = File::open(file).expect(
-            format!(
+        let fh = File::open(file).unwrap_or_else(|_| {
+            panic!(
                 "Unexpected error reading {}",
                 file.to_str().unwrap_or(".dfm.yml")
             )
-            .as_str(),
-        );
+        });
         let reader = BufReader::new(fh);
         let mut config: DFMConfig = serde_yaml::from_reader(reader).expect("Malformed .dfm.yml");
-        if config.location == "" {
+        if config.location.is_empty() {
             config.location = file
                 .parent()
                 .expect("Unexpected error getting profile location!")
@@ -83,14 +75,14 @@ impl DFMConfig {
     }
 
     fn expand_module(&mut self) {
-        if self.location.starts_with("~") {
+        if self.location.starts_with('~') {
             self.location = shellexpand::tilde(&self.location).to_string();
         }
 
-        if self.location == "" {
+        if self.location.is_empty() {
             let name = self
                 .repo
-                .split("/")
+                .split('/')
                 .last()
                 .expect("A module must define a repository!")
                 .replace(".git", "");

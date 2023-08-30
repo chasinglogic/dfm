@@ -6,8 +6,7 @@ mod profiles;
 use crate::cli::state::{force_available, profiles_dir};
 
 use std::{
-    env,
-    fs, io,
+    env, fs, io,
     path::Path,
     process::{self, Command},
 };
@@ -25,7 +24,7 @@ use walkdir::WalkDir;
 Examples on getting started with dfm are available at https://github.com/chasinglogic/dfm",
     version = crate_version!(),
 )]
-struct CLI {
+struct Cli {
     #[command(subcommand)]
     command: Commands,
 }
@@ -150,10 +149,10 @@ enum Commands {
 }
 
 fn main() {
-    let args = CLI::parse();
+    let args = Cli::parse();
     let mut state = cli::state::load_or_default();
 
-    let current_profile: Option<Profile> = if state.current_profile != "" {
+    let current_profile: Option<Profile> = if !state.current_profile.is_empty() {
         Some(cli::state::load_profile(&state.current_profile))
     } else {
         None
@@ -182,7 +181,7 @@ fn main() {
             profile_name,
             overwrite,
         } => {
-            let new_profile = if profile_name != "" {
+            let new_profile = if !profile_name.is_empty() {
                 cli::state::load_profile(&profile_name)
             } else {
                 force_available(current_profile)
@@ -219,11 +218,11 @@ fn main() {
         } => {
             let mut work_dir = profiles_dir();
             let mut args = vec!["clone", &url];
-            let profile_name = if &name != "" {
+            let profile_name = if !name.is_empty() {
                 name
             } else {
                 url.clone()
-                    .split("/")
+                    .split('/')
                     .last()
                     .expect("Unable to parse url!")
                     .to_string()
@@ -304,8 +303,8 @@ fn main() {
                 let file_exists = target.exists();
                 if !file_exists {
                     println!("Link {} is dead removing.", printable_path);
-                    fs::remove_file(&path)
-                        .expect(format!("Unable to remove file: {}", printable_path).as_ref());
+                    fs::remove_file(path)
+                        .unwrap_or_else(|_| panic!("Unable to remove file: {}", printable_path));
                 }
             }
         }
@@ -318,7 +317,7 @@ fn main() {
                 // prefix.
                 let path = Path::new(&file)
                     .canonicalize()
-                    .expect(format!("Unable to find file: {}", &file).as_ref());
+                    .unwrap_or_else(|_| panic!("Unable to find file: {}", &file));
 
                 let home = cli::state::home_dir()
                     .canonicalize()
@@ -335,16 +334,16 @@ fn main() {
 
                 // Join the relative directory to the profile root
                 let mut target_path = profile_root.clone();
-                target_path.push(&relative_path);
+                target_path.push(relative_path);
 
                 let parent = target_path.parent().unwrap();
                 if parent != profile_root {
-                    fs::create_dir_all(&parent).expect("Unable to create preceding directories!");
+                    fs::create_dir_all(parent).expect("Unable to create preceding directories!");
                 }
 
                 // Move the file / directory into the profile root
                 fs::rename(path, target_path)
-                    .expect(format!("Unable to move file: {}", &file).as_ref());
+                    .unwrap_or_else(|_| panic!("Unable to move file: {}", &file));
             }
 
             // Link the profile to create symlinks where files were before.
@@ -353,7 +352,7 @@ fn main() {
         Commands::GenCompletions { shell } => match Shell::from_str(&shell, true) {
             Ok(generator) => {
                 eprintln!("Generating completion file for {}...", generator);
-                let cmd = CLI::command();
+                let cmd = Cli::command();
                 generate(
                     generator,
                     &mut cmd.clone(),

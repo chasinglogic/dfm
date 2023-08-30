@@ -1,7 +1,5 @@
 use std::{collections::HashMap, io, path::Path, process::Command};
 
-use serde;
-
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct HookDefinition {
     interpreter: String,
@@ -35,9 +33,9 @@ impl Hooks {
                         }) => (interpreter.as_ref(), script.as_ref()),
                     };
 
-                    let mut argv = shlex::split(&interpreter_command).expect(
-                        format!("Malformed interpreter: {}", &interpreter_command).as_ref(),
-                    );
+                    let mut argv = shlex::split(interpreter_command).unwrap_or_else(|| {
+                        panic!("Malformed interpreter: {}", &interpreter_command)
+                    });
                     argv.push(script.to_string());
 
                     let shell = argv

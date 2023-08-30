@@ -8,7 +8,7 @@ lazy_static! {
 #[macro_export]
 macro_rules! debug {
     ($($arg:tt)*) => {
-        if *crate::macros::VERBOSITY_ENABLED {
+        if *$crate::macros::VERBOSITY_ENABLED {
             println!($($arg)*);
         }
     };
