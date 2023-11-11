@@ -10,7 +10,10 @@ use std::{
 };
 
 use super::config::{DFMConfig, LinkMode};
-use crate::debug;
+use crate::{
+    debug,
+    profiles::mapping::{MapAction, Mapper},
+};
 
 use text_io::read;
 use walkdir::{DirEntry, WalkDir};
@@ -51,18 +54,15 @@ fn remove_if_able(path: &Path, force_remove: bool) -> Option<io::Error> {
         ));
     }
 
-    if path.is_dir() {
-        return Some(io::Error::new(
-            io::ErrorKind::AlreadyExists,
-            "directory exists and is not a symlink, cowardly refusing to remove.",
-        ));
-    }
-
     if !path.exists() {
         return None;
     }
 
-    fs::remove_file(path).err()
+    if path.is_dir() {
+        fs::remove_dir_all(path).err()
+    } else {
+        fs::remove_file(path).err()
+    }
 }
 
 impl Profile {
@@ -235,19 +235,46 @@ impl Profile {
             .into_iter()
             .filter_entry(is_dotfile);
 
+        let mapper = Mapper::from(self.config.mappings.clone());
+
         let home = PathBuf::from(env::var("HOME").unwrap_or("".to_string()));
         for possible_entry in walker {
             let entry = match possible_entry {
                 Ok(d) => d,
                 Err(_) => continue,
             };
-            let file = entry.path();
+            let mut file = entry.path();
             if !file.is_file() {
                 continue;
             }
 
             let relative_path = file.strip_prefix(&self.location).unwrap();
-            let target_path = home.join(relative_path);
+            let target_path = match mapper.get_mapped_action(
+                relative_path
+                    .as_os_str()
+                    .to_str()
+                    .expect("Something weird happened!"),
+            ) {
+                MapAction::None => home.join(relative_path),
+                MapAction::NewTargetDir(target_dir) => {
+                    let pb = PathBuf::from(target_dir);
+                    pb.join(relative_path)
+                }
+                MapAction::NewDest(dest) => Path::new(&dest).to_owned(),
+                MapAction::LinkAsDir => {
+                    file = file
+                        .parent()
+                        .expect("Cannot link as directory a file which has no parent!");
+
+                    home.join(
+                        relative_path
+                            .parent()
+                            .expect("Cannot link as directory a target which has no parent!"),
+                    )
+                }
+                MapAction::Skip => continue,
+            };
+
             println!(
                 "Link {} -> {}",
                 target_path.to_string_lossy(),

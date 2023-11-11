@@ -1,0 +1,240 @@
+use regex::Regex;
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+pub enum OS {
+    Linux,
+    Darwin,
+    Windows,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(untagged)]
+pub enum TargetOS {
+    String(OS),
+    Vec(Vec<OS>),
+    #[default]
+    All,
+}
+
+#[cfg(target_os = "linux")]
+const CURRENT_OS: OS = OS::Linux;
+#[cfg(target_os = "macos")]
+const CURRENT_OS: OS = OS::Darwin;
+#[cfg(target_os = "windows")]
+const CURRENT_OS: OS = OS::Windows;
+
+impl TargetOS {
+    fn is_this_os(target: &TargetOS) -> bool {
+        match target {
+            &TargetOS::All => true,
+            TargetOS::Vec(targets) => targets.into_iter().find(|t| **t == CURRENT_OS).is_some(),
+            TargetOS::String(desired) => *desired == CURRENT_OS,
+        }
+    }
+}
+
+fn default_off() -> bool {
+    false
+}
+
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct Mapping {
+    #[serde(rename = "match", with = "serde_regex")]
+    term: Regex,
+    #[serde(default = "default_off")]
+    link_as_dir: bool,
+    #[serde(default = "default_off")]
+    skip: bool,
+    #[serde(default)]
+    target_os: TargetOS,
+    #[serde(default)]
+    dest: String,
+    #[serde(default)]
+    target_dir: String,
+}
+
+impl Mapping {
+    fn new(term: &str) -> Mapping {
+        Mapping {
+            term: Regex::new(term).expect("Unable to compile regex!"),
+            link_as_dir: false,
+            skip: false,
+            target_os: TargetOS::All,
+            dest: "".to_string(),
+            target_dir: "".to_string(),
+        }
+    }
+
+    fn skip(mut self) -> Mapping {
+        self.skip = true;
+        self
+    }
+
+    fn link_as_dir(mut self) -> Mapping {
+        self.link_as_dir = true;
+        self
+    }
+
+    fn dest(mut self, new_dest: String) -> Mapping {
+        self.dest = new_dest;
+        self
+    }
+
+    fn target_dir(mut self, new_target_dir: String) -> Mapping {
+        self.target_dir = new_target_dir;
+        self
+    }
+
+    fn target_os(mut self, new_target: TargetOS) -> Mapping {
+        self.target_os = new_target;
+        self
+    }
+
+    fn does_match(&self, path: &str) -> bool {
+        if self.term.is_match(path) {
+            return TargetOS::is_this_os(&self.target_os);
+        }
+
+        false
+    }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub enum MapAction {
+    NewDest(String),
+    NewTargetDir(String),
+    LinkAsDir,
+    Skip,
+    #[default]
+    None,
+}
+
+impl From<Mapping> for MapAction {
+    fn from(mapping: Mapping) -> MapAction {
+        MapAction::from(&mapping)
+    }
+}
+
+impl From<&Mapping> for MapAction {
+    fn from(mapping: &Mapping) -> MapAction {
+        if mapping.skip {
+            return MapAction::Skip;
+        }
+
+        if mapping.dest != "" {
+            return MapAction::NewDest(shellexpand::tilde(mapping.dest.as_str()).into_owned());
+        }
+
+        if mapping.target_dir != "" {
+            return MapAction::NewTargetDir(
+                shellexpand::tilde(mapping.target_dir.as_str()).into_owned(),
+            );
+        }
+
+        if mapping.link_as_dir {
+            return MapAction::LinkAsDir;
+        }
+
+        MapAction::default()
+    }
+}
+
+pub struct Mapper {
+    mappings: Vec<Mapping>,
+}
+
+impl From<Vec<Mapping>> for Mapper {
+    fn from(mappings: Vec<Mapping>) -> Mapper {
+        Mapper { mappings }
+    }
+}
+
+impl From<Option<Vec<Mapping>>> for Mapper {
+    fn from(mappings: Option<Vec<Mapping>>) -> Mapper {
+        let configured: Vec<Mapping> = match mappings {
+            Some(configured) => configured,
+            None => vec![
+                Mapping::new("README.*").skip(),
+                Mapping::new("LICENSE").skip(),
+            ],
+        };
+
+        Mapper::from(configured)
+    }
+}
+
+impl Mapper {
+    pub fn get_mapped_action(&self, relative_path: &str) -> MapAction {
+        for mapping in &self.mappings {
+            if mapping.does_match(relative_path) {
+                return MapAction::from(mapping);
+            }
+        }
+
+        MapAction::None
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_skip_map_action_from_mapping() {
+        assert_eq!(
+            MapAction::Skip,
+            MapAction::from(Mapping::new("README.*").skip())
+        )
+    }
+
+    #[test]
+    fn test_link_as_dir_map_action_from_mapping() {
+        assert_eq!(
+            MapAction::LinkAsDir,
+            MapAction::from(Mapping::new(".*snippets.*").link_as_dir())
+        )
+    }
+
+    #[test]
+    fn test_new_dest_map_action_from_mapping() {
+        assert_eq!(
+            MapAction::NewDest("/some/new/path.txt".to_string()),
+            MapAction::from(Mapping::new("LICENSE").dest("/some/new/path.txt".to_string()))
+        )
+    }
+
+    #[test]
+    fn test_new_target_dir_map_action_from_mapping() {
+        assert_eq!(
+            MapAction::NewTargetDir("/some/new/".to_string()),
+            MapAction::from(Mapping::new("LICENSE").target_dir("/some/new/".to_string()))
+        )
+    }
+
+    #[test]
+    fn test_new_dest_map_action_expands_tilde() {
+        let action = MapAction::from(Mapping::new("LICENSE").dest("~/.LICENSE.txt".to_string()));
+
+        match action {
+            MapAction::NewDest(value) => {
+                assert_ne!(value, "~/.LICENSE.txt");
+                assert!(value.starts_with("/"));
+            }
+            _ => panic!("Reached what should be an unreachable path!"),
+        }
+    }
+
+    #[test]
+    fn test_new_target_dir_map_action_expands_tilde() {
+        let action =
+            MapAction::from(Mapping::new("LICENSE").target_dir("~/some/subfolder".to_string()));
+
+        match action {
+            MapAction::NewTargetDir(value) => {
+                assert_ne!(value, "~/some/subfolder");
+                assert!(value.starts_with("/"));
+            }
+            _ => panic!("Reached what should be an unreachable path!"),
+        }
+    }
+}
