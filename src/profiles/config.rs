@@ -1,6 +1,7 @@
 use std::{fs::File, io::BufReader, path::Path};
 
 use super::hooks::Hooks;
+use super::mapping::Mapping;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -32,6 +33,7 @@ pub struct DFMConfig {
     pub link: LinkMode,
     #[serde(default = "Vec::new")]
     pub modules: Vec<DFMConfig>,
+    pub mappings: Option<Vec<Mapping>>,
 }
 
 impl Default for DFMConfig {
@@ -44,6 +46,7 @@ impl Default for DFMConfig {
             location: "".to_string(),
             hooks: Hooks::new(),
             modules: Vec::new(),
+            mappings: None,
         }
     }
 }
