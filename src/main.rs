@@ -275,7 +275,7 @@ fn main() {
                 // significantly.
                 entry.file_name() != ".git" && entry.file_name() != "node_modules"
             });
-            let profiles_path = profiles_dir();
+            let prefix_path = cli::state::dfm_dir();
 
             for possible_entry in walker {
                 if possible_entry.is_err() {
@@ -294,7 +294,7 @@ fn main() {
                 };
 
                 // If it's not a DFM related symlink ignore it.
-                if !target.starts_with(&profiles_path) {
+                if !target.starts_with(&prefix_path) {
                     continue;
                 }
 
