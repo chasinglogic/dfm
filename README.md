@@ -368,7 +368,7 @@ dfm add ~/.bashrc ~/.vimrc ~/.vim ~/.emacs.d
 ```
 
 Then create your dotfiles repository on GitHub. Instructions for how to do that can be
-found [here](https://help.github.com/articles/create-a-repository/). Once that's done
+found [here](https://docs.github.com/en/get-started/quickstart/create-a-repo). Once that's done
 get the "clone" URL for your new repository and set it as origin for the profile:
 
 **Note:** When creating the remote repository don't choose any options such as
