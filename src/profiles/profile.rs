@@ -15,7 +15,8 @@ use crate::{
     profiles::mapping::{MapAction, Mapper},
 };
 
-use text_io::read;
+use rustyline::error::ReadlineError;
+use rustyline::DefaultEditor;
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug)]
@@ -190,8 +191,13 @@ impl Profile {
         if is_dirty && !pull_only {
             let msg = if self.config.prompt_for_commit_message && commit_msg.is_empty() {
                 self.git(["--no-pager", "diff"])?;
-                print!("Commit message: ");
-                read!("{}\n")
+                let mut rl = DefaultEditor::new().expect("Unable to instantiate readline!");
+                match rl.readline("Commit message: ") {
+                    Ok(line) => line,
+                    Err(ReadlineError::Interrupted) => return Ok(()),
+                    Err(ReadlineError::Eof) => return Ok(()),
+                    Err(err) => panic!("{}", err),
+                }
             } else if !commit_msg.is_empty() {
                 commit_msg.to_string()
             } else {
