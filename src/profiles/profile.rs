@@ -302,7 +302,16 @@ impl Profile {
                 }
             }
 
-            os::unix::fs::symlink(file, target_path)?;
+            os::unix::fs::symlink(file, target_path).map_err(|err| {
+                io::Error::new(
+                    err.kind(),
+                    format!(
+                        "{}: {}",
+                        file.to_str().expect("file could not be made a string?"),
+                        err
+                    ),
+                )
+            })?;
         }
 
         self.run_hook("after_link")?;

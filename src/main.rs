@@ -186,7 +186,10 @@ fn main() {
             } else {
                 force_available(current_profile)
             };
-            new_profile.link(overwrite).expect("Error linking profile!");
+            if let Err(e) = new_profile.link(overwrite) {
+                eprintln!("Error linking profile: {}", e);
+                process::exit(10);
+            };
             state.current_profile = new_profile.name();
         }
         Commands::Sync { message } => {
