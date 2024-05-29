@@ -65,29 +65,10 @@ impl Mapping {
         }
     }
 
-    fn skip(mut self) -> Mapping {
-        self.skip = true;
-        self
-    }
-
-    fn link_as_dir(mut self) -> Mapping {
-        self.link_as_dir = true;
-        self
-    }
-
-    fn dest(mut self, new_dest: String) -> Mapping {
-        self.dest = new_dest;
-        self
-    }
-
-    fn target_dir(mut self, new_target_dir: String) -> Mapping {
-        self.target_dir = new_target_dir;
-        self
-    }
-
-    fn target_os(mut self, new_target: TargetOS) -> Mapping {
-        self.target_os = new_target;
-        self
+    fn skip(term: &str) -> Mapping {
+        let mut mapping = Mapping::new(term);
+        mapping.skip = true;
+        mapping
     }
 
     fn does_match(&self, path: &str) -> bool {
@@ -153,10 +134,7 @@ impl From<Option<Vec<Mapping>>> for Mapper {
     fn from(mappings: Option<Vec<Mapping>>) -> Mapper {
         let configured: Vec<Mapping> = match mappings {
             Some(configured) => configured,
-            None => vec![
-                Mapping::new("README.*").skip(),
-                Mapping::new("LICENSE").skip(),
-            ],
+            None => vec![Mapping::skip("README.*"), Mapping::skip("LICENSE")],
         };
 
         Mapper::from(configured)
@@ -181,39 +159,45 @@ mod test {
 
     #[test]
     fn test_skip_map_action_from_mapping() {
-        assert_eq!(
-            MapAction::Skip,
-            MapAction::from(Mapping::new("README.*").skip())
-        )
+        assert_eq!(MapAction::Skip, MapAction::from(Mapping::skip("README.*")))
     }
 
     #[test]
     fn test_link_as_dir_map_action_from_mapping() {
-        assert_eq!(
-            MapAction::LinkAsDir,
-            MapAction::from(Mapping::new(".*snippets.*").link_as_dir())
-        )
+        let config = r#"match: .*snippets.*
+link_as_dir: true"#;
+        let mapping: Mapping = serde_yaml::from_str(config).expect("invalid yaml config in test!");
+        assert_eq!(MapAction::LinkAsDir, MapAction::from(mapping))
     }
 
     #[test]
     fn test_new_dest_map_action_from_mapping() {
+        let config = r#"match: LICENSE
+dest: /some/new/path.txt"#;
+        let mapping: Mapping = serde_yaml::from_str(config).expect("invalid yaml config in test!");
         assert_eq!(
             MapAction::NewDest("/some/new/path.txt".to_string()),
-            MapAction::from(Mapping::new("LICENSE").dest("/some/new/path.txt".to_string()))
+            MapAction::from(mapping)
         )
     }
 
     #[test]
     fn test_new_target_dir_map_action_from_mapping() {
+        let config = r#"match: LICENSE
+target_dir: /some/new/"#;
+        let mapping: Mapping = serde_yaml::from_str(config).expect("invalid yaml config in test!");
         assert_eq!(
             MapAction::NewTargetDir("/some/new/".to_string()),
-            MapAction::from(Mapping::new("LICENSE").target_dir("/some/new/".to_string()))
+            MapAction::from(mapping)
         )
     }
 
     #[test]
     fn test_new_dest_map_action_expands_tilde() {
-        let action = MapAction::from(Mapping::new("LICENSE").dest("~/.LICENSE.txt".to_string()));
+        let config = r#"match: LICENSE
+dest: ~/.LICENSE.txt"#;
+        let mapping: Mapping = serde_yaml::from_str(config).expect("invalid yaml config in test!");
+        let action = MapAction::from(mapping);
 
         match action {
             MapAction::NewDest(value) => {
@@ -226,8 +210,10 @@ mod test {
 
     #[test]
     fn test_new_target_dir_map_action_expands_tilde() {
-        let action =
-            MapAction::from(Mapping::new("LICENSE").target_dir("~/some/subfolder".to_string()));
+        let config = r#"match: LICENSE
+target_dir: ~/some/subfolder"#;
+        let mapping: Mapping = serde_yaml::from_str(config).expect("invalid yaml config in test!");
+        let action = MapAction::from(mapping);
 
         match action {
             MapAction::NewTargetDir(value) => {
