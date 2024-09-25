@@ -215,8 +215,12 @@ impl Profile {
 
         if is_dirty && has_origin && !pull_only {
             self.git(["push", "origin", &branch_name])?;
-            self.run_hook("after_sync")?;
+            self.run_hook("after_sync_dirty")?;
+        } else {
+            self.run_hook("after_sync_clean")?;
         }
+
+        self.run_hook("after_sync")?;
 
         for profile in &self.modules {
             profile.sync()?;
