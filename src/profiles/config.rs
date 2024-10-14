@@ -25,6 +25,9 @@ pub struct DFMConfig {
     #[serde(default = "Hooks::new")]
     pub hooks: Hooks,
 
+    #[serde(default)]
+    pub clone_flags: Vec<String>,
+
     #[serde(default = "default_off")]
     pub prompt_for_commit_message: bool,
     #[serde(default = "default_off")]
@@ -47,6 +50,7 @@ impl Default for DFMConfig {
             hooks: Hooks::new(),
             modules: Vec::new(),
             mappings: None,
+            clone_flags: Vec::new(),
         }
     }
 }
