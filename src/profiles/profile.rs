@@ -10,11 +10,9 @@ use std::{
 };
 
 use super::config::{DFMConfig, LinkMode};
-use crate::{
-    debug,
-    profiles::mapping::{MapAction, Mapper},
-};
+use crate::profiles::mapping::{MapAction, Mapper};
 
+use log::debug;
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use walkdir::{DirEntry, WalkDir};
@@ -95,7 +93,7 @@ impl Profile {
 
         for module in modules.iter() {
             if !module.get_location().exists() {
-                module.download();
+                module.download().expect("unable to clone module");
             }
         }
 
@@ -113,17 +111,32 @@ impl Profile {
         Profile::from_config(config.clone())
     }
 
-    fn download(&self) {
+    fn download(&self) -> Result<(), io::Error> {
+        let mut args = vec!["clone"];
+        if self.config.clone_flags.len() > 0 {
+            args.extend(self.config.clone_flags.iter().map(|s| s.as_str()));
+        }
+
+        args.push(&self.config.repo);
+
+        let location = self.get_location();
+        args.push(location.to_str().expect("Unexpected error!"));
+
+        debug!("running: git {:?}", args);
+
         Command::new("git")
-            .args([
-                "clone",
-                &self.config.repo,
-                self.get_location().to_str().expect("Unexpected error!"),
-            ])
+            .args(args)
             .spawn()
             .expect("Unable to start git clone!")
             .wait()
-            .unwrap_or_else(|_| panic!("Unable to clone module! {}", self.config.repo));
+            .map_err(|err| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Unable to clone module! {} {}", self.config.repo, err),
+                )
+            })?;
+
+        self.run_hook("after_sync")
     }
 
     pub fn name(&self) -> String {
@@ -285,7 +298,7 @@ impl Profile {
                 MapAction::Skip => continue,
             };
 
-            println!(
+            debug!(
                 "Link {} -> {}",
                 target_path.to_string_lossy(),
                 file.to_string_lossy()

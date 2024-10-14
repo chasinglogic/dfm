@@ -1,6 +1,4 @@
 mod cli;
-#[macro_use]
-mod macros;
 mod profiles;
 
 use crate::cli::state::{force_available, profiles_dir};
@@ -149,6 +147,8 @@ enum Commands {
 }
 
 fn main() {
+    env_logger::builder().format_timestamp(None).init();
+
     let args = Cli::parse();
     let mut state = cli::state::load_or_default();
 
