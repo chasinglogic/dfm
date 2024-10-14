@@ -272,35 +272,31 @@ cd dfm
 ## Usage
 
 ```text
-Usage:
-    dfm [options] <command> [<args>...]
-    dfm help
-    dfm sync
-    dfm link <profile>
+A dotfile manager written for pair programmers and lazy people.
 
-Dotfile management written for pair programmers. Examples on getting
-started with dfm are avialable at https://github.com/chasinglogic/dfm
+Examples on getting started with dfm are available at https://github.com/chasinglogic/dfm
 
-Options:
-    -v, --verbose  If provided print more logging info
-    --debug        If provided print debug level logging info
-    -h, --help     Print this help information
+Usage: dfm <COMMAND>
 
 Commands:
-    help           Print usage information about dfm commands
-    sync (s)       Sync your dotfiles
-    add (a)        Add the file to the current dotfile profile
-    clean (x)      Clean dead symlinks
-    clone (c)      Use git clone to download an existing profile
-    git (g)        Run the given git command on the current profile
-    init (i)       Create a new profile
-    link (l)       Create links for a profile
-    list (ls)      List available profiles
-    remove (rm)    Remove a profile
-    run-hook (rh)  Run dfm hooks without using normal commands
-    where (w)      Prints the location of the current dotfile profile
+  where            Prints the location of the current dotfile profile [aliases: w]
+  status           Print the git status of the current dotfile profile [aliases: st]
+  git              Run the given git command on the current profile [aliases: g]
+  list             List available dotfile profiles on this system [aliases: ls]
+  link             Create links for a profile [aliases: l]
+  init             Create a new profile [aliases: i]
+  remove           Remove a profile [aliases: rm]
+  run-hook         Run dfm hooks without using normal commands [aliases: rh]
+  sync             Sync your dotfiles [aliases: s]
+  clone            Use git clone to download an existing profile
+  clean            Clean dead symlinks. Will ignore symlinks unrelated to DFM.
+  add              Add files to the current dotfile profile
+  gen-completions  Generate shell completions and print them to stdout
+  help             Print this message or the help of the given subcommand(s)
 
-See 'dfm help <command>' for more information on a specific command.
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
 ## Quick start
@@ -470,6 +466,7 @@ accordingly. Including pulling down any modules it defines.
 - [link](#link)
 - [pull\_only](#pull\_only)
 - [mappings](#mappings)
+- [clone\_flags](#clone\_flags)
 
 ##### repo
 
@@ -517,6 +514,20 @@ community configuration repositories.
 A list of file mappings as described below in [Mappings](#mappings). Modules do
 not inherit parent mappings, they do however inherit the default mappings as
 described in [Skips Relevant Files](#skips-relevant-files)
+
+##### clone\_flags
+
+A list of strings that will be added to the `git clone` command when cloning the
+module. Useful if the module is using git submodules or otherwise needs
+specialised cloning behavior. An example would be:
+
+```yaml
+- repository: https://github.com/akinomyoga/ble.sh
+  clone_flags: ["--recursive", "--depth=1", "--shallow-submodules"]
+  hooks:
+    after_sync:
+      - make -C ble.sh install PREFIX=~/.local
+```
 
 ### Mappings
 
