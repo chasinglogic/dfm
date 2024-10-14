@@ -17,8 +17,8 @@ use walkdir::WalkDir;
 #[derive(Debug, Parser)]
 #[command(
     name = "dfm",
-    about = "A dotfile manager for pair programmers and lazy people.", 
-    long_about = "Dotfile management written for pair programmers. 
+    about = "A dotfile manager written for pair programmers and lazy people. 
+
 Examples on getting started with dfm are available at https://github.com/chasinglogic/dfm",
     version = crate_version!(),
 )]
