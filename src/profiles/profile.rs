@@ -49,7 +49,10 @@ fn remove_if_able(path: &Path, force_remove: bool) -> Option<io::Error> {
     if path.exists() && !path.is_symlink() && !force_remove {
         return Some(io::Error::new(
             io::ErrorKind::AlreadyExists,
-            "file exists and is not a symlink, cowardly refusing to remove.",
+            format!(
+                "{}: file exists and is not a symlink, cowardly refusing to remove.",
+                path.to_string_lossy()
+            ),
         ));
     }
 
