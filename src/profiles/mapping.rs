@@ -132,10 +132,19 @@ impl From<Vec<Mapping>> for Mapper {
 
 impl From<Option<Vec<Mapping>>> for Mapper {
     fn from(mappings: Option<Vec<Mapping>>) -> Mapper {
-        let configured: Vec<Mapping> = match mappings {
+        let mut configured: Vec<Mapping> = match mappings {
             Some(configured) => configured,
-            None => vec![Mapping::skip("README.*"), Mapping::skip("LICENSE")],
+            None => vec![],
         };
+
+        let default_mappings = vec![
+            Mapping::skip("README.*"),
+            Mapping::skip("LICENSE"),
+            Mapping::skip(".gitignore"),
+            Mapping::skip(".git"),
+            Mapping::skip(".dfm.yml"),
+        ];
+        configured.extend(default_mappings);
 
         Mapper::from(configured)
     }

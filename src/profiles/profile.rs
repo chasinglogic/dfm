@@ -40,7 +40,7 @@ type GitResult = Result<ExitStatus, io::Error>;
 fn is_dotfile(entry: &DirEntry) -> bool {
     let filename = entry.file_name().to_str().unwrap_or("");
     // .git files and .dfm.yml are not dotfiles so should be ignored.
-    let is_sys_file = filename == ".dfm.yml" || filename == ".git" || filename == "README.md";
+    let is_sys_file = filename == ".dfm.yml" || filename == ".git";
     !is_sys_file
 }
 
