@@ -27,7 +27,7 @@ impl TargetOS {
     fn is_this_os(target: &TargetOS) -> bool {
         match target {
             &TargetOS::All => true,
-            TargetOS::Vec(targets) => targets.into_iter().find(|t| **t == CURRENT_OS).is_some(),
+            TargetOS::Vec(targets) => targets.iter().any(|t| *t == CURRENT_OS),
             TargetOS::String(desired) => *desired == CURRENT_OS,
         }
     }
@@ -102,11 +102,11 @@ impl From<&Mapping> for MapAction {
             return MapAction::Skip;
         }
 
-        if mapping.dest != "" {
+        if !mapping.dest.is_empty() {
             return MapAction::NewDest(shellexpand::tilde(mapping.dest.as_str()).into_owned());
         }
 
-        if mapping.target_dir != "" {
+        if !mapping.target_dir.is_empty() {
             return MapAction::NewTargetDir(
                 shellexpand::tilde(mapping.target_dir.as_str()).into_owned(),
             );
@@ -132,10 +132,7 @@ impl From<Vec<Mapping>> for Mapper {
 
 impl From<Option<Vec<Mapping>>> for Mapper {
     fn from(mappings: Option<Vec<Mapping>>) -> Mapper {
-        let mut configured: Vec<Mapping> = match mappings {
-            Some(configured) => configured,
-            None => vec![],
-        };
+        let mut configured = mappings.unwrap_or_default();
 
         let default_mappings = vec![
             Mapping::skip("README.*"),
