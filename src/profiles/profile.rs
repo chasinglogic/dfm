@@ -256,7 +256,7 @@ impl Profile {
 
         self.run_hook("before_link")?;
 
-        let walker = WalkDir::new(&self.location)
+        let mut walker = WalkDir::new(&self.location)
             .min_depth(1)
             .into_iter()
             .filter_entry(is_dotfile);
@@ -264,47 +264,44 @@ impl Profile {
         let mapper = Mapper::from(self.config.mappings.clone());
 
         let home = PathBuf::from(env::var("HOME").unwrap_or("".to_string()));
-        for possible_entry in walker {
-            let entry = match possible_entry {
-                Ok(d) => d,
-                Err(_) => continue,
+        loop {
+            let entry = match walker.next() {
+                None => break,
+                Some(Ok(e)) => e,
+                Some(Err(_)) => continue,
             };
-            let mut file = entry.path();
-            if !file.is_file() {
-                continue;
-            }
 
-            let relative_path = file.strip_prefix(&self.location).unwrap();
-            let target_path = match mapper.get_mapped_action(
+            let full_path = entry.path();
+            let relative_path = full_path.strip_prefix(&self.location).unwrap();
+            let action = mapper.get_mapped_action(
                 relative_path
                     .as_os_str()
                     .to_str()
                     .expect("Something weird happened!"),
-            ) {
+            );
+
+            let target_path = match action {
+                MapAction::Skip => continue,
+                MapAction::NewDest(ref dest) => Path::new(&dest).to_owned(),
                 MapAction::None => home.join(relative_path),
-                MapAction::NewTargetDir(target_dir) => {
+                MapAction::NewTargetDir(ref target_dir) => {
                     let pb = PathBuf::from(target_dir);
                     pb.join(relative_path)
                 }
-                MapAction::NewDest(dest) => Path::new(&dest).to_owned(),
                 MapAction::LinkAsDir => {
-                    file = file
-                        .parent()
-                        .expect("Cannot link as directory a file which has no parent!");
-
-                    home.join(
-                        relative_path
-                            .parent()
-                            .expect("Cannot link as directory a target which has no parent!"),
-                    )
+                    walker.skip_current_dir();
+                    home.join(relative_path)
                 }
-                MapAction::Skip => continue,
             };
+
+            if full_path.is_dir() && action != MapAction::LinkAsDir {
+                continue;
+            }
 
             debug!(
                 "Link {} -> {}",
                 target_path.to_string_lossy(),
-                file.to_string_lossy()
+                full_path.to_string_lossy()
             );
 
             if let Some(err) = remove_if_able(&target_path, overwrite_existing_files) {
@@ -322,12 +319,14 @@ impl Profile {
                 }
             }
 
-            os::unix::fs::symlink(file, target_path).map_err(|err| {
+            os::unix::fs::symlink(full_path, target_path).map_err(|err| {
                 io::Error::new(
                     err.kind(),
                     format!(
                         "{}: {}",
-                        file.to_str().expect("file could not be made a string?"),
+                        full_path
+                            .to_str()
+                            .expect("file could not be made a string?"),
                         err
                     ),
                 )
