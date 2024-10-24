@@ -116,7 +116,7 @@ impl Profile {
 
     fn download(&self) -> Result<(), io::Error> {
         let mut args = vec!["clone"];
-        if self.config.clone_flags.len() > 0 {
+        if !self.config.clone_flags.is_empty() {
             args.extend(self.config.clone_flags.iter().map(|s| s.as_str()));
         }
 
