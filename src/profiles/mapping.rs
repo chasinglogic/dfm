@@ -137,8 +137,8 @@ impl From<Option<Vec<Mapping>>> for Mapper {
         let default_mappings = vec![
             Mapping::skip("README.*"),
             Mapping::skip("LICENSE"),
-            Mapping::skip(".gitignore"),
-            Mapping::skip(".git"),
+            Mapping::skip(".gitignore$"),
+            Mapping::skip(".git/?$"),
             Mapping::skip(".dfm.yml"),
         ];
         configured.extend(default_mappings);
