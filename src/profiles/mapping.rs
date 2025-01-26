@@ -135,11 +135,11 @@ impl From<Option<Vec<Mapping>>> for Mapper {
         let mut configured = mappings.unwrap_or_default();
 
         let default_mappings = vec![
-            Mapping::skip("README.*"),
-            Mapping::skip("LICENSE"),
-            Mapping::skip(".gitignore$"),
-            Mapping::skip(".git/?$"),
-            Mapping::skip(".dfm.yml"),
+            Mapping::skip("^README.[a-z]+$"),
+            Mapping::skip("^LICENSE$"),
+            Mapping::skip("^\\.gitignore$"),
+            Mapping::skip("^\\.git$"),
+            Mapping::skip("^\\.dfm\\.yml"),
         ];
         configured.extend(default_mappings);
 
