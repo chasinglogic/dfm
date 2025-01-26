@@ -280,8 +280,18 @@ impl Profile {
                     .expect("Something weird happened!"),
             );
 
+            if full_path.is_dir() && action != MapAction::LinkAsDir {
+                continue;
+            }
+
             let target_path = match action {
-                MapAction::Skip => continue,
+                MapAction::Skip => {
+                    debug!(
+                        "Skipping {} because it matched a skip mapping",
+                        relative_path.as_os_str().to_str().unwrap_or_default()
+                    );
+                    continue;
+                }
                 MapAction::NewDest(ref dest) => Path::new(&dest).to_owned(),
                 MapAction::None => home.join(relative_path),
                 MapAction::NewTargetDir(ref target_dir) => {
@@ -293,10 +303,6 @@ impl Profile {
                     home.join(relative_path)
                 }
             };
-
-            if full_path.is_dir() && action != MapAction::LinkAsDir {
-                continue;
-            }
 
             debug!(
                 "Link {} -> {}",
