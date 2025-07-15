@@ -90,7 +90,7 @@ impl DFMConfig {
             let name = self
                 .repo
                 .split('/')
-                .last()
+                .next_back()
                 .expect("A module must define a repository!")
                 .replace(".git", "");
 

@@ -13,8 +13,8 @@ use super::config::{DFMConfig, LinkMode};
 use crate::profiles::mapping::{MapAction, Mapper};
 
 use log::debug;
-use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
+use rustyline::error::ReadlineError;
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug)]
@@ -312,7 +312,7 @@ impl Profile {
 
             if let Some(err) = remove_if_able(&target_path, overwrite_existing_files) {
                 if err.kind() == io::ErrorKind::AlreadyExists {
-                    eprintln!("{}", err);
+                    eprintln!("{err}");
                     continue;
                 }
 
