@@ -1,3 +1,4 @@
+use log::debug;
 use regex::Regex;
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
@@ -72,11 +73,14 @@ impl Mapping {
     }
 
     fn does_match(&self, path: &str) -> bool {
-        if self.term.is_match(path) {
-            return TargetOS::is_this_os(&self.target_os);
-        }
+        let is_match = self.term.is_match(path);
+        debug!("{} matches {:?} = {}", path, self.term, is_match);
 
-        false
+        if is_match {
+            TargetOS::is_this_os(&self.target_os)
+        } else {
+            false
+        }
     }
 }
 
@@ -166,6 +170,14 @@ mod test {
     #[test]
     fn test_skip_map_action_from_mapping() {
         assert_eq!(MapAction::Skip, MapAction::from(Mapping::skip("README.*")))
+    }
+
+    #[test]
+    fn test_matches_mapping() {
+        let config = r#"match: .config/ghostty/macos-config
+skip: true"#;
+        let mapping: Mapping = serde_yaml::from_str(config).expect("invalid yaml config in test!");
+        assert!(mapping.does_match(".config/ghostty/macos-config"))
     }
 
     #[test]
