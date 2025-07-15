@@ -9,8 +9,8 @@ use std::{
     process::{self, Command},
 };
 
-use clap::{command, crate_version, CommandFactory, Parser, Subcommand, ValueEnum};
-use clap_complete::{generate, Shell};
+use clap::{CommandFactory, Parser, Subcommand, ValueEnum, command, crate_version};
+use clap_complete::{Shell, generate};
 use profiles::Profile;
 use walkdir::WalkDir;
 
@@ -187,7 +187,7 @@ fn main() {
                 force_available(current_profile)
             };
             if let Err(e) = new_profile.link(overwrite) {
-                eprintln!("Error linking profile: {}", e);
+                eprintln!("Error linking profile: {e}");
                 process::exit(10);
             };
             state.current_profile = new_profile.name();
@@ -226,7 +226,7 @@ fn main() {
             } else {
                 url.clone()
                     .split('/')
-                    .last()
+                    .next_back()
                     .expect("Unable to parse url!")
                     .to_string()
             };
@@ -264,7 +264,7 @@ fn main() {
             }
 
             fs::remove_dir_all(&path).expect("Unable to remove profile directory!");
-            println!("Profile {} successfully removed.", profile_name);
+            println!("Profile {profile_name} successfully removed.");
         }
         Commands::Status => force_available(current_profile)
             .status()
@@ -302,12 +302,12 @@ fn main() {
                 }
 
                 let printable_path = path.to_string_lossy();
-                println!("Checking {}", printable_path);
+                println!("Checking {printable_path}");
                 let file_exists = target.exists();
                 if !file_exists {
-                    println!("Link {} is dead removing.", printable_path);
+                    println!("Link {printable_path} is dead removing.");
                     fs::remove_file(path)
-                        .unwrap_or_else(|_| panic!("Unable to remove file: {}", printable_path));
+                        .unwrap_or_else(|_| panic!("Unable to remove file: {printable_path}"));
                 }
             }
         }
@@ -330,7 +330,10 @@ fn main() {
                 let relative_path = match path.strip_prefix(&home) {
                     Ok(p) => p,
                     Err(_) => {
-                        eprintln!("File {} is not in your home directory! If you have a mapping please add it manually.", &file);
+                        eprintln!(
+                            "File {} is not in your home directory! If you have a mapping please add it manually.",
+                            &file
+                        );
                         process::exit(1);
                     }
                 };
@@ -354,7 +357,7 @@ fn main() {
         }
         Commands::GenCompletions { shell } => match Shell::from_str(&shell, true) {
             Ok(generator) => {
-                eprintln!("Generating completion file for {}...", generator);
+                eprintln!("Generating completion file for {generator}...");
                 let cmd = Cli::command();
                 generate(
                     generator,
@@ -364,7 +367,7 @@ fn main() {
                 );
             }
             Err(failed) => {
-                eprintln!("{} is not a known shell.", failed);
+                eprintln!("{failed} is not a known shell.");
                 process::exit(1);
             }
         },

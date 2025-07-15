@@ -40,7 +40,7 @@ impl TargetOS {
     fn is_this_os(&self) -> bool {
         match self {
             TargetOS::All => true,
-            TargetOS::Vec(targets) => targets.iter().any(|t| *t == CURRENT_OS),
+            TargetOS::Vec(targets) => targets.contains(&CURRENT_OS),
             TargetOS::String(desired) => *desired == CURRENT_OS,
         }
     }
@@ -113,8 +113,8 @@ pub enum MapAction {
 impl Display for MapAction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let repr = match self {
-            Self::NewDest(value) => format!("MapAction::NewDest({})", value),
-            Self::NewTargetDir(value) => format!("MapAction::NewTargetDir({})", value),
+            Self::NewDest(value) => format!("MapAction::NewDest({value})"),
+            Self::NewTargetDir(value) => format!("MapAction::NewTargetDir({value})"),
             Self::LinkAsDir => "MapAction::LinkAsDir".to_string(),
             Self::Skip => "MapAction::Skip".to_string(),
             Self::None => "MapAction::None".to_string(),
