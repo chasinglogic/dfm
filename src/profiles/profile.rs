@@ -255,7 +255,9 @@ impl Profile {
 
         let mapper = Mapper::from(self.config.mappings.clone());
 
-        let home = PathBuf::from(env::var("HOME").unwrap_or("".to_string()));
+        let home = PathBuf::from(
+            env::var("HOME").expect("Unable to determine home directory from $HOME!"),
+        );
         loop {
             let entry = match walker.next() {
                 None => break,
