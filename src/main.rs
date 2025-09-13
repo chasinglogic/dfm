@@ -1,5 +1,6 @@
 mod cli;
 mod profiles;
+mod utils;
 
 use crate::cli::state::{force_available, profiles_dir};
 
@@ -210,7 +211,7 @@ fn main() {
             }
 
             fs::create_dir_all(&path).expect("Unable to create profile directory!");
-            let new_profile = Profile::load(&path);
+            let new_profile = Profile::load(path);
             new_profile.init().expect("Error initialising profile!");
         }
         Commands::Clone {
@@ -243,7 +244,7 @@ fn main() {
 
             work_dir.push(&profile_name);
 
-            let profile = Profile::load(&work_dir);
+            let profile = Profile::load(work_dir);
             state.current_profile = profile.name();
 
             if link {

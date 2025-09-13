@@ -6,7 +6,6 @@ use std::{
     os,
     path::{Path, PathBuf},
     process::{Command, ExitStatus},
-    str::FromStr,
 };
 
 use super::config::{DFMConfig, LinkMode};
@@ -16,24 +15,6 @@ use log::debug;
 use rustyline::DefaultEditor;
 use rustyline::error::ReadlineError;
 use walkdir::{DirEntry, WalkDir};
-
-#[derive(Debug)]
-pub struct Profile {
-    config: DFMConfig,
-
-    location: PathBuf,
-    modules: Vec<Profile>,
-}
-
-impl Default for Profile {
-    fn default() -> Self {
-        Profile {
-            config: DFMConfig::default(),
-            location: PathBuf::new(),
-            modules: Vec::new(),
-        }
-    }
-}
 
 type GitResult = Result<ExitStatus, io::Error>;
 
@@ -67,23 +48,35 @@ fn remove_if_able(path: &Path, force_remove: bool) -> Option<io::Error> {
     }
 }
 
+#[derive(Debug)]
+pub struct Profile {
+    config: DFMConfig,
+
+    location: PathBuf,
+    modules: Vec<Profile>,
+}
+
+impl Default for Profile {
+    fn default() -> Self {
+        Profile {
+            config: DFMConfig::default(),
+            location: PathBuf::new(),
+            modules: Vec::new(),
+        }
+    }
+}
+
 impl Profile {
-    pub fn load(directory: &Path) -> Profile {
-        let path = if directory.starts_with("~") {
-            let expanded = shellexpand::tilde(directory.to_str().expect("Invalid directory!"));
-            PathBuf::from_str(&expanded).expect("Invalid profile directory!")
-        } else {
-            directory.to_path_buf().clone()
-        };
-        let dotdfm = path.join(".dfm.yml");
+    pub fn load(directory: PathBuf) -> Profile {
+        let dotdfm = directory.join(".dfm.yml");
         if dotdfm.exists() {
             let config = DFMConfig::load(&dotdfm);
             return Profile::from_config(config);
         }
 
         let mut profile = Profile::default();
-        profile.config.location = path.to_string_lossy().to_string();
-        profile.location = path;
+        profile.config.location = directory.to_string_lossy().to_string();
+        profile.location = directory;
         profile
     }
 
@@ -100,8 +93,7 @@ impl Profile {
             }
         }
 
-        let location = PathBuf::from_str(&config.location)
-            .expect("Unable to convert config location into a path!");
+        let location = config.get_location();
 
         Profile {
             config,
@@ -292,12 +284,9 @@ impl Profile {
                     );
                     continue;
                 }
-                MapAction::NewDest(ref dest) => Path::new(&dest).to_owned(),
+                MapAction::NewDest(dest) => dest,
                 MapAction::None => home.join(relative_path),
-                MapAction::NewTargetDir(ref target_dir) => {
-                    let pb = PathBuf::from(target_dir);
-                    pb.join(relative_path)
-                }
+                MapAction::NewTargetDir(target_dir) => target_dir.join(relative_path),
                 MapAction::LinkAsDir => {
                     walker.skip_current_dir();
                     home.join(relative_path)
@@ -319,10 +308,10 @@ impl Profile {
                 return Err(err);
             }
 
-            if let Some(path) = target_path.parent() {
-                if !path.exists() {
-                    fs::create_dir_all(path)?;
-                }
+            if let Some(path) = target_path.parent()
+                && !path.exists()
+            {
+                fs::create_dir_all(path)?;
             }
 
             os::unix::fs::symlink(full_path, target_path).map_err(|err| {

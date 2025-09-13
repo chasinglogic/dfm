@@ -1,4 +1,5 @@
-use std::{fs::File, io::BufReader, path::Path};
+use crate::utils;
+use std::{fs::File, io::BufReader, path::Path, path::PathBuf};
 
 use super::hooks::Hooks;
 use super::mapping::Mapping;
@@ -26,6 +27,9 @@ pub struct DFMConfig {
     pub hooks: Hooks,
 
     #[serde(default)]
+    pub root_dir: Option<String>,
+
+    #[serde(default)]
     pub clone_flags: Vec<String>,
 
     #[serde(default = "default_off")]
@@ -47,6 +51,7 @@ impl Default for DFMConfig {
             link: LinkMode::default(),
             repo: "".to_string(),
             location: "".to_string(),
+            root_dir: None,
             hooks: Hooks::new(),
             modules: Vec::new(),
             mappings: None,
@@ -81,11 +86,17 @@ impl DFMConfig {
         config
     }
 
-    fn expand_module(&mut self) {
-        if self.location.starts_with('~') {
-            self.location = shellexpand::tilde(&self.location).to_string();
+    pub fn get_location(&self) -> PathBuf {
+        let mut location = utils::expand_path(&self.location);
+
+        if let Some(ref new_root) = self.root_dir {
+            location.push(new_root);
         }
 
+        location
+    }
+
+    fn expand_module(&mut self) {
         if self.location.is_empty() {
             let name = self
                 .repo
@@ -98,6 +109,8 @@ impl DFMConfig {
             module_dir.push(name);
 
             self.location = module_dir.to_string_lossy().to_string();
+        } else {
+            self.location = shellexpand::tilde(&self.location).to_string();
         }
     }
 }
