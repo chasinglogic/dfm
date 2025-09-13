@@ -31,10 +31,10 @@ impl State {
     }
 
     pub fn save(&self, filepath: &Path) -> Result<(), io::Error> {
-        if let Some(parent) = filepath.parent() {
-            if !parent.exists() {
-                fs::create_dir_all(parent).expect("Unable to create dfm directory!");
-            }
+        if let Some(parent) = filepath.parent()
+            && !parent.exists()
+        {
+            fs::create_dir_all(parent).expect("Unable to create dfm directory!");
         }
 
         let file_handle = File::create(filepath)?;
@@ -83,7 +83,7 @@ pub fn modules_dir() -> PathBuf {
 pub fn load_profile(name: &str) -> Profile {
     let mut path = profiles_dir();
     path.push(name);
-    Profile::load(&path)
+    Profile::load(path)
 }
 
 pub fn force_available(profile: Option<Profile>) -> Profile {

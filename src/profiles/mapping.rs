@@ -1,7 +1,9 @@
-use std::fmt::Display;
+use std::{fmt::Display, path::PathBuf};
 
 use log::debug;
 use regex::Regex;
+
+use crate::utils;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub enum OS {
@@ -102,8 +104,8 @@ impl Mapping {
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub enum MapAction {
-    NewDest(String),
-    NewTargetDir(String),
+    NewDest(PathBuf),
+    NewTargetDir(PathBuf),
     LinkAsDir,
     Skip,
     #[default]
@@ -113,8 +115,8 @@ pub enum MapAction {
 impl Display for MapAction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let repr = match self {
-            Self::NewDest(value) => format!("MapAction::NewDest({value})"),
-            Self::NewTargetDir(value) => format!("MapAction::NewTargetDir({value})"),
+            Self::NewDest(value) => format!("MapAction::NewDest({})", value.display()),
+            Self::NewTargetDir(value) => format!("MapAction::NewTargetDir({})", value.display()),
             Self::LinkAsDir => "MapAction::LinkAsDir".to_string(),
             Self::Skip => "MapAction::Skip".to_string(),
             Self::None => "MapAction::None".to_string(),
@@ -141,7 +143,7 @@ fn check_if_skip_action(mapping: &Mapping) -> Option<MapAction> {
 fn check_if_dest_action(mapping: &Mapping) -> Option<MapAction> {
     match mapping.dest {
         Some(ref dest) if mapping.target_os.is_this_os() => {
-            Some(MapAction::NewDest(shellexpand::tilde(dest).into_owned()))
+            Some(MapAction::NewDest(utils::expand_path(dest)))
         }
         Some(_) => Some(MapAction::None),
         None => None,
@@ -150,9 +152,9 @@ fn check_if_dest_action(mapping: &Mapping) -> Option<MapAction> {
 
 fn check_if_target_dir_action(mapping: &Mapping) -> Option<MapAction> {
     match mapping.target_dir {
-        Some(ref target_dir) if mapping.target_os.is_this_os() => Some(MapAction::NewTargetDir(
-            shellexpand::tilde(target_dir).into_owned(),
-        )),
+        Some(ref target_dir) if mapping.target_os.is_this_os() => {
+            Some(MapAction::NewTargetDir(utils::expand_path(target_dir)))
+        }
         Some(_) => Some(MapAction::None),
         None => None,
     }
@@ -307,7 +309,7 @@ link_as_dir: true"#;
 dest: /some/new/path.txt"#;
         let mapping: Mapping = serde_yaml::from_str(config).expect("invalid yaml config in test!");
         assert_eq!(
-            MapAction::NewDest("/some/new/path.txt".to_string()),
+            MapAction::NewDest("/some/new/path.txt".into()),
             MapAction::from(mapping)
         )
     }
@@ -318,7 +320,7 @@ dest: /some/new/path.txt"#;
 target_dir: /some/new/"#;
         let mapping: Mapping = serde_yaml::from_str(config).expect("invalid yaml config in test!");
         assert_eq!(
-            MapAction::NewTargetDir("/some/new/".to_string()),
+            MapAction::NewTargetDir("/some/new/".into()),
             MapAction::from(mapping)
         )
     }
@@ -332,7 +334,7 @@ dest: ~/.LICENSE.txt"#;
 
         match action {
             MapAction::NewDest(value) => {
-                assert_ne!(value, "~/.LICENSE.txt");
+                assert_ne!(value, PathBuf::from("~/.LICENSE.txt"));
                 assert!(value.starts_with("/"));
             }
             _ => panic!("Reached what should be an unreachable path!"),
@@ -348,7 +350,7 @@ target_dir: ~/some/subfolder"#;
 
         match action {
             MapAction::NewTargetDir(value) => {
-                assert_ne!(value, "~/some/subfolder");
+                assert_ne!(value, PathBuf::from("~/some/subfolder"));
                 assert!(value.starts_with("/"));
             }
             _ => panic!("Reached what should be an unreachable path!"),
