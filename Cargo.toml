@@ -2,7 +2,7 @@
 name = "dfm"
 description = "A dotfile manager for lazy people and pair programmers."
 license = "Apache-2.0"
-version = "11.0.0"
+version = "11.1.0"
 homepage = "https://github.com/chasinglogic/dfm"
 documentation = "https://github.com/chasinglogic/dfm"
 repository = "https://github.com/chasinglogic/dfm"
@@ -11,15 +11,15 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.5.41", features = ["derive", "cargo"] }
-clap_complete = "4.5.55"
+clap = { version = "4.5.47", features = ["derive", "cargo"] }
+clap_complete = "4.5.57"
 env_logger = "0.11.8"
 lazy_static = "1.5.0"
-log = "0.4.27"
-regex = "1.11.1"
+log = "0.4.28"
+regex = "1.11.2"
 rustyline = "14.0.0"
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde_json = "1.0.143"
 serde_regex = "1.1.0"
 serde_yaml = "0.9.34"
 shellexpand = "3.1.1"
