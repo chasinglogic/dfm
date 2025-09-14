@@ -385,3 +385,43 @@ impl Profile {
         self.location.clone()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use walkdir::WalkDir;
+
+    #[test]
+    fn test_is_dotfile() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let temp_path = temp_dir.path();
+
+        // Create some dummy files and directories
+        std::fs::File::create(temp_path.join(".git")).unwrap();
+        std::fs::File::create(temp_path.join(".dfm.yml")).unwrap();
+        std::fs::File::create(temp_path.join("a_file")).unwrap();
+        std::fs::create_dir(temp_path.join(".config")).unwrap();
+
+        let walker = WalkDir::new(temp_path).into_iter();
+        let entries: Vec<DirEntry> = walker.filter_map(|e| e.ok()).collect();
+
+        // .git should be ignored
+        let git_entry = entries.iter().find(|e| e.file_name() == ".git").unwrap();
+        assert!(!is_dotfile(git_entry));
+
+        // .dfm.yml should be ignored
+        let dfm_yml_entry = entries
+            .iter()
+            .find(|e| e.file_name() == ".dfm.yml")
+            .unwrap();
+        assert!(!is_dotfile(dfm_yml_entry));
+
+        // a_file should not be ignored
+        let a_file_entry = entries.iter().find(|e| e.file_name() == "a_file").unwrap();
+        assert!(is_dotfile(a_file_entry));
+
+        // .config should not be ignored
+        let config_entry = entries.iter().find(|e| e.file_name() == ".config").unwrap();
+        assert!(is_dotfile(config_entry));
+    }
+}
