@@ -93,12 +93,6 @@ impl Mapping {
         let is_match = self.term.is_match(path);
         debug!("{} matches {:?} = {}", path, self.term, is_match);
         is_match
-
-        // if is_match {
-        //     TargetOS::is_this_os(&self.target_os)
-        // } else {
-        //     false
-        // }
     }
 }
 
@@ -129,6 +123,27 @@ impl Display for MapAction {
 impl From<Mapping> for MapAction {
     fn from(mapping: Mapping) -> MapAction {
         MapAction::from(&mapping)
+    }
+}
+
+impl From<&Mapping> for MapAction {
+    fn from(mapping: &Mapping) -> MapAction {
+        let mapping_parsers = [
+            check_if_skip_action,
+            check_if_dest_action,
+            check_if_target_dir_action,
+            check_if_link_as_dir_action,
+            // Must come last
+            check_if_link_on_target_os_action,
+        ];
+
+        for f in mapping_parsers {
+            if let Some(action) = f(mapping) {
+                return action;
+            }
+        }
+
+        MapAction::default()
     }
 }
 
@@ -173,27 +188,6 @@ fn check_if_link_on_target_os_action(mapping: &Mapping) -> Option<MapAction> {
         Some(MapAction::Skip)
     } else {
         None
-    }
-}
-
-impl From<&Mapping> for MapAction {
-    fn from(mapping: &Mapping) -> MapAction {
-        let mapping_parsers = [
-            check_if_skip_action,
-            check_if_dest_action,
-            check_if_target_dir_action,
-            check_if_link_as_dir_action,
-            // Must come last
-            check_if_link_on_target_os_action,
-        ];
-
-        for f in mapping_parsers {
-            if let Some(action) = f(mapping) {
-                return action;
-            }
-        }
-
-        MapAction::default()
     }
 }
 
