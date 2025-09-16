@@ -1,5 +1,3 @@
-dist/*
-build/*
-/target
 result
 /.direnv/*
+/dfm
