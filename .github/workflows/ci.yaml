@@ -5,68 +5,32 @@ on: [push, pull_request]
 jobs:
   test:
     name: test
-    env:
-      # Emit backtraces on panics.
-      RUST_BACKTRACE: 1
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        build:
-          # Test on stable and beta rust compilers.
-          - stable
-          - beta
-        include:
-          - build: macos
-            os: macos-latest
-            rust: stable
-          - build: stable
-            os: ubuntu-latest
-            rust: stable
-          - build: beta
-            os: ubuntu-latest
-            rust: beta
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust }}
-
-      - name: Build dfm
-        run: cargo build --verbose ${{ env.TARGET_FLAGS }}
-
-      - name: Run cargo tests
-        run: cargo test
-
-      - name: Run integration tests
-        run: ./scripts/integration_tests.sh -b ./target/debug/dfm
-
-  clippy:
-    name: clippy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          components: clippy
-      - name: Lint
-        run: cargo clippy --no-deps --all-targets
+        uses: actions/checkout@v5
 
-  rustfmt:
-    name: rustfmt
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Run tests
+        run: go test -v ./...
+
+  lint:
+    name: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@master
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
         with:
-          toolchain: stable
-          components: rustfmt
-      - name: Check formatting
-        run: cargo fmt --all --check
+          go-version: stable
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest

@@ -9,10 +9,10 @@ REPO=$(git rev-parse --show-toplevel)
 
 cd "$REPO" || exit 1
 
-cargo build --release
+go build .
 
 if [[ -x $(which strip) ]]; then
-    strip ./target/release/dfm
+    strip ./dfm
 fi
 
-mv ./target/release/dfm "$INSTALL_DIR/"
+mv ./dfm "$INSTALL_DIR/"

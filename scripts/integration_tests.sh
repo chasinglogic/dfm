@@ -1,14 +1,39 @@
 #!/usr/bin/env bash
 
 function log() {
-    if [[ $2 == "DEBUG" ]] && [[ "$DEBUG_TESTS" == "" ]]; then
+    if [[ $2 == "DEBUG" ]] && [[ "$DFM_DEBUG" == "" ]]; then
         return
     fi
-    echo "[$(date)]" "$1"
+    echo -e "$1"
 }
 
 function list_dir() {
     ls -I .git -alR "$1"
+}
+
+PASS_PREFIX="\033[1;32m[PASS]\033[0m"
+FAIL_PREFIX="\033[1;31m[FAIL]\033[0m"
+FAILED=0
+
+function fail() {
+    test_name=$1
+    if [ -z "$test_name" ]; then
+        echo "MISSING TEST NAME!"
+        exit 100
+    fi
+
+    FAILED=1
+    log "$FAIL_PREFIX $test_name"
+}
+
+function pass() {
+    test_name=$1
+    if [ -z "$test_name" ]; then
+        echo "MISSING TEST NAME!"
+        exit 100
+    fi
+
+    log "$PASS_PREFIX $test_name"
 }
 
 function generate_git_config() {
@@ -22,13 +47,8 @@ function cleanup() {
     rm -rf "$HOME_DIR"
     rm -rf "$CONFIG_DIR"
 
-    if [[ -n $1 ]]; then
-        echo "EXITING WITH FAILURE"
-        exit "$1"
-    fi
-
     export HOME_DIR=$(mktemp -d)
-    export DFM_CONFIG_DIR="$HOME_DIR/.config/dfm"
+    export DFM_CONFIG_DIR="$HOME_DIR/.cache/dfm"
     export HOME=$HOME_DIR
 
     generate_git_config
@@ -41,12 +61,14 @@ function x() {
     stderrfile=$(mktemp)
     $cmd 1>"$stdoutfile" 2>"$stderrfile"
     exit_code=$?
-    if [[ $exit_code != 0 ]]; then
-        log "Failed to run '$cmd'"
+    if [[ $exit_code != 0 ]] || [[ "$DFM_DEBUG" != "" ]]; then
         cat "$stdoutfile"
         cat "$stderrfile"
         rm -f "$stdoutfile" "$stderrfile"
-        cleanup "$exit_code"
+        if [[ $exit_code != 0 ]]; then
+            log "Failed to run '$cmd'"
+            cleanup
+        fi
     fi
 
     rm -f "$stdoutfile" "$stderrfile"
@@ -65,23 +87,26 @@ function dfm_clone_and_link_test() {
     log "Running clone tests..." "DEBUG"
 
     x "$DFM" clone --name "$PROFILE_NAME" "$PROFILE_REPOSITORY"
-    x "$DFM" link "$PROFILE_NAME"
 
     if [ ! -d "$DFM_CONFIG_DIR/profiles/integration" ]; then
-        log "Failed to clone integration profile! \$DFM_CONFIG_DIR contents:"
-        ls -laR "$DFM_CONFIG_DIR"
-        exit 1
+        fail "Integration profile cloned"
+        log "\$DFM_CONFIG_DIR contents:"
+        list_dir "$DFM_CONFIG_DIR"
+        return
     fi
 
-    log "[PASS] Integration profile cloned"
+    pass "Integration profile cloned"
+
+    x "$DFM" link "$PROFILE_NAME"
 
     if [ ! -L "$HOME/.dotfile" ]; then
-        log "Failed to link integration profile! \$HOME contents:"
-        ls -laR "$HOME"
-        exit 1
+        fail "Integration profile cloned"
+        log "\$HOME contents:"
+        list_dir "$HOME"
+        return
     fi
 
-    log "[PASS] Integration profile linked"
+    pass "Integration profile linked"
 
     cleanup
 }
@@ -98,20 +123,22 @@ function dfm_clone_with_link_test() {
     x "$DFM" clone --link --name "$PROFILE_NAME" "$PROFILE_REPOSITORY"
 
     if [ ! -d "$DFM_CONFIG_DIR/profiles/integration" ]; then
-        log "Failed to clone integration profile! \$DFM_CONFIG_DIR contents:"
-        ls -laR "$DFM_CONFIG_DIR"
-        exit 1
+        fail "(--link tests) Integration profile cloned"
+        log "\$HOME contents:"
+        list_dir "$HOME"
+        return
     fi
 
-    log "[PASS] (--link tests) Integration profile cloned"
+    pass "(--link tests) Integration profile cloned"
 
     if [ ! -L "$HOME/.dotfile" ]; then
-        log "Failed to link integration profile! \$HOME contents:"
-        ls -laR "$HOME"
-        exit 1
+        fail "(--link tests) Integration profile linked"
+        log "\$HOME contents:"
+        list_dir "$HOME"
+        return
     fi
 
-    log "[PASS] (--link tests) Integration profile linked"
+    pass "(--link tests) Integration profile linked"
 
     cleanup
 }
@@ -128,36 +155,35 @@ function dfm_init_and_add_test() {
     x "$DFM" link integration-test
 
     if [ ! -d "$DFM_CONFIG_DIR/profiles/integration-test/.git" ]; then
-        log "Failed to create git repository in \$DFM_CONFIG_DIR/profiles/integration-test. \$DFM_CONFIG_DIR contents:"
-        ls -laR "$DFM_CONFIG_DIR"
-        exit 1
+        fail "Integration profile created"
+        log "\$DFM_CONFIG_DIR contents:"
+        list_dir "$DFM_CONFIG_DIR"
+        return
     fi
 
-    log "[PASS] Integration profile created"
+    pass "Integration profile created"
 
     echo "# A fake dotfile" >"$HOME/.dfm_dotfile"
 
     x "$DFM" add "$HOME/.dfm_dotfile"
 
     if [ ! -L "$HOME/.dfm_dotfile" ]; then
+        fail "Added dotfile is now a symlink"
         log "\$HOME/.dfm_dotfile is not a link. \$HOME contents:"
         list_dir "$HOME"
-        log "\$DFM_CONFIG_DIR contents"
-        list_dir "$DFM_CONFIG_DIR"
-        exit 1
+        return
     fi
 
-    log "[PASS] Added dotfile is now a symlink"
+    pass "Added dotfile is now a symlink"
 
     if [ ! -f "$DFM_CONFIG_DIR/profiles/integration-test/.dfm_dotfile" ]; then
-        log "\$DFM_CONFIG_DIR/profiles/integration-test/.dfm_dotfile is not a file. \$HOME contents:"
+        fail "Added dotfile is in git repository"
+        log "\$HOME contents:"
         list_dir "$HOME"
-        log "\$DFM_CONFIG_DIR contents"
-        list_dir "$DFM_CONFIG_DIR"
-        exit 1
+        return
     fi
 
-    log "[PASS] Added dotfile is in git repository"
+    pass "Added dotfile is in git repository"
 
     cleanup
 }
@@ -176,28 +202,28 @@ function dfm_root_dir_test {
     x "$DFM" link integration-test
 
     if [ ! -L "$HOME/.dfm_dotfile" ]; then
-        log "\$HOME/.dfm_dotfile is not a link. \$HOME contents:"
+        fail "Dotfile in new root is now a symlink"
+        log "\$HOME contents:"
         list_dir "$HOME"
-        log "\$DFM_CONFIG_DIR contents"
-        list_dir "$DFM_CONFIG_DIR"
-        exit 1
+        return
     fi
 
-    log "[PASS] Dotfile in new root is now a symlink"
+    pass "Dotfile in new root is now a symlink"
 
     cleanup
 }
 
 GIT_DIR="$(git rev-parse --show-toplevel)"
-DEBUG_BUILD="$GIT_DIR/target/debug/dfm"
-cargo build
+DEBUG_BUILD="$GIT_DIR/dfm"
+cd "$GIT_DIR" || exit 1
+go build .
 
 DFM_BIN="${DFM_BIN:-$DEBUG_BUILD}"
 
 export PROFILE_REPOSITORY="https://github.com/chasinglogic/dfm_dotfile_test.git"
 export PROFILE_NAME="integration"
 export HOME_DIR="$(mktemp -d)"
-export DFM_CONFIG_DIR="$HOME_DIR/.config/dfm"
+export DFM_CONFIG_DIR="$HOME_DIR/.cache/dfm"
 
 while getopts ":b:" opt; do
     case $opt in
@@ -219,3 +245,7 @@ dfm_clone_and_link_test "$DFM_BIN" "$PROFILE_NAME" $PROFILE_REPOSITORY
 dfm_clone_with_link_test "$DFM_BIN" "$PROFILE_NAME" $PROFILE_REPOSITORY
 dfm_init_and_add_test "$DFM_BIN"
 dfm_root_dir_test "$DFM_BIN"
+
+if [[ "$FAILED" != "0" ]]; then
+    exit 1
+fi

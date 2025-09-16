@@ -1,116 +1,26 @@
-name: release
+name: goreleaser
+
 on:
   push:
     tags:
-    - "[0-9]+.[0-9]+.[0-9]+"
+      - 'v*'
 
 jobs:
-  create-release:
-    name: create-release
+  goreleaser:
     runs-on: ubuntu-latest
-    env:
-      DFM_VERSION: ""
-    outputs:
-      upload_url: ${{ steps.release.outputs.upload_url }}
-      dfm_version: ${{ env.DFM_VERSION }}
     steps:
-      - name: Get the release version from the tag
-        shell: bash
-        if: env.DFM_VERSION == ''
-        run: |
-          # See: https://github.community/t5/GitHub-Actions/How-to-get-just-the-tag-name/m-p/32167/highlight/true#M1027
-          echo "DFM_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          echo "version is: ${{ env.DFM_VERSION }}"
-      - name: Create GitHub release
-        id: release
-        uses: actions/create-release@v1
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: 'latest'
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.DFM_VERSION }}
-          release_name: ${{ env.DFM_VERSION }}
-
-  build-release:
-    name: build-release
-    needs: ['create-release']
-    runs-on: ${{ matrix.os }}
-    env:
-      CARGO: cargo
-      TARGET_FLAGS: "--target ${{ matrix.target }}"
-      TARGET_DIR: ./target/${{ matrix.target }}
-    strategy:
-      matrix:
-        build: [linux, linux-arm, macos]
-        include:
-        - build: linux
-          os: ubuntu-latest
-          rust: stable
-          target: x86_64-unknown-linux-gnu
-        - build: linux-arm
-          os: ubuntu-latest
-          rust: stable
-          target: arm-unknown-linux-gnueabihf
-        - build: macos
-          os: macos-latest
-          rust: stable
-          target: x86_64-apple-darwin
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ matrix.rust }}
-        target: ${{ matrix.target }}
-
-    - name: Use Cross
-      shell: bash
-      run: |
-        cargo install cross
-        echo "CARGO=cross" >> $GITHUB_ENV
-
-    - name: Show command used for Cargo
-      run: |
-        echo "cargo command is: ${{ env.CARGO }}"
-        echo "target flag is: ${{ env.TARGET_FLAGS }}"
-        echo "target dir is: ${{ env.TARGET_DIR }}"
-
-    - name: Build release binary
-      run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
-
-    - name: Strip release binary (linux and macos)
-      if: matrix.build == 'linux' || matrix.build == 'macos'
-      run: strip "target/${{ matrix.target }}/release/dfm"
-
-    - name: Strip release binary (arm)
-      if: matrix.build == 'linux-arm'
-      run: |
-        docker run --rm -v \
-          "$PWD/target:/target:Z" \
-          rustembedded/cross:arm-unknown-linux-gnueabihf \
-          arm-linux-gnueabihf-strip \
-          /target/arm-unknown-linux-gnueabihf/release/dfm
-
-    - name: Build archive
-      shell: bash
-      run: |
-        staging="dfm-${{ needs.create-release.outputs.dfm_version }}-${{ matrix.target }}"
-        mkdir -p "$staging/complete"
-
-        cp {README.md,LICENSE} "$staging/"
-        cp "target/${{ matrix.target }}/release/dfm" "$staging/"
-
-        tar czvf "$staging.tar.gz" "$staging"
-        echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
-
-    - name: Upload release archive
-      uses: actions/upload-release-asset@v1.0.2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ${{ env.ASSET }}
-        asset_name: ${{ env.ASSET }}
-        asset_content_type: application/octet-stream
