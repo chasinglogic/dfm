@@ -4,12 +4,30 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/chasinglogic/dfm/internal/profiles"
 	"github.com/chasinglogic/dfm/internal/state"
 	"github.com/spf13/cobra"
+	"github.com/yarlson/pin"
 )
+
+func loadProfile(profileName string) (*profiles.Profile, error) {
+	if profileName == "" {
+		return nil, errors.New("no current profile is set and no profile name provided")
+	}
+
+	profileDir, err := state.ProfilesDir()
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles.Load(filepath.Join(profileDir, profileName))
+}
 
 // linkCmd represents the link command
 var linkCmd = &cobra.Command{
@@ -24,17 +42,26 @@ var linkCmd = &cobra.Command{
 			profileName = state.State.CurrentProfile
 		}
 
-		profileDir, err := state.ProfilesDir()
+		profile, err := loadProfile(profileName)
 		if err != nil {
 			return err
 		}
 
-		profile, err := profiles.Load(filepath.Join(profileDir, profileName))
+		p := pin.New(
+			fmt.Sprintf("Linking %s...", profileName),
+			pin.WithSpinnerColor(pin.ColorCyan),
+			pin.WithWriter(os.Stdout),
+		)
+		cancel := p.Start(context.Background())
+		defer cancel()
+
+		err = profile.Link(overwrite)
 		if err != nil {
 			return err
 		}
 
-		return profile.Link(overwrite)
+		p.Stop("Done!")
+		return nil
 	},
 }
 

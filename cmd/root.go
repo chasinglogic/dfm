@@ -6,16 +6,34 @@ package cmd
 import (
 	"os"
 
+	"github.com/chasinglogic/dfm/internal/logger"
 	"github.com/chasinglogic/dfm/internal/state"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 )
 
-// rootCmd represents the base command when called without any subcommands
+var debug bool
+
 var rootCmd = &cobra.Command{
 	Use:          "dfm",
 	Short:        "A dotfile manager for pair programmers and lazy people",
 	SilenceUsage: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		if debug {
+			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		} else {
+			zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+		}
+
+		logger.SetLogger(
+			zerolog.New(
+				zerolog.ConsoleWriter{
+					Out:          os.Stderr,
+					PartsExclude: []string{"time", "level"},
+				},
+			).With().Timestamp().Logger(),
+		)
+
 		return state.Load()
 	},
 	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
@@ -33,4 +51,5 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Turn on debug logging")
 }

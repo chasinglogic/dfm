@@ -15,12 +15,13 @@ type LinkMode string
 type Config struct {
 	Location string `yaml:"-"`
 
+	LinkMode               string             `yaml:"link_mode"`
+	Mappings               []*mapping.Mapping `yaml:"mappings"`
+	Modules                []Config           `yaml:"modules"`
+	PromptForCommitMessage bool               `yaml:"prompt_for_commit_message"`
+	PullOnly               bool               `yaml:"pull_only"`
 	Repo                   string             `yaml:"repository"`
 	RootDir                string             `yaml:"root_dir"`
-	PromptForCommitMessage bool               `yaml:"prompt_for_commit_message"`
-	Modules                []Config           `yaml:"modules"`
-	Mappings               []*mapping.Mapping `yaml:"mappings"`
-	LinkMode               string             `yaml:"link_mode"`
 }
 
 func Load(configFile string) (*Config, error) {
@@ -60,4 +61,9 @@ func Load(configFile string) (*Config, error) {
 
 func RepoToName(repo string) string {
 	return strings.ReplaceAll(filepath.Base(repo), ".git", "")
+}
+
+func (c *Config) GetDotfileDirectory() string {
+	// This works because if c.RootDir is "" then filepath.Join ignores it.
+	return filepath.Join(c.Location, c.RootDir)
 }

@@ -1,15 +1,18 @@
 package profiles
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/chasinglogic/dfm/internal/config"
+	"github.com/chasinglogic/dfm/internal/logger"
 	"github.com/chasinglogic/dfm/internal/mapping"
 	"github.com/chasinglogic/dfm/internal/utils"
+	"github.com/chzyer/readline"
 )
 
 type Profile struct {
@@ -75,7 +78,7 @@ func (p *Profile) Link(overwrite bool) error {
 	}
 
 	err = filepath.WalkDir(
-		p.config.Location,
+		p.config.GetDotfileDirectory(),
 		func(path string, d fs.DirEntry, err error) error {
 			if d.IsDir() {
 				if filepath.Base(path) == ".git" {
@@ -139,20 +142,19 @@ func (p *Profile) handleMapping(
 }
 
 func (p *Profile) linkTo(overwrite bool, path, target string) error {
-	rel, err := filepath.Rel(p.config.Location, path)
+	rel, err := filepath.Rel(p.config.GetDotfileDirectory(), path)
 	if err != nil {
 		return err
 	}
 
 	targetPath := filepath.Join(target, rel)
 
-	fmt.Println("linking", path, "->", targetPath)
+	logger.Debug().Msgf("linking %s -> %s", path, targetPath)
 	if err := deleteIfExists(overwrite, targetPath); err != nil {
 		return err
 	}
 
-	return nil
-	// return os.Symlink(path, targetPath)
+	return os.Symlink(path, targetPath)
 }
 
 func deleteIfExists(overwrite bool, path string) error {
@@ -164,7 +166,7 @@ func deleteIfExists(overwrite bool, path string) error {
 	}
 
 	if info.IsDir() {
-		return errors.New("refusing to remove a directory")
+		return fmt.Errorf("refusing to remove a directory: %s", path)
 	}
 
 	if info.Mode().IsRegular() && !overwrite {
@@ -174,6 +176,70 @@ func deleteIfExists(overwrite bool, path string) error {
 		)
 	}
 
-	// return os.Remove(path)
+	return os.Remove(path)
+}
+
+func (p *Profile) GetLocation() string {
+	return p.config.Location
+}
+
+func (p *Profile) isDirty() bool {
+	buf := bytes.NewBuffer([]byte{})
+
+	cmd := exec.Command("git", "status", "--porcelain")
+	cmd.Dir = p.config.Location
+	cmd.Stdout = buf
+	cmd.Stderr = buf
+	cmd.Run()
+
+	return buf.String() != ""
+}
+
+func (p *Profile) Sync() error {
+
+	if !p.isDirty() || p.config.PullOnly {
+		if err := utils.RunIn(p.config.Location, "git", "pull", "--ff-only"); err != nil {
+			return err
+		}
+	} else {
+		if err := utils.RunIn(p.config.Location, "git", "diff"); err != nil {
+			return err
+		}
+
+		commitMessage := "Dotfiles managed by DFM!"
+		if p.config.PromptForCommitMessage {
+			rl, err := readline.New("Commit message: ")
+			if err != nil {
+				panic(err)
+			}
+
+			defer rl.Close()
+
+			commitMessage, err = rl.Readline()
+			if err != nil {
+				return err
+			}
+		}
+
+		cmds := [][]string{
+			{"git", "add", "--all"},
+			{"git", "commit", "--message", commitMessage},
+			{"git", "pull", "--rebase"},
+			{"git", "push"},
+		}
+
+		for _, cmd := range cmds {
+			if err := utils.RunIn(p.config.Location, cmd...); err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, module := range p.modules {
+		if err := module.Sync(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
