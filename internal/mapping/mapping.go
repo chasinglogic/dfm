@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"regexp"
 	"runtime"
+	"strings"
 )
 
 type Action int
@@ -55,7 +56,7 @@ func (m *Mapping) IsMatch(path string) bool {
 	}
 
 	matchesRegex := m.rgx.Match([]byte(path))
-	isTargetOS := m.TargetOS == runtime.GOOS || m.TargetOS == ""
+	isTargetOS := strings.ToLower(m.TargetOS) == runtime.GOOS || m.TargetOS == ""
 	return matchesRegex && isTargetOS
 }
 
