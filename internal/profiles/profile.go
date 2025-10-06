@@ -231,6 +231,7 @@ func (p *Profile) Sync() error {
 		return err
 	}
 
+	fmt.Println("Syncing", p.GetLocation())
 	if !p.isDirty() || p.config.PullOnly {
 		if err := utils.RunIn(p.config.Location, "git", "pull", "--ff-only"); err != nil {
 			return err
@@ -268,6 +269,7 @@ func (p *Profile) Sync() error {
 			}
 		}
 	}
+	fmt.Println("")
 
 	for _, module := range p.modules {
 		if err := module.Sync(); err != nil {
