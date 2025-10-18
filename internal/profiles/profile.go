@@ -181,6 +181,10 @@ func (p *Profile) linkTo(overwrite bool, path, target string) error {
 		return err
 	}
 
+	if err := os.MkdirAll(filepath.Dir(targetPath), 0744); err != nil {
+		return err
+	}
+
 	return os.Symlink(path, targetPath)
 }
 
