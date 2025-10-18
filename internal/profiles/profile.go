@@ -225,7 +225,7 @@ func (p *Profile) isDirty() bool {
 	cmd.Dir = p.config.Location
 	cmd.Stdout = buf
 	cmd.Stderr = buf
-	cmd.Run()
+	_ = cmd.Run()
 
 	return buf.String() != ""
 }
@@ -252,12 +252,12 @@ func (p *Profile) Sync() error {
 				panic(err)
 			}
 
-			defer rl.Close()
-
 			commitMessage, err = rl.Readline()
 			if err != nil {
 				return err
 			}
+
+			_ = rl.Close()
 		}
 
 		cmds := [][]string{
