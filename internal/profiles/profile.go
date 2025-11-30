@@ -230,7 +230,7 @@ func (p *Profile) isDirty() bool {
 	return buf.String() != ""
 }
 
-func (p *Profile) Sync() error {
+func (p *Profile) Sync(commitMessage string) error {
 	if err := p.RunHook("pre_sync"); err != nil {
 		return err
 	}
@@ -245,8 +245,7 @@ func (p *Profile) Sync() error {
 			return err
 		}
 
-		commitMessage := "Dotfiles managed by DFM!"
-		if p.config.PromptForCommitMessage {
+		if commitMessage == "" && p.config.PromptForCommitMessage {
 			rl, err := readline.New("Commit message: ")
 			if err != nil {
 				panic(err)
@@ -258,6 +257,8 @@ func (p *Profile) Sync() error {
 			}
 
 			_ = rl.Close()
+		} else if commitMessage == "" {
+			commitMessage = "Dotfiles managed by DFM!"
 		}
 
 		cmds := [][]string{
@@ -276,7 +277,7 @@ func (p *Profile) Sync() error {
 	fmt.Println("")
 
 	for _, module := range p.modules {
-		if err := module.Sync(); err != nil {
+		if err := module.Sync(""); err != nil {
 			return err
 		}
 	}

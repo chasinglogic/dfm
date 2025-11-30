@@ -18,10 +18,17 @@ var syncCmd = &cobra.Command{
 			return err
 		}
 
-		return profile.Sync()
+		commitMessage, err := cmd.Flags().GetString("message")
+		if err != nil {
+			return err
+		}
+
+		return profile.Sync(commitMessage)
 	},
 }
 
 func init() {
+	syncCmd.Flags().StringP("message", "m", "", "Commit message to use for sync")
+
 	RootCmd.AddCommand(syncCmd)
 }
