@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/chasinglogic/dfm/internal/mapping"
 	"github.com/chasinglogic/dfm/internal/state"
 	"github.com/spf13/cobra"
 )
@@ -17,6 +18,11 @@ var addCmd = &cobra.Command{
 	Short: "Add files to the current dotfile profile",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		linkAsDir, err := cmd.Flags().GetBool("link-as-dir")
+		if err != nil {
+			return err
+		}
+
 		profile, err := loadProfile(state.State.CurrentProfile)
 		if err != nil {
 			return err
@@ -47,6 +53,16 @@ var addCmd = &cobra.Command{
 			if err := os.Rename(absPath, profilePath); err != nil {
 				return err
 			}
+
+			if linkAsDir {
+				m := &mapping.Mapping{
+					Match:     filepath.ToSlash(relPath) + "/.*",
+					LinkAsDir: true,
+				}
+				if err := profile.AddMapping(m); err != nil {
+					return err
+				}
+			}
 		}
 
 		return profile.Link(false)
@@ -54,5 +70,6 @@ var addCmd = &cobra.Command{
 }
 
 func init() {
+	addCmd.Flags().Bool("link-as-dir", false, "Add the directory to the dotfile profile and create a link as dir mapping before linking")
 	RootCmd.AddCommand(addCmd)
 }

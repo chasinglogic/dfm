@@ -27,6 +27,14 @@ type Config struct {
 	Hooks                  hooks.Hooks        `yaml:"hooks"`
 }
 
+func (c *Config) Save() error {
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(c.Location, ".dfm.yml"), data, 0644)
+}
+
 func (c *Config) String() string {
 	data, _ := json.Marshal(c)
 	return string(data)

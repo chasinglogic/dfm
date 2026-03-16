@@ -218,6 +218,11 @@ func (p *Profile) GetDotfileDirectory() string {
 	return p.config.GetDotfileDirectory()
 }
 
+func (p *Profile) AddMapping(m *mapping.Mapping) error {
+	p.config.Mappings = append(p.config.Mappings, m)
+	return p.config.Save()
+}
+
 func (p *Profile) isDirty() bool {
 	buf := bytes.NewBuffer([]byte{})
 
