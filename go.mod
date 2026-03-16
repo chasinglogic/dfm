@@ -1,6 +1,6 @@
 module github.com/chasinglogic/dfm
 
-go 1.24.6
+go 1.26.1
 
 require (
 	github.com/chzyer/readline v1.5.1

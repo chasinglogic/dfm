@@ -17,7 +17,7 @@
           pkgs = nixpkgsFor.${system};
         in
         {
-          dfm = pkgs.buildGoModule {
+          dfm = pkgs.buildGoModule.override { go = pkgs.go_1_26; } {
             pname = "dfm";
             inherit version;
             src = ./.;
@@ -35,7 +35,7 @@
         in
         {
           default = pkgs.mkShell {
-            buildInputs = with pkgs; [ go gopls gotools go-tools ];
+            buildInputs = with pkgs; [ go_1_26 gopls gotools go-tools ];
           };
         });
 
