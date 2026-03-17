@@ -21,6 +21,9 @@
             pname = "dfm";
             inherit version;
             src = ./.;
+            # Tests are disabled when installing because they don't work on
+            # a read only file system.
+            checkPhase = null;
             vendorHash = "sha256-2xjwWrP1O2brpzNuUxG/CZtMoBiG1V5BOlsp8MSI8WQ=";
             ldflags = [
               "-X main.Version=${version}"
