@@ -2,6 +2,7 @@ package profiles
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -126,7 +127,7 @@ func (p *Profile) Link(overwrite bool) error {
 				}
 			}
 
-			return p.linkTo(overwrite, path, home)
+			return p.linkTo(newLinkToOptions(overwrite, path, home))
 		},
 	)
 	if err != nil {
@@ -156,29 +157,64 @@ func (p *Profile) handleMapping(
 	case mapping.ActionLinkAsDir:
 		// TODO: would be nice if we could skip the dir but I don't see an obvious way
 		// to make that not suck from a code maintenance perspective yet.
-		return p.linkTo(overwrite, filepath.Dir(path), home)
+		opts := newLinkToOptions(overwrite, filepath.Dir(path), home)
+		opts.deleteDirs = true
+		return p.linkTo(opts)
 	case mapping.ActionTranslate:
-		return p.linkTo(overwrite, path, m.Dest)
+		return p.linkTo(newLinkToOptions(overwrite, path, m.Dest))
 	default:
 		return fmt.Errorf("unhandled map action: %s", m.Action())
 	}
 }
 
-func (p *Profile) linkTo(overwrite bool, path, target string) error {
-	rel, err := filepath.Rel(p.config.GetDotfileDirectory(), path)
+type linkToOptions struct {
+	overwrite  bool
+	path       string
+	target     string
+	deleteDirs bool
+}
+
+func newLinkToOptions(overwrite bool, path, target string) linkToOptions {
+	return linkToOptions{
+		overwrite:  overwrite,
+		path:       path,
+		target:     target,
+		deleteDirs: false,
+	}
+}
+
+func (lo linkToOptions) validate() error {
+	if lo.path == "" {
+		return errors.New("BUG: linkToOptions path must be provided")
+	}
+
+	if lo.target == "" {
+		return errors.New("BUG: linkToOptions target must be provided")
+	}
+
+	return nil
+}
+
+func (p *Profile) linkTo(opts linkToOptions) error {
+	if err := opts.validate(); err != nil {
+		return err
+	}
+
+	rel, err := filepath.Rel(p.config.GetDotfileDirectory(), opts.path)
 	if err != nil {
 		return err
 	}
 
-	targetPath := filepath.Join(target, rel)
+	targetPath := filepath.Join(opts.target, rel)
 
 	logger.Debug().
 		Str("relativePath", rel).
-		Str("targetDirectory", target).
-		Str("path", path).
+		Str("targetDirectory", opts.target).
+		Str("path", opts.path).
 		Str("targetPath", targetPath).
 		Msg("link")
-	if err := deleteIfExists(overwrite, targetPath); err != nil {
+
+	if err := deleteIfExists(opts, targetPath); err != nil {
 		return err
 	}
 
@@ -186,10 +222,10 @@ func (p *Profile) linkTo(overwrite bool, path, target string) error {
 		return err
 	}
 
-	return os.Symlink(path, targetPath)
+	return os.Symlink(opts.path, targetPath)
 }
 
-func deleteIfExists(overwrite bool, path string) error {
+func deleteIfExists(opts linkToOptions, path string) error {
 	info, err := os.Lstat(path)
 	if os.IsNotExist(err) {
 		return nil
@@ -197,11 +233,11 @@ func deleteIfExists(overwrite bool, path string) error {
 		return err
 	}
 
-	if info.IsDir() {
+	if info.IsDir() && !opts.deleteDirs {
 		return fmt.Errorf("refusing to remove a directory: %s", path)
 	}
 
-	if info.Mode().IsRegular() && !overwrite {
+	if info.Mode().IsRegular() && !opts.overwrite {
 		return fmt.Errorf(
 			"refusing to remove %s because it is a regular file and --overwrite not provided",
 			path,
