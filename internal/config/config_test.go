@@ -88,3 +88,31 @@ func TestLoadNormalizesModuleLocations(t *testing.T) {
 		t.Fatalf("module Location = %q, want %q", cfg.Modules[0].Location, expected)
 	}
 }
+
+func TestLoadParsesLLMConfig(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	configFile := filepath.Join(dir, ".dfm.yml")
+
+	content := []byte(`llm:
+  model_provider: gemini
+  commit_messages: true
+`)
+	if err := os.WriteFile(configFile, content, 0644); err != nil {
+		t.Fatalf("failed to write config file: %v", err)
+	}
+
+	cfg, err := Load(configFile)
+	if err != nil {
+		t.Fatalf("Load returned error: %v", err)
+	}
+
+	if cfg.LLM.ModelProvider != "gemini" {
+		t.Fatalf("LLM.ModelProvider = %q, want %q", cfg.LLM.ModelProvider, "gemini")
+	}
+
+	if !cfg.LLM.CommitMessages {
+		t.Fatalf("LLM.CommitMessages = %v, want true", cfg.LLM.CommitMessages)
+	}
+}

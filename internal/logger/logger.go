@@ -15,3 +15,7 @@ func Debug() *zerolog.Event {
 func Info() *zerolog.Event {
 	return logger.Info()
 }
+
+func Error() *zerolog.Event {
+	return logger.Error()
+}

@@ -14,6 +14,11 @@ import (
 
 type LinkMode string
 
+type LLMConfig struct {
+	ModelProvider  string `yaml:"model_provider"`
+	CommitMessages bool   `yaml:"commit_messages"`
+}
+
 type Config struct {
 	Location string `yaml:"-"`
 
@@ -25,6 +30,7 @@ type Config struct {
 	Repo                   string             `yaml:"repository"`
 	RootDir                string             `yaml:"root_dir"`
 	Hooks                  hooks.Hooks        `yaml:"hooks"`
+	LLM                    LLMConfig          `yaml:"llm"`
 }
 
 func (c *Config) Save() error {

@@ -395,6 +395,25 @@ features:
 - [Modules](#modules)
 - [Mappings](#mappings)
 - [Hooks](#hooks)
+- [LLM Commit Messages](#llm-commit-messages)
+
+### LLM Commit Messages
+
+DFM can optionally use an LLM to generate your commit messages when syncing changes. To enable this, add the following configuration block to your `.dfm.yml`:
+
+```yaml
+llm:
+  model_provider: gemini
+  commit_messages: true
+```
+
+Currently, only `gemini` is supported as a provider. You must also set the `GEMINI_API_KEY` environment variable in your shell profile for this feature to work:
+
+```bash
+export GEMINI_API_KEY="your-api-key-here"
+```
+
+When `commit_messages` is `true`, DFM will automatically generate a commit message based on the `git diff` of your changes before syncing. If the generation fails, it will fall back to prompting or using the default message.
 
 ### Modules
 

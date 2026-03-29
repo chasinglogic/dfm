@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/chasinglogic/dfm/internal/config"
+	"github.com/chasinglogic/dfm/internal/llm"
 	"github.com/chasinglogic/dfm/internal/logger"
 	"github.com/chasinglogic/dfm/internal/mapping"
 	"github.com/chasinglogic/dfm/internal/utils"
@@ -246,8 +247,25 @@ func (p *Profile) Sync(commitMessage string) error {
 			return err
 		}
 	} else {
-		if err := utils.RunIn(p.config.Location, "git", "diff"); err != nil {
-			return err
+		if !p.config.LLM.CommitMessages {
+			if err := utils.RunIn(p.config.Location, "git", "diff"); err != nil {
+				return err
+			}
+		}
+
+		if commitMessage == "" && p.config.LLM.CommitMessages {
+			if err := utils.RunIn(p.config.Location, "git", "add", "--all"); err != nil {
+				return err
+			}
+			diff, err := utils.RunInOutput(p.config.Location, "git", "diff", "--cached")
+			if err == nil && diff != "" {
+				msg, llmErr := llm.GenerateCommitMessage(diff, p.config.LLM.ModelProvider)
+				if llmErr == nil && msg != "" {
+					commitMessage = msg
+				} else {
+					logger.Error().Err(llmErr).Msg("failed to generate commit message from LLM, falling back")
+				}
+			}
 		}
 
 		if commitMessage == "" && p.config.PromptForCommitMessage {
