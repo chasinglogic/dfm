@@ -99,8 +99,6 @@ func (p *Profile) Link(overwrite bool) error {
 						Msg("skipping because it is the git directory")
 					return filepath.SkipDir
 				}
-
-				return nil
 			}
 
 			if filepath.Base(path) == ".dfm.yml" {
@@ -121,10 +119,15 @@ func (p *Profile) Link(overwrite bool) error {
 					return p.handleMapping(
 						overwrite,
 						path,
+						d,
 						m,
 						home,
 					)
 				}
+			}
+
+			if d.IsDir() {
+				return nil
 			}
 
 			return p.linkTo(newLinkToOptions(overwrite, path, home))
@@ -148,18 +151,37 @@ func (p *Profile) Link(overwrite bool) error {
 func (p *Profile) handleMapping(
 	overwrite bool,
 	path string,
+	entry fs.DirEntry,
 	m *mapping.Mapping,
 	home string,
 ) error {
+	isDir := entry != nil && entry.IsDir()
+
 	switch m.Action() {
 	case mapping.ActionSkip, mapping.ActionNone:
+		if isDir && m.Action() == mapping.ActionSkip {
+			return filepath.SkipDir
+		}
+
 		return nil
 	case mapping.ActionLinkAsDir:
-		// TODO: would be nice if we could skip the dir but I don't see an obvious way
-		// to make that not suck from a code maintenance perspective yet.
-		opts := newLinkToOptions(overwrite, filepath.Dir(path), home)
+		targetPath := path
+		if !isDir {
+			targetPath = filepath.Dir(path)
+		}
+
+		opts := newLinkToOptions(overwrite, targetPath, home)
 		opts.deleteDirs = true
-		return p.linkTo(opts)
+
+		if err := p.linkTo(opts); err != nil {
+			return err
+		}
+
+		if isDir {
+			return filepath.SkipDir
+		}
+
+		return nil
 	case mapping.ActionTranslate:
 		return p.linkTo(newLinkToOptions(overwrite, path, m.Dest))
 	default:
@@ -242,6 +264,10 @@ func deleteIfExists(opts linkToOptions, path string) error {
 			"refusing to remove %s because it is a regular file and --overwrite not provided",
 			path,
 		)
+	}
+
+	if info.IsDir() {
+		return os.RemoveAll(path)
 	}
 
 	return os.Remove(path)

@@ -144,7 +144,8 @@ func TestDeleteIfExistsBehavior(t *testing.T) {
 	dir := t.TempDir()
 
 	t.Run("no file", func(t *testing.T) {
-		if err := deleteIfExists(false, filepath.Join(dir, "does-not-exist")); err != nil {
+		opts := linkToOptions{}
+		if err := deleteIfExists(opts, filepath.Join(dir, "does-not-exist")); err != nil {
 			t.Fatalf("expected no error when file does not exist, got %v", err)
 		}
 	})
@@ -155,7 +156,8 @@ func TestDeleteIfExistsBehavior(t *testing.T) {
 			t.Fatalf("failed to create directory: %v", err)
 		}
 
-		if err := deleteIfExists(false, p); err == nil {
+		opts := linkToOptions{}
+		if err := deleteIfExists(opts, p); err == nil {
 			t.Fatalf("expected error when attempting to delete directory")
 		}
 
@@ -170,7 +172,8 @@ func TestDeleteIfExistsBehavior(t *testing.T) {
 			t.Fatalf("failed to write file: %v", err)
 		}
 
-		if err := deleteIfExists(false, p); err == nil {
+		opts := linkToOptions{}
+		if err := deleteIfExists(opts, p); err == nil {
 			t.Fatalf("expected error when deleting regular file without overwrite")
 		}
 
@@ -185,7 +188,8 @@ func TestDeleteIfExistsBehavior(t *testing.T) {
 			t.Fatalf("failed to write file: %v", err)
 		}
 
-		if err := deleteIfExists(true, p); err != nil {
+		opts := linkToOptions{overwrite: true}
+		if err := deleteIfExists(opts, p); err != nil {
 			t.Fatalf("expected no error when deleting regular file with overwrite, got %v", err)
 		}
 
