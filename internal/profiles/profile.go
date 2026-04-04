@@ -10,11 +10,9 @@ import (
 	"path/filepath"
 
 	"github.com/chasinglogic/dfm/internal/config"
-	"github.com/chasinglogic/dfm/internal/llm"
 	"github.com/chasinglogic/dfm/internal/logger"
 	"github.com/chasinglogic/dfm/internal/mapping"
 	"github.com/chasinglogic/dfm/internal/utils"
-	"github.com/chzyer/readline"
 )
 
 type Profile struct {
@@ -309,39 +307,18 @@ func (p *Profile) Sync(commitMessage string) error {
 			return err
 		}
 	} else {
-		if !p.config.LLM.CommitMessages {
-			if err := utils.RunIn(p.config.Location, "git", "diff"); err != nil {
-				return err
-			}
-		}
-
 		if commitMessage == "" && p.config.LLM.CommitMessages {
-			if err := utils.RunIn(p.config.Location, "git", "add", "--all"); err != nil {
-				return err
-			}
-			diff, err := utils.RunInOutput(p.config.Location, "git", "diff", "--cached")
-			if err == nil && diff != "" {
-				msg, llmErr := llm.GenerateCommitMessage(diff, p.config.LLM.ModelProvider)
-				if llmErr == nil && msg != "" {
-					commitMessage = msg
-				} else {
-					return fmt.Errorf("failed to generate commit message from LLM (you enabled LLM commit messages with %s provider): %w", p.config.LLM.ModelProvider, llmErr)
-				}
-			}
-		}
-
-		if commitMessage == "" && p.config.PromptForCommitMessage {
-			rl, err := readline.New("Commit message: ")
-			if err != nil {
-				panic(err)
-			}
-
-			commitMessage, err = rl.Readline()
+			var err error
+			commitMessage, err = commitMessageFromLLM(p.config.Location, p.config.LLM.ModelProvider)
 			if err != nil {
 				return err
 			}
-
-			_ = rl.Close()
+		} else if commitMessage == "" && p.config.PromptForCommitMessage {
+			var err error
+			commitMessage, err = commitMessageFromPrompt(p.config.Location)
+			if err != nil {
+				return err
+			}
 		} else if commitMessage == "" {
 			commitMessage = "Dotfiles managed by DFM!"
 		}
