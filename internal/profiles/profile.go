@@ -325,7 +325,7 @@ func (p *Profile) Sync(commitMessage string) error {
 				if llmErr == nil && msg != "" {
 					commitMessage = msg
 				} else {
-					logger.Error().Err(llmErr).Msg("failed to generate commit message from LLM, falling back")
+					return fmt.Errorf("failed to generate commit message from LLM (you enabled LLM commit messages with %s provider): %w", p.config.LLM.ModelProvider, llmErr)
 				}
 			}
 		}
