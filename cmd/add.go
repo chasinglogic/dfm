@@ -6,11 +6,18 @@ package cmd
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/chasinglogic/dfm/internal/mapping"
 	"github.com/chasinglogic/dfm/internal/state"
 	"github.com/spf13/cobra"
 )
+
+func linkAsDirMatchPattern(relPath string) string {
+	cleanPath := filepath.ToSlash(filepath.Clean(relPath))
+	escapedPath := regexp.QuoteMeta(cleanPath)
+	return escapedPath + "$"
+}
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
@@ -56,7 +63,7 @@ var addCmd = &cobra.Command{
 
 			if linkAsDir {
 				m := &mapping.Mapping{
-					Match:     filepath.ToSlash(relPath) + "/.*",
+					Match:     linkAsDirMatchPattern(relPath),
 					LinkAsDir: true,
 				}
 				if err := profile.AddMapping(m); err != nil {
