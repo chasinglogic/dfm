@@ -347,7 +347,11 @@ func (p *Profile) Sync(commitMessage string) error {
 	} else {
 		if commitMessage == "" && p.config.LLM.CommitMessages {
 			var err error
-			commitMessage, err = commitMessageFromLLM(p.config.Location, p.config.LLM.ModelProvider)
+			commitMessage, err = commitMessageFromLLM(
+				p.config.Location,
+				p.config.LLM.ModelProvider,
+				p.config.LLM.CommitMessagePrompt,
+			)
 			if err != nil {
 				return err
 			}

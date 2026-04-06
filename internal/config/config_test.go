@@ -98,6 +98,9 @@ func TestLoadParsesLLMConfig(t *testing.T) {
 	content := []byte(`llm:
   model_provider: gemini
   commit_messages: true
+  commit_message_prompt: |
+    Use this diff to generate a conventional commit message.
+    Diff:\n%s
 `)
 	if err := os.WriteFile(configFile, content, 0644); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
@@ -114,5 +117,9 @@ func TestLoadParsesLLMConfig(t *testing.T) {
 
 	if !cfg.LLM.CommitMessages {
 		t.Fatalf("LLM.CommitMessages = %v, want true", cfg.LLM.CommitMessages)
+	}
+
+	if cfg.LLM.CommitMessagePrompt == "" {
+		t.Fatalf("LLM.CommitMessagePrompt should not be empty")
 	}
 }

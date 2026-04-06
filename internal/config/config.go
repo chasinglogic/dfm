@@ -15,8 +15,9 @@ import (
 type LinkMode string
 
 type LLMConfig struct {
-	ModelProvider  string `yaml:"model_provider"`
-	CommitMessages bool   `yaml:"commit_messages"`
+	ModelProvider       string `yaml:"model_provider"`
+	CommitMessages      bool   `yaml:"commit_messages"`
+	CommitMessagePrompt string `yaml:"commit_message_prompt"`
 }
 
 type Config struct {

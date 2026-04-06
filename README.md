@@ -405,6 +405,12 @@ DFM can optionally use an LLM to generate your commit messages when syncing chan
 llm:
   model_provider: gemini
   commit_messages: true
+  commit_message_prompt: |
+    You are an expert developer. Generate a concise, conventional git commit
+    message from this diff. Return only the commit message text.
+
+    Diff:
+    %s
 ```
 
 Currently, only `gemini` is supported as a provider. You must also set the `GEMINI_API_KEY` environment variable in your shell profile for this feature to work:
@@ -413,7 +419,7 @@ Currently, only `gemini` is supported as a provider. You must also set the `GEMI
 export GEMINI_API_KEY="your-api-key-here"
 ```
 
-When `commit_messages` is `true`, DFM will automatically generate a commit message based on the `git diff` of your changes before syncing. If the generation fails, it will fall back to prompting or using the default message.
+When `commit_messages` is `true`, DFM will automatically generate a commit message based on the `git diff` of your changes before syncing. If you set `commit_message_prompt`, DFM uses that template and injects the staged diff with `fmt.Sprintf`, so include exactly one `%s` placeholder where the diff should go.
 
 ### Modules
 

@@ -8,14 +8,14 @@ import (
 	"github.com/chzyer/readline"
 )
 
-func commitMessageFromLLM(location string, provider string) (string, error) {
+func commitMessageFromLLM(location string, provider string, prompt string) (string, error) {
 	if err := utils.RunIn(location, "git", "add", "--all"); err != nil {
 		return "", err
 	}
 
 	diff, err := utils.RunInOutput(location, "git", "diff", "--cached")
 	if err == nil && diff != "" {
-		msg, llmErr := llm.GenerateCommitMessage(diff, provider)
+		msg, llmErr := llm.GenerateCommitMessage(diff, provider, prompt)
 		if llmErr != nil {
 			return "", fmt.Errorf("failed to generate commit message from LLM (you enabled LLM commit messages with %s provider): %w", provider, llmErr)
 		}
