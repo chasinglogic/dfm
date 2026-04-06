@@ -234,6 +234,19 @@ func (p *Profile) linkTo(opts linkToOptions) error {
 		Str("targetPath", targetPath).
 		Msg("link")
 
+	selfLink, err := wouldCreateSelfReferentialSymlink(opts.path, targetPath)
+	if err != nil {
+		return err
+	}
+
+	if selfLink {
+		return fmt.Errorf(
+			"refusing to create symlink %q -> %q because it points to itself; this usually happens when a link_as_dir mapping matches a subdirectory (like .agents/.*) while the parent in $HOME is already a symlink. Use a mapping that matches the directory root too (for example .agents($|/.*))",
+			targetPath,
+			opts.path,
+		)
+	}
+
 	if err := deleteIfExists(opts, targetPath); err != nil {
 		return err
 	}
@@ -243,6 +256,31 @@ func (p *Profile) linkTo(opts linkToOptions) error {
 	}
 
 	return os.Symlink(opts.path, targetPath)
+}
+
+func wouldCreateSelfReferentialSymlink(sourcePath, targetPath string) (bool, error) {
+	absSourcePath, err := filepath.Abs(sourcePath)
+	if err != nil {
+		return false, err
+	}
+
+	absTargetPath, err := filepath.Abs(targetPath)
+	if err != nil {
+		return false, err
+	}
+
+	targetDir := filepath.Dir(absTargetPath)
+	resolvedTargetDir := targetDir
+	evaluatedTargetDir, err := filepath.EvalSymlinks(targetDir)
+	if err == nil {
+		resolvedTargetDir = evaluatedTargetDir
+	} else if !os.IsNotExist(err) {
+		return false, err
+	}
+
+	resolvedTargetPath := filepath.Join(resolvedTargetDir, filepath.Base(absTargetPath))
+
+	return filepath.Clean(absSourcePath) == filepath.Clean(resolvedTargetPath), nil
 }
 
 func deleteIfExists(opts linkToOptions, path string) error {

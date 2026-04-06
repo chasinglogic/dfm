@@ -3,6 +3,7 @@ package profiles
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/chasinglogic/dfm/internal/config"
@@ -197,4 +198,49 @@ func TestDeleteIfExistsBehavior(t *testing.T) {
 			t.Fatalf("expected file to be removed, got err=%v", err)
 		}
 	})
+}
+
+func TestLinkRejectsSelfReferentialLinkAsDir(t *testing.T) {
+	home := t.TempDir()
+	repo := t.TempDir()
+
+	if err := os.MkdirAll(filepath.Join(repo, ".agents", "skills"), 0755); err != nil {
+		t.Fatalf("failed to create source directories: %v", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(repo, ".agents", "skills", "test.md"), []byte("data"), 0644); err != nil {
+		t.Fatalf("failed to create source file: %v", err)
+	}
+
+	if err := os.Symlink(filepath.Join(repo, ".agents"), filepath.Join(home, ".agents")); err != nil {
+		t.Fatalf("failed to create home symlink to source dir: %v", err)
+	}
+
+	t.Setenv("HOME", home)
+
+	cfg := &config.Config{
+		Location: repo,
+		Mappings: []*mapping.Mapping{{
+			Match:     ".agents/.*",
+			LinkAsDir: true,
+		}},
+	}
+
+	p, err := New(cfg)
+	if err != nil {
+		t.Fatalf("New returned error: %v", err)
+	}
+
+	err = p.Link(true)
+	if err == nil {
+		t.Fatalf("expected Link to fail with self-referential symlink error")
+	}
+
+	if !strings.Contains(err.Error(), "link_as_dir mapping matches a subdirectory") {
+		t.Fatalf("expected explanatory error, got: %v", err)
+	}
+
+	if _, statErr := os.Stat(filepath.Join(repo, ".agents", "skills", "test.md")); statErr != nil {
+		t.Fatalf("expected existing directory contents to be preserved, got: %v", statErr)
+	}
 }
