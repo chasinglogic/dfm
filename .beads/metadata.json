@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "dfm",
+  "project_id": "49c4390e-f112-45de-8ed4-a951673418c4"
+}
