@@ -100,7 +100,6 @@ func TestLoadParsesLLMConfig(t *testing.T) {
   commit_messages: true
   commit_message_prompt: |
     Use this diff to generate a conventional commit message.
-    Diff:\n%s
 `)
 	if err := os.WriteFile(configFile, content, 0644); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
