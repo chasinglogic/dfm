@@ -77,6 +77,54 @@ func TestNewProviderOpenAIWithModel(t *testing.T) {
 	}
 }
 
+func TestNewProviderGeminiCLI(t *testing.T) {
+	p, err := NewProvider("gemini-cli", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := p.(*GeminiCLIProvider); !ok {
+		t.Fatalf("expected *GeminiCLIProvider, got %T", p)
+	}
+}
+
+func TestNewProviderGeminiCLIWithModel(t *testing.T) {
+	p, err := NewProvider("gemini-cli", "gemini-2.5-pro")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	gp, ok := p.(*GeminiCLIProvider)
+	if !ok {
+		t.Fatalf("expected *GeminiCLIProvider, got %T", p)
+	}
+	if gp.Model != "gemini-2.5-pro" {
+		t.Fatalf("expected model gemini-2.5-pro, got %s", gp.Model)
+	}
+}
+
+func TestNewProviderCodex(t *testing.T) {
+	p, err := NewProvider("codex", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := p.(*CodexProvider); !ok {
+		t.Fatalf("expected *CodexProvider, got %T", p)
+	}
+}
+
+func TestNewProviderCodexWithModel(t *testing.T) {
+	p, err := NewProvider("codex", "gpt-4.1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	cp, ok := p.(*CodexProvider)
+	if !ok {
+		t.Fatalf("expected *CodexProvider, got %T", p)
+	}
+	if cp.Model != "gpt-4.1" {
+		t.Fatalf("expected model gpt-4.1, got %s", cp.Model)
+	}
+}
+
 func TestNewProviderUnsupported(t *testing.T) {
 	_, err := NewProvider("unsupported", "")
 	if err == nil {
@@ -85,7 +133,7 @@ func TestNewProviderUnsupported(t *testing.T) {
 	if !strings.Contains(err.Error(), "unsupported model provider") {
 		t.Fatalf("unexpected error message: %v", err)
 	}
-	if !strings.Contains(err.Error(), "gemini, claude, openai") {
+	if !strings.Contains(err.Error(), "gemini, gemini-cli, claude, openai, codex") {
 		t.Fatalf("error should list supported providers: %v", err)
 	}
 }
