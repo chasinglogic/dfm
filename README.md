@@ -19,6 +19,10 @@ A dotfile manager for lazy people and pair programmers.
   - [Existing dotfiles repository](#quick-start-existing-dotfiles-repository)
   - [No existing dotfiles repository](#quick-start-no-existing-dotfiles-repository)
 - [Configuration](#configuration)
+  - [LLM Commit Messages](#llm-commit-messages)
+  - [Modules](#modules)
+  - [Mappings](#mappings)
+  - [Hooks](#hooks)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -399,24 +403,142 @@ features:
 
 ### LLM Commit Messages
 
-DFM can optionally use an LLM to generate your commit messages when syncing changes. To enable this, add the following configuration block to your `.dfm.yml`:
+DFM can use an LLM to generate commit messages when syncing changes.
+When `commit_messages` is `true` and no `-m` flag is provided, DFM
+stages your changes, captures the diff, and sends it to the configured
+provider to produce a commit message.
+
+#### Minimal example
 
 ```yaml
 llm:
-  model_provider: gemini
   commit_messages: true
-  commit_message_prompt: |
-    You are an expert developer. Generate a concise, conventional git commit
-    message from this diff. Return only the commit message text.
+  model_provider: claude
 ```
 
-Currently, only `gemini` is supported as a provider. You must also set the `GEMINI_API_KEY` environment variable in your shell profile for this feature to work:
+#### Available configuration keys
+
+| Key                     | Required | Description                                                                 |
+|-------------------------|----------|-----------------------------------------------------------------------------|
+| `commit_messages`       | yes      | Set to `true` to enable LLM-generated commit messages.                      |
+| `model_provider`        | yes      | Which provider to use. See the table below.                                 |
+| `model`                 | no       | Override the provider's default model (e.g. `gpt-4o`, `gemini-2.5-pro`).   |
+| `commit_message_prompt` | no       | Custom prompt template. The staged diff is appended automatically.          |
+
+#### Providers
+
+DFM ships with five providers. Two use API keys, three use CLI tools
+that authenticate through their own login flow (typically a
+subscription you already have).
+
+| Provider      | Auth method             | Requires          | Default model       |
+|---------------|-------------------------|--------------------|---------------------|
+| `gemini`      | API key                 | `GEMINI_API_KEY`   | `gemini-2.5-flash`  |
+| `gemini-cli`  | Gemini CLI login        | `gemini` in PATH   | `gemini-2.5-flash`  |
+| `claude`      | Claude CLI login        | `claude` in PATH   | `sonnet`            |
+| `openai`      | API key                 | `OPENAI_API_KEY`   | `gpt-4.1-mini`     |
+| `codex`       | Codex CLI / ChatGPT login | `codex` in PATH  | `o4-mini`           |
+
+#### Provider setup
+
+##### gemini (API)
+
+Requires a [Gemini API key](https://aistudio.google.com/apikey)
+exported in your shell:
 
 ```bash
 export GEMINI_API_KEY="your-api-key-here"
 ```
 
-When `commit_messages` is `true`, DFM will automatically generate a commit message based on the `git diff` of your changes before syncing. If you set `commit_message_prompt`, DFM appends the staged diff to the end of your prompt automatically.
+```yaml
+llm:
+  commit_messages: true
+  model_provider: gemini
+```
+
+##### gemini-cli
+
+Uses the [Gemini CLI](https://github.com/google-gemini/gemini-cli).
+Install it and run `gemini` once to authenticate — no API key needed.
+
+```yaml
+llm:
+  commit_messages: true
+  model_provider: gemini-cli
+```
+
+##### claude
+
+Uses the [Claude CLI](https://docs.anthropic.com/en/docs/claude-cli).
+Install it and run `claude` once to authenticate.
+
+```yaml
+llm:
+  commit_messages: true
+  model_provider: claude
+```
+
+##### openai (API)
+
+Requires an [OpenAI API key](https://platform.openai.com/api-keys)
+exported in your shell:
+
+```bash
+export OPENAI_API_KEY="your-api-key-here"
+```
+
+```yaml
+llm:
+  commit_messages: true
+  model_provider: openai
+```
+
+##### codex
+
+Uses the [Codex CLI](https://github.com/openai/codex). Install it and
+run `codex login` to authenticate with your ChatGPT subscription — no
+API key needed.
+
+```yaml
+llm:
+  commit_messages: true
+  model_provider: codex
+```
+
+#### Overriding the model
+
+Every provider has a sensible default model but you can override it:
+
+```yaml
+llm:
+  commit_messages: true
+  model_provider: openai
+  model: gpt-4o
+```
+
+```yaml
+llm:
+  commit_messages: true
+  model_provider: gemini-cli
+  model: gemini-2.5-pro
+```
+
+#### Custom prompt
+
+If you set `commit_message_prompt`, DFM uses your text as the system
+prompt and appends the staged diff automatically:
+
+```yaml
+llm:
+  commit_messages: true
+  model_provider: claude
+  commit_message_prompt: |
+    You are an expert developer. Generate a concise, conventional git commit
+    message from this diff. Return only the commit message text.
+```
+
+If omitted, DFM uses a built-in prompt tuned for configuration-only
+diffs.
 
 ### Modules
 
