@@ -350,6 +350,7 @@ func (p *Profile) Sync(commitMessage string) error {
 			commitMessage, err = commitMessageFromLLM(
 				p.config.Location,
 				p.config.LLM.ModelProvider,
+				p.config.LLM.Model,
 				p.config.LLM.CommitMessagePrompt,
 			)
 			if err != nil {
