@@ -31,7 +31,7 @@
             # Tests are disabled when installing because they don't work on
             # a read only file system.
             checkPhase = null;
-            vendorHash = "sha256-5sHbHF3T9heFosbQPOD/MTi+F+c0KmRa/T4AOIQxW04=";
+            vendorHash = "sha256-QMHvcgvUm3CeK/9kjdUWYseUA8FizSdVrTDXnIYy9Zw=";
             ldflags = [
               "-X main.Version=${version}"
             ];

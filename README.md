@@ -396,10 +396,10 @@ file will be ignored when doing a `dfm link` so won't end up in
 your home directory. The `.dfm.yml` can be used to configure these
 features:
 
+- [LLM Commit Messages](#llm-commit-messages)
 - [Modules](#modules)
 - [Mappings](#mappings)
 - [Hooks](#hooks)
-- [LLM Commit Messages](#llm-commit-messages)
 
 ### LLM Commit Messages
 
