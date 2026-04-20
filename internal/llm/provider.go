@@ -1,11 +1,14 @@
 package llm
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // Provider generates commit messages from diffs using an LLM.
 type Provider interface {
 	// GenerateCommitMessage takes a diff and a prompt template and returns a commit message.
-	GenerateCommitMessage(diff string, promptTemplate string) (string, error)
+	GenerateCommitMessage(ctx context.Context, diff string, promptTemplate string) (string, error)
 }
 
 // NewProvider returns a Provider for the given provider name and model.

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/chasinglogic/dfm/internal/config"
 	"github.com/chasinglogic/dfm/internal/logger"
@@ -323,6 +324,9 @@ func (p *Profile) AddMapping(m *mapping.Mapping) error {
 }
 
 func (p *Profile) isDirty() bool {
+	started := time.Now()
+	logger.Debug().Str("location", p.config.Location).Msg("checking git status")
+
 	buf := bytes.NewBuffer([]byte{})
 
 	cmd := exec.Command("git", "status", "--porcelain")
@@ -331,21 +335,37 @@ func (p *Profile) isDirty() bool {
 	cmd.Stderr = buf
 	_ = cmd.Run()
 
+	logger.Debug().Str("location", p.config.Location).Dur("elapsed", time.Since(started)).Bool("dirty", buf.String() != "").Msg("finished git status check")
+
 	return buf.String() != ""
 }
 
 func (p *Profile) Sync(commitMessage string) error {
+	started := time.Now()
+	logger.Debug().
+		Str("location", p.config.Location).
+		Bool("pullOnly", p.config.PullOnly).
+		Bool("llmCommitMessages", p.config.LLM.CommitMessages).
+		Bool("promptForCommitMessage", p.config.PromptForCommitMessage).
+		Msg("starting sync")
+
 	if err := p.RunHook("pre_sync"); err != nil {
 		return err
 	}
 
 	fmt.Println("Syncing", p.GetLocation())
 	if !p.isDirty() || p.config.PullOnly {
+		logger.Debug().Str("location", p.config.Location).Msg("working tree clean or pull-only; pulling")
 		if err := utils.RunIn(p.config.Location, "git", "pull", "--ff-only"); err != nil {
 			return err
 		}
 	} else {
 		if commitMessage == "" && p.config.LLM.CommitMessages {
+			logger.Debug().
+				Str("location", p.config.Location).
+				Str("provider", p.config.LLM.ModelProvider).
+				Str("model", p.config.LLM.Model).
+				Msg("generating commit message with LLM")
 			var err error
 			commitMessage, err = commitMessageFromLLM(
 				p.config.Location,
@@ -356,13 +376,19 @@ func (p *Profile) Sync(commitMessage string) error {
 			if err != nil {
 				return err
 			}
+			logger.Debug().
+				Str("location", p.config.Location).
+				Int("length", len(commitMessage)).
+				Msg("generated LLM commit message")
 		} else if commitMessage == "" && p.config.PromptForCommitMessage {
+			logger.Debug().Str("location", p.config.Location).Msg("prompting for commit message")
 			var err error
 			commitMessage, err = commitMessageFromPrompt(p.config.Location)
 			if err != nil {
 				return err
 			}
 		} else if commitMessage == "" {
+			logger.Debug().Str("location", p.config.Location).Msg("using default sync commit message")
 			commitMessage = "Dotfiles managed by DFM!"
 		}
 
@@ -374,9 +400,11 @@ func (p *Profile) Sync(commitMessage string) error {
 		}
 
 		for _, cmd := range cmds {
+			logger.Debug().Str("location", p.config.Location).Strs("args", cmd).Msg("running sync command")
 			if err := utils.RunIn(p.config.Location, cmd...); err != nil {
 				return err
 			}
+			logger.Debug().Str("location", p.config.Location).Strs("args", cmd).Msg("finished sync command")
 		}
 	}
 	fmt.Println("")
@@ -387,6 +415,7 @@ func (p *Profile) Sync(commitMessage string) error {
 		}
 	}
 
+	logger.Debug().Str("location", p.config.Location).Dur("elapsed", time.Since(started)).Msg("finished sync")
 	return p.RunHook("post_sync")
 }
 

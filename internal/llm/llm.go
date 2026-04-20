@@ -1,6 +1,9 @@
 package llm
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
 const defaultCommitMessagePrompt = `You write git commit messages for
 configuration-only diffs.
@@ -24,13 +27,13 @@ Output format:
   commentary.`
 
 // GenerateCommitMessage generates a commit message based on a git diff using the specified provider.
-func GenerateCommitMessage(diff string, providerName string, model string, promptTemplate string) (string, error) {
+func GenerateCommitMessage(ctx context.Context, diff string, providerName string, model string, promptTemplate string) (string, error) {
 	provider, err := NewProvider(providerName, model)
 	if err != nil {
 		return "", err
 	}
 
-	return provider.GenerateCommitMessage(diff, promptTemplate)
+	return provider.GenerateCommitMessage(ctx, diff, promptTemplate)
 }
 
 func buildCommitMessagePrompt(diff string, promptTemplate string) string {
