@@ -5,20 +5,28 @@ import (
 	"testing"
 )
 
-func TestLinkAsDirMatchPatternMatchesProvidedDirectoryOnly(t *testing.T) {
+func TestLinkAsDirMatchPatternMatchesProvidedDirectoryAndChildren(t *testing.T) {
 	pattern := linkAsDirMatchPattern(".agents")
+	if pattern != `(^|/)\.agents($|/.*)` {
+		t.Fatalf("pattern = %q, want %q", pattern, `(^|/)\.agents($|/.*)`)
+	}
+
 	rgx := regexp.MustCompile(pattern)
 
 	if !rgx.MatchString("/tmp/repo/.agents") {
 		t.Fatalf("pattern %q should match directory root", pattern)
 	}
 
-	if rgx.MatchString("/tmp/repo/.agents/skills/test.md") {
-		t.Fatalf("pattern %q should not match directory children", pattern)
+	if !rgx.MatchString("/tmp/repo/.agents/skills/test.md") {
+		t.Fatalf("pattern %q should match directory children", pattern)
 	}
 
 	if rgx.MatchString("/tmp/repo/.agentsx") {
 		t.Fatalf("pattern %q should not match sibling paths", pattern)
+	}
+
+	if rgx.MatchString("/tmp/repo/foo.agents") {
+		t.Fatalf("pattern %q should not match paths with only a suffix match", pattern)
 	}
 }
 

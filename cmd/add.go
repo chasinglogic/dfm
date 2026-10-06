@@ -16,7 +16,7 @@ import (
 func linkAsDirMatchPattern(relPath string) string {
 	cleanPath := filepath.ToSlash(filepath.Clean(relPath))
 	escapedPath := regexp.QuoteMeta(cleanPath)
-	return escapedPath + "$"
+	return "(^|/)" + escapedPath + "($|/.*)"
 }
 
 // addCmd represents the add command
