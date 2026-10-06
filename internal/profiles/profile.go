@@ -265,6 +265,14 @@ func wouldCreateSelfReferentialSymlink(sourcePath, targetPath string) (bool, err
 		return false, err
 	}
 
+	resolvedSourcePath := absSourcePath
+	evaluatedSourcePath, err := filepath.EvalSymlinks(absSourcePath)
+	if err == nil {
+		resolvedSourcePath = evaluatedSourcePath
+	} else if !os.IsNotExist(err) {
+		return false, err
+	}
+
 	absTargetPath, err := filepath.Abs(targetPath)
 	if err != nil {
 		return false, err
@@ -281,7 +289,7 @@ func wouldCreateSelfReferentialSymlink(sourcePath, targetPath string) (bool, err
 
 	resolvedTargetPath := filepath.Join(resolvedTargetDir, filepath.Base(absTargetPath))
 
-	return filepath.Clean(absSourcePath) == filepath.Clean(resolvedTargetPath), nil
+	return filepath.Clean(resolvedSourcePath) == filepath.Clean(resolvedTargetPath), nil
 }
 
 func deleteIfExists(opts linkToOptions, path string) error {
