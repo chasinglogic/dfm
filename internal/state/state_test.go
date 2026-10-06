@@ -6,8 +6,21 @@ import (
 	"testing"
 )
 
+func isolateStateTest(t *testing.T) {
+	t.Helper()
+
+	tempHome := t.TempDir()
+	t.Setenv("HOME", tempHome)
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(tempHome, ".cache"))
+
+	State = nil
+	t.Cleanup(func() {
+		State = nil
+	})
+}
+
 func TestDfmDirCreatesDirectory(t *testing.T) {
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	isolateStateTest(t)
 
 	dir, err := DfmDir()
 	if err != nil {
@@ -25,7 +38,7 @@ func TestDfmDirCreatesDirectory(t *testing.T) {
 }
 
 func TestProfilesAndModulesDir(t *testing.T) {
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	isolateStateTest(t)
 
 	profilesDir, err := ProfilesDir()
 	if err != nil {
@@ -49,8 +62,7 @@ func TestProfilesAndModulesDir(t *testing.T) {
 }
 
 func TestLoadCreatesEmptyStateWhenNoFile(t *testing.T) {
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
-	State = nil
+	isolateStateTest(t)
 
 	dir, err := DfmDir()
 	if err != nil {
@@ -74,7 +86,7 @@ func TestLoadCreatesEmptyStateWhenNoFile(t *testing.T) {
 }
 
 func TestSaveAndLoadRoundTrip(t *testing.T) {
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	isolateStateTest(t)
 
 	State = &appState{CurrentProfile: "/tmp/profile"}
 	if err := Save(); err != nil {
