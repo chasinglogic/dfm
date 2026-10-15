@@ -25,5 +25,11 @@ cp -rf source dest          # NOT: cp -r source dest
 - `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
 
 
-**CRITICAL PROJECT RULES:**
-- The application is packaged as a nix flake, the `nix build .` command must succeed. This most commonly breaks when dependencies are updated.
+## Validation
+
+Use standard Go build, test, and lint checks:
+- `go build ./...`
+- `go test ./...`
+- `go vet ./...`
+
+Do not use `nix build` as a validation step.
