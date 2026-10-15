@@ -133,7 +133,7 @@ func TestNewProviderUnsupported(t *testing.T) {
 	if !strings.Contains(err.Error(), "unsupported model provider") {
 		t.Fatalf("unexpected error message: %v", err)
 	}
-	if !strings.Contains(err.Error(), "gemini, gemini-cli, claude, openai, codex") {
+	if !strings.Contains(err.Error(), "gemini, gemini-cli, claude, openai, codex, pi") {
 		t.Fatalf("error should list supported providers: %v", err)
 	}
 }

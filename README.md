@@ -427,7 +427,7 @@ llm:
 
 #### Providers
 
-DFM ships with five providers. Two use API keys, three use CLI tools
+DFM ships with six providers. Two use API keys, four use CLI tools
 that authenticate through their own login flow (typically a
 subscription you already have).
 
@@ -438,6 +438,7 @@ subscription you already have).
 | `claude`      | Claude CLI login        | `claude` in PATH   | `sonnet`            |
 | `openai`      | API key                 | `OPENAI_API_KEY`   | `gpt-4.1-mini`     |
 | `codex`       | Codex CLI / ChatGPT login | `codex` in PATH  | `o4-mini`           |
+| `pi`          | Pi credentials / API key | `pi` in PATH     | Pi's configured default |
 
 #### Provider setup
 
@@ -504,6 +505,26 @@ llm:
   commit_messages: true
   model_provider: codex
 ```
+
+##### pi
+
+Uses the [Pi CLI](https://pi.dev). Install it, run `pi`, and use
+`/login` to authenticate with your preferred provider. DFM reuses Pi's
+credentials and configured default model, or you can select a model
+with Pi's `provider/model` syntax:
+
+```yaml
+llm:
+  commit_messages: true
+  model_provider: pi
+  # Optional: override Pi's default model
+  model: anthropic/claude-sonnet-4-6
+```
+
+DFM runs Pi in text-only print mode without tools, extensions, skills,
+prompt templates, project instructions, or saved sessions. Models that
+require provider extensions are not available in this mode. The prompt
+and staged diff are sent through stdin to the selected model.
 
 #### Overriding the model
 
