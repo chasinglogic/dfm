@@ -23,7 +23,11 @@ var syncCmd = &cobra.Command{
 			return err
 		}
 
-		return profile.Sync(commitMessage)
+		if err := profile.Sync(commitMessage); err != nil {
+			return err
+		}
+
+		return profile.Link(false)
 	},
 }
 
